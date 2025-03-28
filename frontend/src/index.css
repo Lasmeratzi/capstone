@@ -1,1 +1,11 @@
 @import "tailwindcss";
+* {
+    font-family: 'Inter', sans-serif;
+  }
+  .custom-font {
+    font-family: "BasheqVintageRegular", sans-serif;
+  }
+  @font-face {
+    font-family: "BasheqVintageRegular";
+    src: url("./assets/fonts/BasheqVintageRegular.ttf") format("truetype");
+  }
