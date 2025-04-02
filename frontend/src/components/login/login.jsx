@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Import Link for navigation
 
 const Login = () => {
   const navigate = useNavigate(); // Hook for navigation
@@ -33,10 +33,10 @@ const Login = () => {
 
       {/* Right Section: Login Form */}
       <div
-        className="w-1/2 flex items-center justify-center"
+        className="w-1/2 flex items-center justify-center relative"
         style={{ backgroundColor: "#EAE7E6" }} // Updated background color
       >
-        <div className="w-full max-w-md p-8 bg-white shadow-md rounded-lg">
+        <div className="w-[500px] p-8 bg-white shadow-md rounded-lg">
           {/* Welcome to Illura Section */}
           <div className="text-center mb-6">
             <p className="text-2xl text-gray-600">Welcome to</p>
@@ -83,12 +83,9 @@ const Login = () => {
             {/* Forgot Password and Remember Me Row */}
             <div className="flex justify-between items-center mt-2">
               {/* Forgot Password */}
-              <a
-                href="/forgot-password"
-                className="text-blue-600 hover:underline text-sm"
-              >
-                Forgot Password?
-              </a>
+              <Link to="/forgotpass" className="text-blue-600 hover:underline">
+                Forgot Password
+              </Link>
 
               {/* Remember Me Checkbox */}
               <div className="flex items-center">
@@ -117,15 +114,23 @@ const Login = () => {
               Log In
             </button>
           </form>
-          
+
           {/* Sign Up Link */}
           <p className="text-sm text-center text-gray-600 mt-4">
             Don't have an account?{" "}
-            <a href="#" className="text-blue-600 hover:underline">
+            <Link to="/signup" className="text-blue-600 hover:underline">
               Sign up
-            </a>
+            </Link>
           </p>
         </div>
+
+        {/* Admin Login Button */}
+        <Link
+          to="/loginadmin"
+          className="absolute bottom-4 right-4 text-blue-600 hover:underline text-sm"
+        >
+          Admin Login
+        </Link>
       </div>
     </div>
   );
