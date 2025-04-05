@@ -7,19 +7,25 @@ const Sidebar = () => {
   const navigate = useNavigate(); // Hook for navigation
 
   const handleLogout = () => {
-    // Logic for logging out (if necessary, e.g., clearing tokens)
-    navigate("/"); // Navigate back to the login page
+    // Clear tokens and redirect to login
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("username");
+    navigate("/login");
   };
 
   return (
-    <div className="h-screen w-20 shadow-md flex flex-col items-center py-4 px-14"
-      style={{ backgroundColor: "#00040d" }}>
+    <div
+      className="h-screen w-20 shadow-md flex flex-col items-center py-4 px-14"
+      style={{ backgroundColor: "#00040d" }}
+    >
       {/* Logo */}
       <div className="mb-8">
         <img
           src="src/assets/images/illura.png"
           alt="Illura Logo"
-          className="w-16 h-16 "  // Adjust size as needed
+          className="w-16 h-16" // Adjust size as needed
         />
         <h1 className="text-2xl font-bold text-white custom-font">Illura</h1>
       </div>
@@ -27,34 +33,49 @@ const Sidebar = () => {
       {/* Navigation Items */}
       <nav className="flex flex-col space-y-6 flex-grow">
         {/* Home */}
-        <a href="#" className="flex flex-col items-center text-white hover:text-[#5E66FF]">
+        <button
+          onClick={() => navigate("/home")}
+          className="flex flex-col items-center text-white hover:text-[#5E66FF]"
+        >
           <FontAwesomeIcon icon={faHome} size="lg" />
           <span className="text-xs mt-1">Home</span>
-        </a>
+        </button>
 
         {/* Search */}
-        <a href="#" className="flex flex-col items-center text-white hover:text-[#5E66FF]">
+        <button
+          onClick={() => navigate("/search")}
+          className="flex flex-col items-center text-white hover:text-[#5E66FF]"
+        >
           <FontAwesomeIcon icon={faSearch} size="lg" />
           <span className="text-xs mt-1">Search</span>
-        </a>
+        </button>
 
         {/* Explore */}
-        <a href="#" className="flex flex-col items-center text-white hover:text-[#5E66FF]">
+        <button
+          onClick={() => navigate("/explore")}
+          className="flex flex-col items-center text-white hover:text-[#5E66FF]"
+        >
           <FontAwesomeIcon icon={faCompass} size="lg" />
           <span className="text-xs mt-1">Explore</span>
-        </a>
+        </button>
 
         {/* Notifications */}
-        <a href="#" className="flex flex-col items-center text-white hover:text-[#5E66FF]">
+        <button
+          onClick={() => navigate("/notifications")}
+          className="flex flex-col items-center text-white hover:text-[#5E66FF]"
+        >
           <FontAwesomeIcon icon={faBell} size="lg" />
           <span className="text-xs mt-1">Notifications</span>
-        </a>
+        </button>
 
         {/* Profile */}
-        <a href="#" className="flex flex-col items-center text-white hover:text-[#5E66FF]">
+        <button
+          onClick={() => navigate("/profiles")}
+          className="flex flex-col items-center text-white hover:text-[#5E66FF]"
+        >
           <FontAwesomeIcon icon={faUser} size="lg" />
           <span className="text-xs mt-1">Profile</span>
-        </a>
+        </button>
       </nav>
 
       {/* Log Out Button */}

@@ -1,51 +1,69 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; // Import Link for navigation
+import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 
 const Login = () => {
-  const navigate = useNavigate(); // Hook for navigation
-  const [rememberMe, setRememberMe] = useState(false); // State for "Remember Me"
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [errorMessage, setErrorMessage] = useState(""); // State for error messages
+  const [isLoading, setIsLoading] = useState(false); // State for loading spinner
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    // Add logic for login and handling "Remember Me" if necessary
-    navigate("/home"); // Navigate to the Home page
+  // Handle input changes
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData({ ...formData, [id]: value });
   };
 
-  const handleRememberMeToggle = () => {
-    setRememberMe(!rememberMe); // Toggle the Remember Me state
+  // Login function
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true); // Show loading spinner
+    setErrorMessage(""); // Clear any previous error messages
+
+    try {
+      const response = await axios.post("http://localhost:5000/api/login", formData, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      setIsLoading(false); // Hide loading spinner
+
+      if (response.status === 200) {
+        const { token, username } = response.data; // Backend should return token and username
+
+        console.log("Token received from backend:", token); // Debugging log
+
+        // Save token and username directly in localStorage
+        localStorage.setItem("token", token);
+        localStorage.setItem("username", username); // Store username for display
+
+        // Redirect to the homepage after successful login
+        navigate("/home");
+      }
+    } catch (error) {
+      setIsLoading(false); // Hide loading spinner
+      console.error("Login error:", error.response?.data || error.message); // Debugging log
+      setErrorMessage(error.response?.data?.message || "Invalid login credentials."); // Show error message
+    }
   };
 
   return (
     <div className="flex h-screen">
-      {/* Left Section: Image with Copyright Below */}
+      {/* Left Section */}
       <div
         className="w-1/2 flex flex-col justify-between bg-cover bg-center"
         style={{ backgroundImage: "url('src/assets/images/lgin.jpeg')" }}
       >
-        {/* Empty Spacer to push copyright notice down */}
         <div></div>
-
-        {/* Copyright Text */}
-        <div className="text-center text-black text-sm font-medium p-4">
-          © 2025 Illura. All rights reserved.
-        </div>
+        <div className="text-center text-black text-sm font-medium p-4">© 2025 Illura. All rights reserved.</div>
       </div>
 
-      {/* Right Section: Login Form */}
-      <div
-        className="w-1/2 flex items-center justify-center relative"
-        style={{ backgroundColor: "#EAE7E6" }} // Updated background color
-      >
-        <div className="w-[500px] p-8 bg-white shadow-md rounded-lg">
-          {/* Welcome to Illura Section */}
+      {/* Right Section */}
+      <div className="w-1/2 flex items-center justify-center relative" style={{ backgroundColor: "#EAE7E6" }}>
+        <div className="w-[500px] py-25 px-18 bg-white shadow-md rounded-lg">
           <div className="text-center mb-6">
             <p className="text-2xl text-gray-600">Welcome to</p>
             <div className="flex items-center justify-center">
-              <img
-                src="src/assets/images/illura.png"
-                alt="Illura Logo"
-                className="w-18 h-18 mr-2"
-              />
+              <img src="src/assets/images/illura.png" alt="Illura Logo" className="w-18 h-18 mr-2" />
               <h1 className="text-5xl text-gray-800 custom-font">Illura</h1>
             </div>
           </div>
@@ -60,6 +78,8 @@ const Login = () => {
               <input
                 type="email"
                 id="email"
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300 focus:outline-none"
                 placeholder="Enter your email"
                 required
@@ -74,36 +94,19 @@ const Login = () => {
               <input
                 type="password"
                 id="password"
+                value={formData.password}
+                onChange={handleChange}
                 className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300 focus:outline-none"
                 placeholder="Enter your password"
                 required
               />
             </div>
 
-            {/* Forgot Password and Remember Me Row */}
-            <div className="flex justify-between items-center mt-2">
-              {/* Forgot Password */}
-              <Link to="/forgotpass" className="text-blue-600 hover:underline">
-                Forgot Password
-              </Link>
+            {/* Error Message */}
+            {errorMessage && <p className="text-sm text-red-600 text-center">{errorMessage}</p>}
 
-              {/* Remember Me Checkbox */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  checked={rememberMe}
-                  onChange={handleRememberMeToggle}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring focus:ring-blue-300"
-                />
-                <label
-                  htmlFor="rememberMe"
-                  className="ml-2 text-sm text-gray-700"
-                >
-                  Remember me
-                </label>
-              </div>
-            </div>
+            {/* Loading State */}
+            {isLoading && <p className="text-sm text-gray-600 text-center">Logging in...</p>}
 
             {/* Log In Button */}
             <button
@@ -117,7 +120,7 @@ const Login = () => {
 
           {/* Sign Up Link */}
           <p className="text-sm text-center text-gray-600 mt-4">
-            Don't have an account?{" "}
+            Don’t have an account?{" "}
             <Link to="/signup" className="text-blue-600 hover:underline">
               Sign up
             </Link>
@@ -125,10 +128,7 @@ const Login = () => {
         </div>
 
         {/* Admin Login Button */}
-        <Link
-          to="/loginadmin"
-          className="absolute bottom-4 right-4 text-blue-600 hover:underline text-sm"
-        >
+        <Link to="/loginadmin" className="absolute bottom-4 right-4 text-blue-600 hover:underline text-sm">
           Admin Login
         </Link>
       </div>
