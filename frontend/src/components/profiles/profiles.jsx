@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for redirection
 import Sidebar from "../sidebar/sidebar"; // Ensure the path is correct
 import axios from "axios";
 
 const Profiles = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [error, setError] = useState(null);
+  const navigate = useNavigate(); // Initialize navigation hook
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -14,6 +16,7 @@ const Profiles = () => {
 
         if (!token || !username) {
           setError("User not logged in");
+          navigate("/login"); // Redirect to login if user is not logged in
           return;
         }
 
@@ -22,7 +25,17 @@ const Profiles = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        setUserInfo(response.data); // Save the user info in state
+        const user = response.data;
+
+        // Check account status and handle "on_hold" case
+        if (user.account_status === "on_hold") {
+          alert("Your account is currently on hold. Please contact support for assistance.");
+          localStorage.clear(); // Clear localStorage
+          navigate("/login"); // Redirect back to login page
+          return;
+        }
+
+        setUserInfo(user); // Save the user info in state
       } catch (err) {
         console.error("Error fetching user info:", err.response || err.message);
         setError("Failed to fetch user info");
@@ -30,7 +43,7 @@ const Profiles = () => {
     };
 
     fetchUserInfo();
-  }, []);
+  }, [navigate]);
 
   // Helper function to format the birthdate
   const formatBirthdate = (birthdate) => {
@@ -50,39 +63,43 @@ const Profiles = () => {
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-grow flex flex-col items-center bg-gray-200 p-6">
-        <h1 className="text-3xl font-bold mb-6">Profile</h1>
-
+      <div className="flex-grow p-6 bg-gray-200 flex flex-col items-start">
         {error && <p className="text-red-600">{error}</p>}
 
         {userInfo ? (
           <div className="bg-white p-6 shadow-lg rounded-lg w-full max-w-md">
             {/* Profile Picture */}
-            <div className="flex justify-center mb-4">
+            <div className="mb-4">
               <img
                 src={`http://localhost:5000/uploads/${userInfo.pfp}`} // Ensure backend serves files correctly
                 alt={`${userInfo.username}'s profile`}
-                className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
+                className="w-32 h-32 rounded-full object-cover"
               />
             </div>
 
-            {/* Username */}
-            <h2 className="text-xl font-semibold text-center">{userInfo.username}</h2>
+            {/* User Info */}
+            <div>
+              {/* Full Name */}
+              <h2 className="text-lg font-medium text-gray-700">{userInfo.fullname || "No full name available"}</h2>
 
-            {/* Email */}
-            <p className="text-gray-600 text-center mt-2">
-              <strong>Email:</strong> {userInfo.email}
-            </p>
+              {/* Username with Larger Text */}
+              <p className="text-2xl font-bold text-gray-900 mt-1">{userInfo.username}</p>
 
-            {/* Bio */}
-            <p className="text-gray-600 text-center mt-2">
-              <strong>Bio:</strong> {userInfo.bio || "No bio available"}
-            </p>
+              {/* Bio */}
+              <p className="text-gray-600 mt-2">
+                <strong>Bio:</strong> {userInfo.bio || "No bio available"}
+              </p>
 
-            {/* Birthdate */}
-            <p className="text-gray-600 text-center mt-2">
-              <strong>Birthdate:</strong> {formatBirthdate(userInfo.birthdate)}
-            </p>
+              {/* Smaller Birthdate */}
+              <p className="text-sm text-gray-500 mt-2">
+                <strong>Birthdate:</strong> {formatBirthdate(userInfo.birthdate)}
+              </p>
+
+              {/* Smaller Email */}
+              <p className="text-sm text-gray-500 mt-2">
+                <strong>Email:</strong> {userInfo.email}
+              </p>
+            </div>
           </div>
         ) : (
           !error && <p>Loading profile...</p>
