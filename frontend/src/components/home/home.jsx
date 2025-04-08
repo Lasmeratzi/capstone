@@ -2,7 +2,8 @@ import React from "react";
 import Sidebar from "../sidebar/sidebar"; // Ensure the path is correct
 
 const Home = () => {
-  // Fetch the username from localStorage
+  // Fetch fullname and username from localStorage
+  const fullname = localStorage.getItem("fullname");
   const username = localStorage.getItem("username");
 
   return (
@@ -12,9 +13,11 @@ const Home = () => {
 
       {/* Main Content */}
       <div className="flex-grow flex flex-col bg-gray-200">
-        {/* Display Username */}
+        {/* Welcome Section */}
         <div className="p-4 bg-white shadow-md">
-          <h2 className="text-lg font-semibold">Welcome, {username || "Guest"}!</h2>
+          <h2 className="text-lg font-semibold">
+            Welcome, {fullname || username || "Guest"}!
+          </h2>
         </div>
 
         {/* Main Text */}

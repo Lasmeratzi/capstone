@@ -5,6 +5,7 @@ import axios from "axios";
 const SignUp = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    fullname: "",
     username: "",
     password: "",
     email: "",
@@ -13,6 +14,7 @@ const SignUp = () => {
   });
   const [pfp, setPfp] = useState(null); // For profile picture upload
   const [termsAccepted, setTermsAccepted] = useState(false); // State for Terms and Conditions acceptance
+  const [loading, setLoading] = useState(false); // Loading indicator
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -21,6 +23,8 @@ const SignUp = () => {
       alert("You must agree to the Terms and Conditions to sign up.");
       return;
     }
+
+    setLoading(true); // Start loading indicator
 
     try {
       const data = new FormData();
@@ -32,7 +36,13 @@ const SignUp = () => {
 
       // Append profile picture to FormData
       if (pfp) {
-        data.append("pfp", pfp); // Attach the uploaded image
+        const selectedFile = pfp;
+        if (!selectedFile.type.startsWith("image/")) {
+          alert("Please upload a valid image file.");
+          setLoading(false);
+          return;
+        }
+        data.append("pfp", selectedFile);
       }
 
       // Send data to the backend
@@ -43,12 +53,19 @@ const SignUp = () => {
       });
 
       if (response.status === 201) {
-        alert("Sign-up successful!");
-        navigate("/home");
+        alert("Sign-up successful! Please log in to continue.");
+        navigate("/login");
       }
     } catch (error) {
-      console.error("Error during sign-up:", error.response?.data?.message || error.message);
-      alert("Failed to sign up. Please try again.");
+      const message =
+        error.response?.status === 400
+          ? "Validation failed. Please check your inputs."
+          : error.response?.status === 500
+          ? "Server error. Please try again later."
+          : "Failed to sign up. Please try again.";
+      alert(message);
+    } finally {
+      setLoading(false); // Stop loading indicator
     }
   };
 
@@ -58,7 +75,12 @@ const SignUp = () => {
   };
 
   const handleFileChange = (e) => {
-    setPfp(e.target.files[0]); // Store the selected file
+    const selectedFile = e.target.files[0];
+    if (!selectedFile.type.startsWith("image/")) {
+      alert("Please upload a valid image file.");
+      return;
+    }
+    setPfp(selectedFile);
   };
 
   return (
@@ -69,11 +91,23 @@ const SignUp = () => {
       >
         <h1 className="text-2xl font-bold text-gray-800 col-span-2 text-center">Sign Up</h1>
 
+        {/* Full Name */}
+        <div>
+          <label htmlFor="fullname" className="block text-sm text-gray-700">Full Name</label>
+          <input
+            type="text"
+            id="fullname"
+            value={formData.fullname}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none"
+            placeholder="Enter your full name"
+            required
+          />
+        </div>
+
         {/* Username */}
         <div>
-          <label htmlFor="username" className="block text-sm text-gray-700">
-            Username
-          </label>
+          <label htmlFor="username" className="block text-sm text-gray-700">Username</label>
           <input
             type="text"
             id="username"
@@ -87,9 +121,7 @@ const SignUp = () => {
 
         {/* Password */}
         <div>
-          <label htmlFor="password" className="block text-sm text-gray-700">
-            Password
-          </label>
+          <label htmlFor="password" className="block text-sm text-gray-700">Password</label>
           <input
             type="password"
             id="password"
@@ -103,9 +135,7 @@ const SignUp = () => {
 
         {/* Email */}
         <div>
-          <label htmlFor="email" className="block text-sm text-gray-700">
-            Email
-          </label>
+          <label htmlFor="email" className="block text-sm text-gray-700">Email</label>
           <input
             type="email"
             id="email"
@@ -119,9 +149,7 @@ const SignUp = () => {
 
         {/* Birthdate */}
         <div>
-          <label htmlFor="birthdate" className="block text-sm text-gray-700">
-            Birthdate
-          </label>
+          <label htmlFor="birthdate" className="block text-sm text-gray-700">Birthdate</label>
           <input
             type="date"
             id="birthdate"
@@ -134,9 +162,7 @@ const SignUp = () => {
 
         {/* Bio */}
         <div className="col-span-2">
-          <label htmlFor="bio" className="block text-sm text-gray-700">
-            Bio
-          </label>
+          <label htmlFor="bio" className="block text-sm text-gray-700">Bio</label>
           <textarea
             id="bio"
             value={formData.bio}
@@ -148,9 +174,7 @@ const SignUp = () => {
 
         {/* Profile Picture */}
         <div className="col-span-2">
-          <label htmlFor="pfp" className="block text-sm text-gray-700">
-            Profile Picture
-          </label>
+          <label htmlFor="pfp" className="block text-sm text-gray-700">Profile Picture</label>
           <input
             type="file"
             id="pfp"
@@ -180,8 +204,9 @@ const SignUp = () => {
             type="submit"
             className="w-full px-4 py-2 text-white rounded-lg hover:opacity-80"
             style={{ backgroundColor: "#00040d" }}
+            disabled={loading}
           >
-            Sign Up
+            {loading ? "Signing Up..." : "Sign Up"}
           </button>
         </div>
       </form>

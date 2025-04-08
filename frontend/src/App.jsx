@@ -8,6 +8,7 @@ import Homeadmin from "./components/homeadmin/homeadmin";
 import Loginadmin from "./components/loginadmin/loginadmin";
 import Tags from "./components/tags/tags";
 import Profiles from "./components/profiles/profiles";
+import ProfileDisplay from "./components/profiles/profiledisplay";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/homeadmin" element={<Homeadmin />} />
         <Route path="/loginadmin" element={<Loginadmin />} />
         <Route path="/tags"  element={<Tags />} />
+        <Route path="/profiledisplay"  element={<ProfileDisplay />} />
       </Routes>
     </Router>
   );
