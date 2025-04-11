@@ -8,9 +8,9 @@ const Home = () => {
 
       {/* Main Content */}
       <div className="flex flex-grow justify-center items-center">
-        <div className="w-full max-w-[600px] space-y-4">
+        <div className="w-full max-w-[600px] space-y-6">
           {/* Post Input Section */}
-          <div className="bg-gray-300 p-4 shadow-md border border-gray-500">
+          <div className="bg-gray-300 p-4 shadow-md border border-gray-500 mt-8">
             <p>Post something...</p>
             <div className="flex space-x-2 mt-2">
               <button className="bg-blue-600 text-white px-4 py-1 border border-black">
