@@ -19,23 +19,25 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true); // Show loading spinner
     setErrorMessage(""); // Clear any previous error messages
-
+  
     try {
       const response = await axios.post("http://localhost:5000/api/login", formData, {
         headers: { "Content-Type": "application/json" },
       });
-
+  
       setIsLoading(false); // Hide loading spinner
-
+  
       if (response.status === 200) {
-        const { token, username } = response.data; // Backend should return token and username
-
-        console.log("Token received from backend:", token); // Debugging log
-
-        // Save token and username directly in localStorage
+        const { token, id, fullname, username } = response.data; // Include 'id' and 'fullname'
+  
+        console.log("Token and User ID received from backend:", token, id); // Debugging log
+  
+        // Save token, id, fullname, and username in localStorage
         localStorage.setItem("token", token);
-        localStorage.setItem("username", username); // Store username for display
-
+        localStorage.setItem("id", id); // Store user ID for future use
+        localStorage.setItem("fullname", fullname); // Store user's full name
+        localStorage.setItem("username", username); // Store username
+  
         // Redirect to the homepage after successful login
         navigate("/home");
       }
