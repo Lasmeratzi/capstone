@@ -17,6 +17,7 @@ const loginRoutes = require("./routes/loginRoutes"); // Login routes
 const logoutRoutes = require("./routes/logoutRoutes"); // Logout routes
 const profileRoutes = require("./routes/profileRoutes"); // Dedicated profile routes
 const tagRoutes = require("./routes/tagRoutes"); // Tag routes
+const postRoutes = require("./routes/postRoutes"); // Post routes
 
 // Mount Routes
 app.use("/api/signup", signupRoutes); // Signup routes
@@ -24,10 +25,11 @@ app.use("/api/login", loginRoutes); // Login routes
 app.use("/api/logout", logoutRoutes); // Logout routes
 app.use("/api/profiles", profileRoutes); // Profile-related operations
 app.use("/api/tags", tagRoutes); // Tag routes
+app.use("/api/posts", postRoutes); // Post-related operations
 
 // Welcome Route
 app.get("/", (req, res) => {
-  res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, and Tag APIs.");
+  res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, and Tag APIs.");
 });
 
 // Start the Server

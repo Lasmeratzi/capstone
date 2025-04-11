@@ -39,6 +39,7 @@ const loginUser = (req, res) => {
 
     res.status(200).json({
       token,
+      id: user.id,
       fullname: user.fullname,
       username: user.username,
     });
