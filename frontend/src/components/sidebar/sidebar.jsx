@@ -4,67 +4,112 @@ import { faHome, faSearch, faCompass, faBell, faUser, faSignOutAlt } from "@fort
 import { useNavigate } from "react-router-dom";
 
 const Sidebar = () => {
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Logic for logging out (if necessary, e.g., clearing tokens)
-    navigate("/"); // Navigate back to the login page
+    // Clear tokens and redirect to login
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("username");
+    navigate("/login");
   };
 
   return (
-    <div className="h-screen w-20 shadow-md flex flex-col items-center py-4 px-14"
-      style={{ backgroundColor: "#00040d" }}>
+    <div
+      className="h-screen w-20 flex flex-col items-center py-4 px-4 shadow-md"
+      style={{ backgroundColor: "#00040d" }}
+    >
       {/* Logo */}
-      <div className="mb-8">
+      <div className="mb-6 flex flex-col items-center">
         <img
           src="src/assets/images/illura.png"
           alt="Illura Logo"
-          className="w-16 h-16 "  // Adjust size as needed
+          className="w-12 h-12" // Reduced size for logo
         />
-        <h1 className="text-2xl font-bold text-white custom-font">Illura</h1>
+        <h1 className="text-lg font-bold text-white custom-font mt-2">Illura</h1> {/* Smaller text */}
       </div>
 
       {/* Navigation Items */}
-      <nav className="flex flex-col space-y-6 flex-grow">
+      <nav className="flex flex-col space-y-8 flex-grow">
         {/* Home */}
-        <a href="#" className="flex flex-col items-center text-white hover:text-[#5E66FF]">
-          <FontAwesomeIcon icon={faHome} size="lg" />
-          <span className="text-xs mt-1">Home</span>
-        </a>
+        <div className="relative group">
+          <button
+            onClick={() => navigate("/home")}
+            className="flex items-center justify-center text-white hover:text-[#5E66FF]"
+          >
+            <FontAwesomeIcon icon={faHome} size="2x" /> {/* Larger icon */}
+          </button>
+          <span className="absolute left-full ml-2 bg-[#00040d] text-white px-3 py-1 rounded hidden group-hover:block text-sm">
+            Home
+          </span>
+        </div>
 
         {/* Search */}
-        <a href="#" className="flex flex-col items-center text-white hover:text-[#5E66FF]">
-          <FontAwesomeIcon icon={faSearch} size="lg" />
-          <span className="text-xs mt-1">Search</span>
-        </a>
+        <div className="relative group">
+          <button
+            onClick={() => navigate("/search")}
+            className="flex items-center justify-center text-white hover:text-[#5E66FF]"
+          >
+            <FontAwesomeIcon icon={faSearch} size="2x" /> {/* Larger icon */}
+          </button>
+          <span className="absolute left-full ml-2 bg-[#00040d] text-white px-3 py-1 rounded hidden group-hover:block text-sm">
+            Search
+          </span>
+        </div>
 
         {/* Explore */}
-        <a href="#" className="flex flex-col items-center text-white hover:text-[#5E66FF]">
-          <FontAwesomeIcon icon={faCompass} size="lg" />
-          <span className="text-xs mt-1">Explore</span>
-        </a>
+        <div className="relative group">
+          <button
+            onClick={() => navigate("/explore")}
+            className="flex items-center justify-center text-white hover:text-[#5E66FF]"
+          >
+            <FontAwesomeIcon icon={faCompass} size="2x" /> {/* Larger icon */}
+          </button>
+          <span className="absolute left-full ml-2 bg-[#00040d] text-white px-3 py-1 rounded hidden group-hover:block text-sm">
+            Explore
+          </span>
+        </div>
 
         {/* Notifications */}
-        <a href="#" className="flex flex-col items-center text-white hover:text-[#5E66FF]">
-          <FontAwesomeIcon icon={faBell} size="lg" />
-          <span className="text-xs mt-1">Notifications</span>
-        </a>
+        <div className="relative group">
+          <button
+            onClick={() => navigate("/notifications")}
+            className="flex items-center justify-center text-white hover:text-[#5E66FF]"
+          >
+            <FontAwesomeIcon icon={faBell} size="2x" /> {/* Larger icon */}
+          </button>
+          <span className="absolute left-full ml-2 bg-[#00040d] text-white px-3 py-1 rounded hidden group-hover:block text-sm">
+            Notifications
+          </span>
+        </div>
 
         {/* Profile */}
-        <a href="#" className="flex flex-col items-center text-white hover:text-[#5E66FF]">
-          <FontAwesomeIcon icon={faUser} size="lg" />
-          <span className="text-xs mt-1">Profile</span>
-        </a>
+        <div className="relative group">
+          <button
+            onClick={() => navigate("/profiles")}
+            className="flex items-center justify-center text-white hover:text-[#5E66FF]"
+          >
+            <FontAwesomeIcon icon={faUser} size="2x" /> {/* Larger icon */}
+          </button>
+          <span className="absolute left-full ml-2 bg-[#00040d] text-white px-3 py-1 rounded hidden group-hover:block text-sm">
+            Profile
+          </span>
+        </div>
       </nav>
 
       {/* Log Out Button */}
-      <button
-        onClick={handleLogout}
-        className="mt-6 flex flex-col items-center text-white hover:text-red-500"
-      >
-        <FontAwesomeIcon icon={faSignOutAlt} size="lg" />
-        <span className="text-xs mt-1 w-100">Log Out</span>
-      </button>
+      <div className="relative group mt-8">
+        <button
+          onClick={handleLogout}
+          className="flex items-center justify-center text-white hover:text-red-500"
+        >
+          <FontAwesomeIcon icon={faSignOutAlt} size="2x" /> {/* Larger icon */}
+        </button>
+        <span className="absolute left-full ml-2 bg-red-500 text-white px-3 py-1 rounded hidden group-hover:block text-sm">
+          Log Out
+        </span>
+      </div>
     </div>
   );
 };
