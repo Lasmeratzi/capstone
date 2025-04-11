@@ -9,12 +9,13 @@ import Loginadmin from "./components/loginadmin/loginadmin";
 import Tags from "./components/tags/tags";
 import Profiles from "./components/profiles/profiles";
 import ProfileDisplay from "./components/profiles/profiledisplay";
+import LandingPage from "./components/landing/landingpage";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<LandingPage/>} />
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home />} />
         <Route path="/signup" element={<Signup />} />
