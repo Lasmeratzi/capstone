@@ -1,8 +1,9 @@
 const express = require("express");
-const router = express.Router();
-const { logoutUser } = require("../controllers/logoutController");
+const logoutController = require("../controllers/logoutController"); // Import logout controller
 
-// POST /api/logout: Logout a user
-router.post("/", logoutUser);
+const router = express.Router();
+
+// Logout route
+router.post("/logout", logoutController.logoutUser);
 
 module.exports = router;

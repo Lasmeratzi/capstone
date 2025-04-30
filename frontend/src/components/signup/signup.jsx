@@ -12,8 +12,8 @@ const SignUp = () => {
     bio: "",
     birthdate: "",
   });
-  const [pfp, setPfp] = useState(null); // For profile picture upload
-  const [termsAccepted, setTermsAccepted] = useState(false); // State for Terms and Conditions acceptance
+  const [pfp, setPfp] = useState(null); // Profile Picture upload
+  const [termsAccepted, setTermsAccepted] = useState(false); // Terms acceptance
   const [loading, setLoading] = useState(false); // Loading indicator
 
   const handleSignUp = async (e) => {
@@ -24,32 +24,29 @@ const SignUp = () => {
       return;
     }
 
-    setLoading(true); // Start loading indicator
+    setLoading(true); // Start loading
 
     try {
       const data = new FormData();
 
-      // Append text fields to FormData
+      // Add form fields to FormData
       for (const key in formData) {
         data.append(key, formData[key]);
       }
 
-      // Append profile picture to FormData
+      // Add profile picture if uploaded
       if (pfp) {
-        const selectedFile = pfp;
-        if (!selectedFile.type.startsWith("image/")) {
+        if (!pfp.type.startsWith("image/")) {
           alert("Please upload a valid image file.");
           setLoading(false);
           return;
         }
-        data.append("pfp", selectedFile);
+        data.append("pfp", pfp); // Add profile picture
       }
 
-      // Send data to the backend
+      // Send the data to the backend
       const response = await axios.post("http://localhost:5000/api/signup", data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       if (response.status === 201) {
@@ -65,7 +62,7 @@ const SignUp = () => {
           : "Failed to sign up. Please try again.";
       alert(message);
     } finally {
-      setLoading(false); // Stop loading indicator
+      setLoading(false); // Stop loading
     }
   };
 
@@ -76,11 +73,7 @@ const SignUp = () => {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    if (!selectedFile.type.startsWith("image/")) {
-      alert("Please upload a valid image file.");
-      return;
-    }
-    setPfp(selectedFile);
+    setPfp(selectedFile); // Store the file
   };
 
   return (
@@ -119,20 +112,6 @@ const SignUp = () => {
           />
         </div>
 
-        {/* Password */}
-        <div>
-          <label htmlFor="password" className="block text-sm text-gray-700">Password</label>
-          <input
-            type="password"
-            id="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none"
-            placeholder="Enter your password"
-            required
-          />
-        </div>
-
         {/* Email */}
         <div>
           <label htmlFor="email" className="block text-sm text-gray-700">Email</label>
@@ -143,6 +122,20 @@ const SignUp = () => {
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-lg focus:outline-none"
             placeholder="Enter your email"
+            required
+          />
+        </div>
+
+        {/* Password */}
+        <div>
+          <label htmlFor="password" className="block text-sm text-gray-700">Password</label>
+          <input
+            type="password"
+            id="password"
+            value={formData.password}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none"
+            placeholder="Enter your password"
             required
           />
         </div>
@@ -168,7 +161,7 @@ const SignUp = () => {
             value={formData.bio}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-lg focus:outline-none"
-            placeholder="Write about yourself"
+            placeholder="Tell us about yourself"
           ></textarea>
         </div>
 
@@ -184,21 +177,21 @@ const SignUp = () => {
           />
         </div>
 
-        {/* Terms and Conditions */}
+        {/* Terms */}
         <div className="col-span-2 flex items-center">
           <input
             type="checkbox"
             id="terms"
             checked={termsAccepted}
             onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring focus:ring-blue-300"
+            className="w-4 h-4 border-gray-300 rounded focus:ring focus:ring-blue-300"
           />
           <label htmlFor="terms" className="ml-2 text-sm text-gray-700">
             I agree to the Terms and Conditions
           </label>
         </div>
 
-        {/* Submit Button */}
+        {/* Submit */}
         <div className="col-span-2">
           <button
             type="submit"

@@ -1,167 +1,173 @@
-const bcrypt = require("bcrypt");
-const db = require("../config/database"); // Import database connection
-const multer = require("multer");
-const path = require("path");
+const bcrypt = require("bcrypt"); // For password hashing
+const jwt = require("jsonwebtoken"); // For token generation
+const signupModels = require("../models/signupModels"); // Import signupModels
+require("dotenv").config(); // Load environment variables
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../uploads")); // Save files in "uploads" folder
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + "-" + file.originalname); // Generate a unique filename
-  },
-});
+// Create a new user (Sign-up)
+const createUser = async (req, res) => {
+  try {
+    const { fullname, username, email, password, bio, birthdate } = req.body;
+    const pfp = req.file ? req.file.filename : null; // If profile picture is uploaded
 
-const upload = multer({ storage });
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-const SignupController = {
-  // CREATE: Add a new user
-  createUser: (req, res) => {
-    const { fullname, username, password, email, bio, birthdate } = req.body;
+    const userData = { fullname, username, email, password: hashedPassword, bio, birthdate, pfp };
 
-    if (!fullname || !username || !password || !email || !birthdate) {
-      return res.status(400).json({ message: "All required fields must be filled." });
-    }
-
-    bcrypt.hash(password, 10, (err, hashedPassword) => {
+    signupModels.createUser(userData, (err, result) => {
       if (err) {
-        console.error("Error hashing password:", err);
-        return res.status(500).json({ message: "Server error." });
-      }
-
-      const pfp = req.file ? req.file.filename : null;
-
-      const query = `
-        INSERT INTO profiles (fullname, username, password, email, bio, birthdate, pfp)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `;
-      db.query(
-        query,
-        [fullname, username, hashedPassword, email, bio || null, birthdate, pfp],
-        (err, result) => {
-          if (err) {
-            console.error("Error creating user:", err);
-            return res.status(500).json({ message: "Database error." });
-          }
-          res.status(201).json({ message: "User created successfully!" });
+        if (err.code === "ER_DUP_ENTRY") {
+          return res.status(400).json({ message: "Username or email already exists." });
         }
-      );
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+      res.status(201).json({ message: "User created successfully!", userId: result.insertId });
     });
-  },
-
-  // READ: Get all users
-  getAllUsers: (req, res) => {
-    const query =
-      "SELECT id, fullname, username, email, bio, birthdate, pfp, account_status FROM profiles";
-    db.query(query, (err, results) => {
-      if (err) {
-        console.error("Error fetching users:", err);
-        return res.status(500).json({ message: "Database error." });
-      }
-      res.status(200).json(results);
-    });
-  },
-
-  // READ: Get a specific user by ID
-  getUserById: (req, res) => {
-    const { id } = req.params;
-    const query =
-      "SELECT id, fullname, username, email, bio, birthdate, pfp, account_status FROM profiles WHERE id = ?";
-    db.query(query, [id], (err, results) => {
-      if (err) {
-        console.error("Error fetching user:", err);
-        return res.status(500).json({ message: "Database error." });
-      }
-      if (results.length === 0) {
-        return res.status(404).json({ message: "User not found." });
-      }
-      res.status(200).json(results[0]);
-    });
-  },
-
-  // READ: Get a specific user by username
-  getUserByUsername: (req, res) => {
-    const { username } = req.params;
-    const query =
-      "SELECT id, fullname, username, email, bio, birthdate, pfp, account_status FROM profiles WHERE username = ?";
-    db.query(query, [username], (err, results) => {
-      if (err) {
-        console.error("Error fetching user by username:", err);
-        return res.status(500).json({ message: "Database error." });
-      }
-      if (results.length === 0) {
-        return res.status(404).json({ message: "User not found." });
-      }
-      res.status(200).json(results[0]);
-    });
-  },
-
-  // UPDATE: Update a user's details
-  updateUser: (req, res) => {
-    const { id } = req.params;
-    const { fullname, username, email, bio, birthdate, account_status } = req.body;
-    const pfp = req.file ? req.file.filename : null;
-
-    const query = `
-      UPDATE profiles SET
-        fullname = ?, username = ?, email = ?, bio = ?, birthdate = ?, pfp = ?, account_status = ?
-      WHERE id = ?
-    `;
-    db.query(
-      query,
-      [fullname, username, email, bio || null, birthdate, pfp, account_status, id],
-      (err, result) => {
-        if (err) {
-          console.error("Error updating user:", err);
-          return res.status(500).json({ message: "Database error." });
-        }
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ message: "User not found." });
-        }
-        res.status(200).json({ message: "User updated successfully!" });
-      }
-    );
-  },
-
-  // UPDATE: Update account status
-  updateAccountStatus: (req, res) => {
-    const { id } = req.params;
-    const { account_status } = req.body;
-
-    if (!["active", "on_hold"].includes(account_status)) {
-      return res.status(400).json({ message: "Invalid account status." });
-    }
-
-    const query = "UPDATE profiles SET account_status = ? WHERE id = ?";
-    db.query(query, [account_status, id], (err, result) => {
-      if (err) {
-        console.error("Error updating account status:", err);
-        return res.status(500).json({ message: "Database error." });
-      }
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "User not found." });
-      }
-      res.status(200).json({ message: `Account status updated to ${account_status}` });
-    });
-  },
-
-  // DELETE: Remove a user
-  deleteUser: (req, res) => {
-    const { id } = req.params;
-    const query = "DELETE FROM profiles WHERE id = ?";
-    db.query(query, [id], (err, result) => {
-      if (err) {
-        console.error("Error deleting user:", err);
-        return res.status(500).json({ message: "Database error." });
-      }
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "User not found." });
-      }
-      res.status(200).json({ message: "User deleted successfully!" });
-    });
-  },
+  } catch (error) {
+    res.status(500).json({ message: "Server error during sign-up.", error });
+  }
 };
 
-module.exports = { SignupController, upload };
+// Get all registered users
+const getAllUsers = (req, res) => {
+  signupModels.getAllUsers((err, results) => {
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    res.status(200).json(results);
+  });
+};
+
+// Get a user by ID
+const getUserById = (req, res) => {
+  const { id } = req.params;
+  signupModels.getUserById(id, (err, result) => {
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    if (!result.length) return res.status(404).json({ message: "User not found." });
+    res.status(200).json(result[0]);
+  });
+};
+
+// Search users by username
+const searchUsers = (req, res) => {
+  const { username } = req.query; // Get the search term from query parameters
+
+  signupModels.searchUsersByUsername(username, (err, results) => {
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    res.status(200).json(results); // Return the search results
+  });
+};
+
+// Log in a user
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Search for user by email
+    signupModels.searchUserByEmail(email, async (err, results) => {
+      if (err) {
+        console.error("Database error:", err); // Log database errors
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+      if (!results.length) {
+        return res.status(404).json({ message: "Email not found." });
+      }
+
+      const user = results[0];
+
+      // Restrict login if account status is not "active"
+      if (user.account_status !== "active") {
+        console.warn(`Login attempt blocked for ${email}: Account is ${user.account_status}`);
+        return res.status(403).json({
+          message: `Login denied: Account is ${user.account_status}.`,
+        });
+      }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid credentials." });
+      }
+
+      const token = jwt.sign(
+        { id: user.id, username: user.username },
+        process.env.JWT_SECRET,
+        { expiresIn: "2h" } // Adjust the expiration time as needed
+      );
+
+      res.status(200).json({
+        message: "Login successful!",
+        token,
+        id: user.id,
+        fullname: user.fullname,
+        username: user.username,
+        account_status: user.account_status, // Include account_status in login response
+        commissions: user.commissions, // Include commissions in login response
+      });
+    });
+  } catch (error) {
+    console.error("Login server error:", error); // Log server-side errors
+    res.status(500).json({ message: "Server error during login.", error });
+  }
+};
+
+// Follow a user
+const followUser = (req, res) => {
+  const { followerId, followedId } = req.body; // Extract follower and followed user IDs from the request body
+
+  signupModels.followUser(followerId, followedId, (err, result) => {
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    res.status(201).json({ message: "Followed user successfully!" });
+  });
+};
+
+// Leave a review for a user
+const leaveReview = (req, res) => {
+  const { reviewerId, reviewedId, rating, comment } = req.body; // Extract review details
+
+  const reviewData = { reviewerId, reviewedId, rating, comment }; // Organize review data
+  signupModels.leaveReview(reviewData, (err, result) => {
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    res.status(201).json({ message: "Review submitted successfully!" });
+  });
+};
+
+// Update account status
+const updateAccountStatus = (req, res) => {
+  const { id } = req.params; // Extract user ID from request parameters
+  const { status } = req.body; // Extract new status from the request body
+
+  if (!['active', 'on hold', 'banned'].includes(status)) {
+    return res.status(400).json({ message: "Invalid status value." });
+  }
+
+  signupModels.updateAccountStatus(id, status, (err, result) => {
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    res.status(200).json({ message: "Account status updated successfully!" });
+  });
+};
+
+// Toggle commissions status
+const toggleCommissions = (req, res) => {
+  const { id } = req.user; // Get logged-in user's ID from token middleware
+  const { commissions } = req.body; // New commission status (open/closed)
+
+  if (!['open', 'closed'].includes(commissions)) {
+    return res.status(400).json({ message: "Invalid commissions value." });
+  }
+
+  signupModels.updateUser(id, { commissions }, (err, result) => {
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    res.status(200).json({ message: "Commissions status updated successfully!" });
+  });
+};
+
+module.exports = {
+  createUser,
+  getAllUsers,
+  getUserById,
+  searchUsers,
+  loginUser,
+  followUser, // Reintroduced followUser
+  leaveReview, // Reintroduced leaveReview
+  updateAccountStatus, // Reintroduced updateAccountStatus
+  toggleCommissions,
+};
