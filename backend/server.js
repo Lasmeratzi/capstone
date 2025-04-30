@@ -1,6 +1,14 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+require("dotenv").config(); // Load environment variables from .env file
+
+const signupRoutes = require("./routes/signupRoutes"); // Import signup routes
+const loginRoutes = require("./routes/loginRoutes"); // Import login routes
+const logoutRoutes = require("./routes/logoutRoutes"); // Import logout routes
+const profileRoutes = require("./routes/profileRoutes");
+const portfolioRoutes = require("./routes/portfolioRoutes");
+
 
 const app = express();
 
@@ -8,30 +16,30 @@ const app = express();
 app.use(cors()); // Enable CORS for cross-origin requests
 app.use(express.json()); // Parse JSON request bodies
 
+// Disable browser caching for authenticated pages
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  res.set("Surrogate-Control", "no-store");
+  next();
+});
+
 // Static file serving for uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve files from the /uploads folder
 
-// Routes
-const signupRoutes = require("./routes/signupRoutes"); // Signup routes
-const loginRoutes = require("./routes/loginRoutes"); // Login routes
-const logoutRoutes = require("./routes/logoutRoutes"); // Logout routes
-const profileRoutes = require("./routes/profileRoutes"); // Dedicated profile routes
-const tagRoutes = require("./routes/tagRoutes"); // Tag routes
-const postRoutes = require("./routes/postRoutes"); // Post routes
-
 // Mount Routes
-app.use("/api/signup", signupRoutes); // Signup routes
-app.use("/api/login", loginRoutes); // Login routes
-app.use("/api/logout", logoutRoutes); // Logout routes
-app.use("/api/profiles", profileRoutes); // Profile-related operations
-app.use("/api/tags", tagRoutes); // Tag routes
-app.use("/api/posts", postRoutes); // Post-related operations
+app.use("/api", signupRoutes); // Mount signup routes under "/api"
+app.use("/api", loginRoutes); // Mount login routes under "/api"
+app.use("/api", logoutRoutes); // Mount logout routes under "/api"
+app.use("/api", profileRoutes); // Mount profile-related routes
+app.use("/api", portfolioRoutes);
 
 // Welcome Route
 app.get("/", (req, res) => {
-  res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, and Tag APIs.");
+  res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, and Bid APIs.");
 });
 
-// Start the Server
-const PORT = 5000;
+// Start the Server using PORT from .env
+const PORT = process.env.PORT || 5000; // Use PORT from .env or default to 5000
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

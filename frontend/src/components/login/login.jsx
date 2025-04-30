@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
@@ -7,6 +7,14 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState(""); // State for error messages
   const [isLoading, setIsLoading] = useState(false); // State for loading spinner
+
+  // Redirect logged-in users to /home
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/home"); // Redirect if already logged in
+    }
+  }, [navigate]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -28,22 +36,20 @@ const Login = () => {
       setIsLoading(false); // Hide loading spinner
   
       if (response.status === 200) {
-        const { token, id, fullname, username } = response.data; // Include 'id' and 'fullname'
+        const { token, id, fullname, username } = response.data;
   
-        console.log("Token and User ID received from backend:", token, id); // Debugging log
-  
-        // Save token, id, fullname, and username in localStorage
+        // Save token and user info in localStorage
         localStorage.setItem("token", token);
-        localStorage.setItem("id", id); // Store user ID for future use
-        localStorage.setItem("fullname", fullname); // Store user's full name
-        localStorage.setItem("username", username); // Store username
+        localStorage.setItem("id", id);
+        localStorage.setItem("fullname", fullname);
+        localStorage.setItem("username", username);
   
         // Redirect to the homepage after successful login
         navigate("/home");
       }
     } catch (error) {
       setIsLoading(false); // Hide loading spinner
-      console.error("Login error:", error.response?.data || error.message); // Debugging log
+      console.error("Login error:", error.response?.data || error.message);
       setErrorMessage(error.response?.data?.message || "Invalid login credentials."); // Show error message
     }
   };

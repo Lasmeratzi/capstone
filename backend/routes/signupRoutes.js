@@ -1,26 +1,24 @@
 const express = require("express");
+const multer = require("multer"); // Add Multer
+const { authenticateToken } = require("../middleware/authMiddleware"); // Correct middleware import
+const signupController = require("../controllers/signupController"); // Import controllers
+
+const upload = multer({ dest: "uploads/" }); // Configure Multer
+
 const router = express.Router();
-const { SignupController, upload } = require("../controllers/signupController");
 
-// CREATE: Add a new user
-router.post("/", upload.single("pfp"), SignupController.createUser);
+// Test middleware chain
+router.post("/test-upload", upload.single("pfp"), (req, res) => {
+  res.status(200).json({ message: "Upload working!" });
+});
 
-// READ: Get all users
-router.get("/", SignupController.getAllUsers);
+// Sign-up route (Create user)
+router.post("/signup", upload.single("pfp"), signupController.createUser);
 
-// UPDATE: Update account status (e.g., Activate/Put On Hold)
-router.put("/:id/status", SignupController.updateAccountStatus);
-
-// READ: Get a user by ID
-router.get("/:id", SignupController.getUserById);
-
-// READ: Get a user by username
-router.get("/:username", SignupController.getUserByUsername);
-
-// UPDATE: Update a user's details
-router.put("/:id", upload.single("pfp"), SignupController.updateUser);
-
-// DELETE: Delete a user
-router.delete("/:id", SignupController.deleteUser);
+// Other routes (example)
+router.get("/users", signupController.getAllUsers);
+router.get("/users/:id", signupController.getUserById);
+router.post("/login", signupController.loginUser);
+router.patch("/users/:id/status", authenticateToken, signupController.updateAccountStatus);
 
 module.exports = router;

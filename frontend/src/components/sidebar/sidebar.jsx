@@ -1,145 +1,99 @@
 import React, { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
-  faHome,
-  faSearch,
-  faCompass,
-  faBell,
-  faUser,
-  faSignOutAlt,
-} from "@fortawesome/free-solid-svg-icons";
-import { useNavigate } from "react-router-dom";
-import SearchBar from "../searchbar/searchbar"; // Import the updated SearchBar component
+  HomeIcon,
+  MagnifyingGlassIcon,
+  GlobeAltIcon, // Explore Icon
+  BellIcon,
+  UserIcon,
+  ArrowRightOnRectangleIcon,
+} from "@heroicons/react/24/solid"; // Import Heroicons
 
 const Sidebar = () => {
   const navigate = useNavigate();
-  const [isSearchBarOpen, setIsSearchBarOpen] = useState(false); // State to toggle search bar
+  const location = useLocation(); // Determine current route
+  const [isSearchBarOpen, setIsSearchBarOpen] = useState(false);
 
   const toggleSearchBar = () => {
-    setIsSearchBarOpen((prevState) => !prevState); // Toggle search bar visibility
+    setIsSearchBarOpen((prevState) => !prevState);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("username");
-    navigate("/login");
-  };
+  // Active styling for the current page
+  const isActive = (path) => (location.pathname === path ? "text-[#5E66FF] font-bold" : "text-white");
 
   return (
     <div
-      className="h-screen w-20 flex flex-col items-center py-4 shadow-md"
+      className="h-screen w-60 flex flex-col py-4 pl-14 shadow-md" // Added padding-left for spacing
       style={{ backgroundColor: "#00040d" }}
     >
-      {/* Logo */}
-      <div className="mb-6 flex flex-col items-center">
-        <img
-          src="src/assets/images/illura.png"
-          alt="Illura Logo"
-          className="w-12 h-12"
-        />
-        <h1 className="text-lg font-bold text-white custom-font mt-2">Illura</h1>
+      {/* Logo and Name in the Same Row */}
+      <div className="mb-8 flex items-center space-x-4">
+        <img src="src/assets/images/illura.png" alt="Illura Logo" className="w-12 h-12" />
+        <h1 className="text-2xl font-bold text-white custom-font">Illura</h1> {/* Increased font size */}
       </div>
 
       {/* Navigation Items */}
       <nav className="flex flex-col space-y-8 flex-grow">
         {/* Home */}
-        <div className="relative group">
-          <button
-            onClick={() => navigate("/home")}
-            className="flex items-center justify-center text-white hover:text-[#5E66FF]"
-          >
-            <FontAwesomeIcon icon={faHome} size="2x" />
-          </button>
-          <span
-            className="absolute left-full -translate-y-8 ml-2 bg-[#00040d] text-white px-3 py-1 rounded hidden group-hover:block text-sm"
-          >
-            Home
-          </span>
-        </div>
+        <button
+          onClick={() => navigate("/home")}
+          className={`flex items-center hover:text-[#5E66FF] ${isActive("/home")}`}
+        >
+          <HomeIcon className="h-8 w-8" /> {/* Increased icon size */}
+          <span className="ml-4 text-lg">Home</span> {/* Increased text size */}
+        </button>
 
         {/* Search */}
-        <div className="relative group">
-          <button
-            onClick={toggleSearchBar}
-            className="flex items-center justify-center text-white hover:text-[#5E66FF]"
-          >
-            <FontAwesomeIcon icon={faSearch} size="2x" />
-          </button>
-          <span
-            className="absolute left-full -translate-y-8 ml-2 bg-[#00040d] text-white px-3 py-1 rounded hidden group-hover:block text-sm"
-          >
-            Search
-          </span>
-        </div>
+        <button
+          onClick={toggleSearchBar}
+          className={`flex items-center hover:text-[#5E66FF] ${isActive("/search")}`}
+        >
+          <MagnifyingGlassIcon className="h-8 w-8" /> {/* Increased icon size */}
+          <span className="ml-4 text-lg">Search</span> {/* Increased text size */}
+        </button>
 
         {/* Explore */}
-        <div className="relative group">
-          <button
-            onClick={() => navigate("/explore")}
-            className="flex items-center justify-center text-white hover:text-[#5E66FF]"
-          >
-            <FontAwesomeIcon icon={faCompass} size="2x" />
-          </button>
-          <span
-            className="absolute left-full -translate-y-8 ml-2 bg-[#00040d] text-white px-3 py-1 rounded hidden group-hover:block text-sm"
-          >
-            Explore
-          </span>
-        </div>
+        <button
+          onClick={() => navigate("/explore")}
+          className={`flex items-center hover:text-[#5E66FF] ${isActive("/explore")}`}
+        >
+          <GlobeAltIcon className="h-8 w-8" /> {/* Increased icon size */}
+          <span className="ml-4 text-lg">Explore</span> {/* Increased text size */}
+        </button>
 
         {/* Notifications */}
-        <div className="relative group">
-          <button
-            onClick={() => navigate("/notifications")}
-            className="flex items-center justify-center text-white hover:text-[#5E66FF]"
-          >
-            <FontAwesomeIcon icon={faBell} size="2x" />
-          </button>
-          <span
-            className="absolute left-full -translate-y-8 ml-2 bg-[#00040d] text-white px-3 py-1 rounded hidden group-hover:block text-sm"
-          >
-            Notifications
-          </span>
-        </div>
+        <button
+          onClick={() => navigate("/notifications")}
+          className={`flex items-center hover:text-[#5E66FF] ${isActive("/notifications")}`}
+        >
+          <BellIcon className="h-8 w-8" /> {/* Increased icon size */}
+          <span className="ml-4 text-lg">Notifications</span> {/* Increased text size */}
+        </button>
 
         {/* Profile */}
-        <div className="relative group">
-          <button
-            onClick={() => navigate("/profiles")}
-            className="flex items-center justify-center text-white hover:text-[#5E66FF]"
-          >
-            <FontAwesomeIcon icon={faUser} size="2x" />
-          </button>
-          <span
-            className="absolute left-full -translate-y-8 ml-2 bg-[#00040d] text-white px-3 py-1 rounded hidden group-hover:block text-sm"
-          >
-            Profile
-          </span>
-        </div>
+        <button
+          onClick={() => navigate("/profile")}
+          className={`flex items-center hover:text-[#5E66FF] ${isActive("/profile")}`}
+        >
+          <UserIcon className="h-8 w-8" /> {/* Increased icon size */}
+          <span className="ml-4 text-lg">Profile</span> {/* Increased text size */}
+        </button>
       </nav>
 
-      {/* Log Out Button */}
-      <div className="relative group mt-8">
+      {/* Log Out */}
+      <div className="mt-8">
         <button
-          onClick={handleLogout}
-          className="flex items-center justify-center text-white hover:text-red-500"
+          onClick={() => {
+            localStorage.clear();
+            sessionStorage.clear();
+            navigate("/login");
+          }}
+          className="flex items-center text-white hover:text-red-500"
         >
-          <FontAwesomeIcon icon={faSignOutAlt} size="2x" />
+          <ArrowRightOnRectangleIcon className="h-8 w-8" /> {/* Increased icon size */}
+          <span className="ml-4 text-lg">Logout</span> {/* Increased text size */}
         </button>
-        <span
-          className="absolute left-full -translate-y-8 ml-2 bg-red-500 text-white px-3 py-1 rounded hidden group-hover:block text-sm"
-        >
-          Log Out
-        </span>
       </div>
-
-      {/* SearchBar Pop-Up */}
-      <SearchBar
-        isOpen={isSearchBarOpen}
-        closeSearchBar={toggleSearchBar}
-      />
     </div>
   );
 };

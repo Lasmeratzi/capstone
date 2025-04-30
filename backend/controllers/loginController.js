@@ -1,49 +1,87 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const db = require("../config/database");
+const bcrypt = require("bcrypt"); // For password hashing
+const jwt = require("jsonwebtoken"); // For token generation
+const signupModels = require("../models/signupModels"); // Use the user models
+require("dotenv").config(); // Load environment variables
 
-const loginUser = (req, res) => {
-  const { email, password } = req.body;
+// Log in a user
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required." });
-  }
+    // Debug log: Show the incoming email for debugging
+    console.log("Attempting login for email:", email);
 
-  // Query to retrieve user data including account_status
-  const query = "SELECT id, fullname, username, password, account_status FROM profiles WHERE email = ?";
-  db.query(query, [email], async (err, results) => {
-    if (err) {
-      console.error("Database error:", err);
-      return res.status(500).json({ message: "Server error." });
-    }
+    // Search for user by email
+    signupModels.searchUserByEmail(email, async (err, results) => {
+      if (err) {
+        console.error("Database error occurred for email:", email, "Error:", err); // Log detailed database errors
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
 
-    if (results.length === 0) {
-      return res.status(401).json({ message: "Invalid email or password." });
-    }
+      if (!results.length) {
+        console.warn("Email not found:", email); // Log warning if email not found
+        return res.status(404).json({ message: "Email not found." });
+      }
 
-    const user = results[0];
+      const user = results[0];
 
-    // Check if the account is on hold
-    if (user.account_status === "on_hold") {
-      return res.status(403).json({ message: "Your account is on hold. Please contact support." });
-    }
+      // Debugging Log: Account Status
+      console.log("Retrieved account_status for email:", email, "-", user.account_status);
 
-    // Compare hashed password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password." });
-    }
+      // Restrict login if account status is not "active"
+      if (user.account_status.trim().toLowerCase() !== "active") {
+        console.warn(
+          `Login attempt blocked for ${email}: Account is ${user.account_status}`
+        );
+        return res.status(403).json({
+          message: `Login denied: Account is ${user.account_status}. Please contact support.`,
+        });
+      }
 
-    // Generate a JWT token
-    const token = jwt.sign({ id: user.id }, "your_secret_key", { expiresIn: "1h" });
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      console.log("Password comparison result for email:", email, "-", isValidPassword);
 
-    res.status(200).json({
-      token,
-      id: user.id,
-      fullname: user.fullname,
-      username: user.username,
+      if (!isValidPassword) {
+        console.warn("Invalid password for email:", email); // Log invalid password attempt
+        return res.status(401).json({ message: "Invalid credentials." });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: user.id, username: user.username },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1h", // Token validity (1 hour)
+        }
+      );
+
+      console.log("Login successful for user:", user.username); // Debug log for successful login
+
+      // Include account_status in the response
+      res.status(200).json({
+        message: "Login successful!",
+        token,
+        id: user.id,
+        fullname: user.fullname,
+        username: user.username,
+        account_status: user.account_status, // Ensure this is sent back to the frontend
+      });
     });
+  } catch (error) {
+    console.error("Server error during login:", error); // Log server-side errors
+    res.status(500).json({ message: "Server error during login.", error });
+  }
+};
+
+// Log out a user (Simulate ending the session)
+const logoutUser = (req, res) => {
+  res.status(200).json({
+    message: "Logout successful! Please clear the token on the client-side.",
   });
 };
 
-module.exports = { loginUser };
+module.exports = {
+  loginUser,
+  logoutUser,
+};
