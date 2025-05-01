@@ -11,6 +11,7 @@ import Loginadmin from "./components/ADMIN/loginadmin/loginadmin";
 import Tags from "./components/ADMIN/tags/tags";
 import DisplayProfile from "./components/ADMIN/displayprofile/displayprofile";
 import LandingPage from "./components/landing/landingpage";
+import MakePost from "./components/makepost/makepost";
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        
   
 
         {/* Admin Routes */}
@@ -46,6 +48,8 @@ function App() {
         <Route path="/loginadmin" element={<Loginadmin />} />
         <Route path="/tags" element={<Tags />} />
         <Route path="/displayprofile" element={<DisplayProfile />} />
+        <Route path="/makepost" element={<MakePost />} />
+
 
       </Routes>
     </Router>

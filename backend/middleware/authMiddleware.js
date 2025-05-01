@@ -6,45 +6,29 @@ require("dotenv").config(); // Load environment variables from .env file
 const authenticateToken = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
+
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Unauthorized: Missing or invalid token format." });
+      console.error("Authorization header missing or improperly formatted.");
+      return res.status(401).json({ message: "Unauthorized: Missing token." });
     }
 
     const token = authHeader.split(" ")[1];
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized: No token provided." });
+    if (!token || token === "null") {
+      console.error("Token is missing or null.");
+      return res.status(401).json({ message: "Unauthorized: Invalid token." });
     }
 
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
       if (err) {
         console.error(`JWT verification failed for token: ${token} - Error:`, err);
-        return res.status(403).json({ 
-          message: "Unauthorized: Invalid token. Please log in again." 
-        });
+        return res.status(403).json({ message: "Unauthorized: Invalid token." });
       }
 
       req.user = decoded; // Attach decoded user info to request object
-      const userId = decoded.id;
-
-      signupModels.getUserById(userId, (err, results) => {
-        if (err || !results.length) {
-          return res.status(500).json({ message: "User not found or database error." });
-        }
-
-        const user = results[0];
-
-        if (user.account_status !== "active") {
-          console.warn(`Access blocked for user ID ${userId}: Account is ${user.account_status}`);
-          return res.status(403).json({ 
-            message: `Access denied: Account is ${user.account_status}.` 
-          });
-        }
-
-        next(); // Proceed to the next middleware or route handler
-      });
+      next(); // Proceed to the next middleware or route handler
     });
   } catch (error) {
-    console.error("Unexpected server error during token authentication:", error);
+    console.error("Unexpected server error during authentication:", error);
     res.status(500).json({ message: "Server error during authentication.", error });
   }
 };
