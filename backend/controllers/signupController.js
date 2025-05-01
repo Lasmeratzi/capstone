@@ -133,14 +133,24 @@ const leaveReview = (req, res) => {
 // Update account status
 const updateAccountStatus = (req, res) => {
   const { id } = req.params; // Extract user ID from request parameters
-  const { status } = req.body; // Extract new status from the request body
+  const { status } = req.body; // Extract new account status
+
+  console.log("Controller: Updating account status...");
+  console.log("User ID:", id);
+  console.log("New Status:", status);
 
   if (!['active', 'on hold', 'banned'].includes(status)) {
+    console.error("Invalid status value:", status);
     return res.status(400).json({ message: "Invalid status value." });
   }
 
   signupModels.updateAccountStatus(id, status, (err, result) => {
-    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    if (err) {
+      console.error("Database error during account status update:", err);
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    console.log("Account status updated successfully.");
     res.status(200).json({ message: "Account status updated successfully!" });
   });
 };

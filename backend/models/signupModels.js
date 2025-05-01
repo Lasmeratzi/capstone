@@ -80,6 +80,7 @@ const updateAccountStatus = (id, status, callback) => {
     SET account_status = ?
     WHERE id = ?
   `;
+  console.log("Executing query to update account status:", { id, status });
   db.query(sql, [status, id], callback);
 };
 

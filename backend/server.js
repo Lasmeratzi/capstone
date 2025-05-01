@@ -8,6 +8,8 @@ const loginRoutes = require("./routes/loginRoutes"); // Import login routes
 const logoutRoutes = require("./routes/logoutRoutes"); // Import logout routes
 const profileRoutes = require("./routes/profileRoutes");
 const portfolioRoutes = require("./routes/portfolioRoutes");
+const postsRoutes = require("./routes/postsRoutes");
+
 
 
 const app = express();
@@ -34,6 +36,7 @@ app.use("/api", loginRoutes); // Mount login routes under "/api"
 app.use("/api", logoutRoutes); // Mount logout routes under "/api"
 app.use("/api", profileRoutes); // Mount profile-related routes
 app.use("/api", portfolioRoutes);
+app.use("/api", postsRoutes); // Register posts-related routes
 
 // Welcome Route
 app.get("/", (req, res) => {
