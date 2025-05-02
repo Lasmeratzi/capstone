@@ -10,8 +10,11 @@ const router = express.Router();
 // Create a new post
 router.post("/posts", authenticateToken, upload.single("media"), postsController.createPost);
 
-// Get all posts
+// Get all posts (supports optional author filtering)
 router.get("/posts", authenticateToken, postsController.getAllPosts);
+
+// Get posts by the logged-in user
+router.get("/posts/user", authenticateToken, postsController.getUserPosts); // New route
 
 // Get a post by ID
 router.get("/posts/:id", authenticateToken, postsController.getPostById);
