@@ -1,13 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCompass, faSearch } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion"; // Import Framer Motion for animations
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const [isNavigating, setIsNavigating] = useState(false); // State for fade-out animation
+  const [targetPage, setTargetPage] = useState(""); // State to store the navigation target
+
+  const handleNavigation = (path) => {
+    setIsNavigating(true); // Trigger fade-out animation
+    setTargetPage(path); // Set the target page
+    setTimeout(() => {
+      navigate(path); // Navigate after the animation completes
+    }, 500); // Match the animation duration
+  };
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 1 }} // Navbar starts fully visible
+      animate={isNavigating ? { opacity: 0 } : { opacity: 1 }} // Fade-out on navigation
+      transition={{ duration: 0.5, ease: "easeOut" }} // Smooth animation timing
       className="w-full h-16 flex items-center justify-between px-6 shadow-sm"
       style={{ backgroundColor: "#00040d" }}
     >
@@ -62,7 +76,7 @@ const Navbar = () => {
       <div className="flex items-center space-x-2">
         {/* Link Log In Button */}
         <button
-          onClick={() => navigate("/login")} // This navigates to login.jsx
+          onClick={() => handleNavigation("/login")} // Trigger fade-out and navigate to login
           className="px-3 py-1 bg-gray-800 text-white rounded-full hover:bg-red-500 transition duration-150 text-sm"
         >
           Log In
@@ -70,13 +84,13 @@ const Navbar = () => {
 
         {/* Link Sign Up Button */}
         <button
-          onClick={() => navigate("/signup")} // This navigates to signup.jsx
+          onClick={() => handleNavigation("/signup")} // Trigger fade-out and navigate to signup
           className="px-3 py-1 bg-[#5E66FF] text-white rounded-full hover:bg-[#4D5BFF] transition duration-150 text-sm"
         >
           Sign Up
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -4,6 +4,8 @@ import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRou
 import Login from "./components/login/login";
 import Home from "./components/home/home";
 import Profile from "./components/profiles/profile";
+import VisitProfile from "./components/profiles/visitprofile"; // Import VisitProfile
+import SearchProfile from "./components/search/searchprofile"; // Import SearchProfiles
 import Signup from "./components/signup/signup";
 import Forgotpass from "./components/forgotpass/forgotpass";
 import Homeadmin from "./components/ADMIN/homeadmin/homeadmin";
@@ -40,8 +42,22 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
-  
+        <Route
+          path="/visitprofile/:id"
+          element={
+            <ProtectedRoute>
+              <VisitProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/searchprofile"
+          element={
+            <ProtectedRoute>
+              <SearchProfile /> {/* Match the corrected import and component name */}
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin Routes */}
         <Route path="/homeadmin" element={<Homeadmin />} />
@@ -49,8 +65,6 @@ function App() {
         <Route path="/tags" element={<Tags />} />
         <Route path="/displayprofile" element={<DisplayProfile />} />
         <Route path="/makepost" element={<MakePost />} />
-
-
       </Routes>
     </Router>
   );

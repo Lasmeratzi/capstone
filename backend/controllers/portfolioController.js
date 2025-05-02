@@ -18,45 +18,75 @@ const createPortfolioItem = (req, res) => {
   });
 };
 
-// Get all portfolio items for the authenticated user
+// Get portfolio items for a specific user or the logged-in user
 const getPortfolioItems = (req, res) => {
-  const userId = req.user.id; // Extract user ID from token
+  // Check if a userId query parameter is provided (for visited users),
+  // otherwise, fallback to the logged-in user's ID
+  const userId = req.query.userId || req.user.id;
 
   signupModels.getPortfolioItemsByUser(userId, (err, results) => {
-    if (err) return res.status(500).json({ message: "Database error.", error: err });
-    if (!results.length) return res.status(404).json({ message: "No portfolio items found." });
-    res.status(200).json(results);
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+    if (!results.length) {
+      return res.status(404).json({ message: "No portfolio items found." });
+    }
+    res.status(200).json(results); // Return portfolio items
   });
 };
 
 // Update a portfolio item
 const updatePortfolioItem = (req, res) => {
-  const { id } = req.params; // Extract item ID from request parameters
-  const { title, description } = req.body; // Extract title and description from the request
-  const imagePath = req.file ? req.file.filename : null; // Handle optional file upload
+  const { id } = req.params;
+  const { title, description } = req.body;
+  const imagePath = req.file ? req.file.filename : null;
 
-  const portfolioData = { title, description, image_path: imagePath };
-
-  signupModels.updatePortfolioItem(id, portfolioData, (err, result) => {
+  signupModels.getPortfolioItemById(id, (err, results) => {
     if (err) return res.status(500).json({ message: "Database error.", error: err });
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Portfolio item not found or no changes made." });
+    if (!results.length) return res.status(404).json({ message: "Portfolio item not found." });
+  
+    const portfolioItem = results[0]; // <--- fix
+  
+    if (portfolioItem.user_id !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized: You do not own this portfolio item." });
     }
-    res.status(200).json({ message: "Portfolio item updated successfully!" });
+  
+    const portfolioData = { title, description, image_path: imagePath };
+    signupModels.updatePortfolioItem(id, portfolioData, (err, result) => {
+      if (err) return res.status(500).json({ message: "Database error.", error: err });
+      res.status(200).json({ message: "Portfolio item updated successfully!" });
+    });
   });
+  
 };
 
 // Delete a portfolio item
 const deletePortfolioItem = (req, res) => {
-  const { id } = req.params; // Extract item ID from request parameters
+  const { id } = req.params; // Extract portfolio item ID
 
-  signupModels.deletePortfolioItem(id, (err, result) => {
-    if (err) return res.status(500).json({ message: "Database error.", error: err });
-    if (result.affectedRows === 0) {
+  // Fetch the portfolio item to validate ownership
+  signupModels.getPortfolioItemById(id, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+    if (!results.length) {
       return res.status(404).json({ message: "Portfolio item not found." });
     }
-    res.status(200).json({ message: "Portfolio item deleted successfully!" });
+  
+    const portfolioItem = results[0]; // <--- fix
+  
+    if (portfolioItem.user_id !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized: You do not own this portfolio item." });
+    }
+  
+    signupModels.deletePortfolioItem(id, req.user.id, (err, result) => {
+      if (err) {
+        return res.status(500).json({ message: "Failed to delete portfolio item.", error: err });
+      }
+      res.status(200).json({ message: "Portfolio item deleted successfully!" });
+    });
   });
+  
 };
 
 module.exports = {
