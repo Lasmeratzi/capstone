@@ -3,7 +3,8 @@ import axios from "axios";
 import Sidebar from "../sidebar/sidebar";
 import PortfolioGrid from "../profiles/portfoliogrid";
 import PortfolioUpload from "../portfolioupload/portfolioupload";
-import { PlusCircleIcon } from "@heroicons/react/24/outline"; // Import the plus circle icon
+import OwnPost from "../profiles/ownpost"; // Import OwnPost.jsx
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { UserIcon, CakeIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 
@@ -12,6 +13,7 @@ const Profile = () => {
   const [commissions, setCommissions] = useState("closed");
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("posts"); // Default: Posts
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -44,9 +46,7 @@ const Profile = () => {
       await axios.patch(
         `http://localhost:5000/api/profile/commissions`,
         { commissions: newStatus },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setCommissions(newStatus);
     } catch (error) {
@@ -77,8 +77,8 @@ const Profile = () => {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="ml-60 flex-grow px-40 py-4"
       >
+        {/* Profile Info */}
         <div className="flex items-start justify-between mb-4">
-          {/* Profile Image and Info */}
           <div className="flex items-start">
             <div className="w-32 flex flex-col items-center">
               <img
@@ -92,19 +92,15 @@ const Profile = () => {
                 <span className="mr-1">Commissions:</span>
                 <button
                   onClick={toggleCommissions}
-                  className={`px-3 py-1 rounded-full shadow transition duration-300
-                    ${
-                      commissions === "open"
-                        ? "bg-green-500 hover:bg-green-600 text-white"
-                        : "bg-orange-500 hover:bg-orange-600 text-white"
-                    }`}
+                  className={`px-3 py-1 rounded-full shadow transition duration-300 ${
+                    commissions === "open" ? "bg-green-500 hover:bg-green-600 text-white" : "bg-orange-500 hover:bg-orange-600 text-white"
+                  }`}
                 >
                   {commissions === "open" ? "Open" : "Closed"}
                 </button>
               </div>
             </div>
 
-            {/* User Info */}
             <div className="ml-6 flex flex-col justify-between h-32">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{user.username}</h2>
@@ -125,26 +121,46 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Upload Button below user info */}
+        {/* Upload Button */}
         <div className="flex justify-start mb-4">
-        
-        <button
+          <button
             onClick={toggleUploadModal}
             className="flex items-center gap-3 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-md transition-all duration-300 ease-in-out"
-        >
+          >
             <PlusCircleIcon className="h-5 w-5" />
-              <span className="text-sm">Portfolio</span>
-        </button>
+            <span className="text-sm">Portfolio</span>
+          </button>
         </div>
 
         {/* Divider Line */}
-        <div className="border-b border-gray-200 mb-8"></div>
+        <div className="border-b border-gray-200 mb-4"></div>
 
-        {/* Portfolio Grid */}
-        <PortfolioGrid
-          portfolioItems={portfolioItems}
-          loggedInUserId={user.id}
-        />
+        {/* Posts & Portfolio Tabs (Smaller Version) */}
+        <div className="flex border-b border-gray-300 mb-6 text-sm">
+          <button
+            onClick={() => setActiveTab("posts")}
+            className={`flex-1 text-center py-2 font-semibold ${
+              activeTab === "posts" ? "border-b-4 border-blue-500 text-blue-600" : "hover:bg-gray-100 text-gray-600"
+            }`}
+          >
+            Posts
+          </button>
+          <button
+            onClick={() => setActiveTab("portfolio")}
+            className={`flex-1 text-center py-2 font-semibold ${
+              activeTab === "portfolio" ? "border-b-4 border-blue-500 text-blue-600" : "hover:bg-gray-100 text-gray-600"
+            }`}
+          >
+            Portfolio
+          </button>
+        </div>
+
+        {/* Content Section */}
+        {activeTab === "posts" ? (
+          <OwnPost userId={user.id} />
+        ) : (
+          <PortfolioGrid portfolioItems={portfolioItems} loggedInUserId={user.id} />
+        )}
 
         {/* Upload Modal */}
         {isUploadModalOpen && (
