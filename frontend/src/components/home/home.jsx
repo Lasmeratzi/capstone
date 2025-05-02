@@ -109,15 +109,11 @@ const Home = () => {
       >
         {/* Top Tabs */}
         <div className="flex border-b border-gray-300">
-          <button
-            className="flex-1 text-center py-4 font-semibold text-lg hover:bg-gray-100 transition border-b-4 border-blue-500 text-blue-600"
-          >
+          <button className="flex-1 text-center py-4 font-semibold text-lg hover:bg-gray-100 transition border-b-4 border-blue-500 text-blue-600">
             Posts
           </button>
-          <button
-            className="flex-1 text-center py-4 font-semibold text-lg hover:bg-gray-100 transition text-gray-600"
-          >
-            Bids
+          <button className="flex-1 text-center py-4 font-semibold text-lg hover:bg-gray-100 transition text-gray-600">
+            Auctions
           </button>
         </div>
 
@@ -151,7 +147,7 @@ const Home = () => {
             <p className="text-gray-500 text-sm text-center p-6">
               No posts available.
             </p>
-          )}  
+          )}
         </div>
       </motion.div>
 
@@ -203,6 +199,15 @@ const Home = () => {
               <p className="text-gray-500 text-sm">No other users available.</p>
             )}
           </div>
+
+          {/* Footer */}
+          <div className="mt-10 text-xs text-gray-400 space-x-2">
+            <span className="hover:underline cursor-pointer">About</span>·
+            <span className="hover:underline cursor-pointer">Help</span>·
+            <span className="hover:underline cursor-pointer">Privacy</span>·
+            <span className="hover:underline cursor-pointer">Terms</span>·
+            <p className="mt-3">&copy; 2025 Illura from Studio</p>
+          </div>
         </div>
       </div>
 
@@ -220,7 +225,6 @@ const Home = () => {
             >
               &times;
             </button>
-
             <MakePost onSuccess={toggleMakePostModal} />
           </div>
         </div>
