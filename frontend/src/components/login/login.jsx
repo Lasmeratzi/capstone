@@ -1,12 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { motion } from "framer-motion"; // Import Framer Motion for animations
 
 const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState(""); // State for error messages
   const [isLoading, setIsLoading] = useState(false); // State for loading spinner
+
+  // Redirect logged-in users to /home (with token validation)
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1])); // Decode JWT
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp > currentTime) {
+          navigate("/home"); // Redirect if token is valid
+        } else {
+          console.error("Token expired. Clearing token.");
+          localStorage.removeItem("token"); // Clear expired token
+        }
+      } catch (error) {
+        console.error("Invalid token format. Clearing token.");
+        localStorage.removeItem("token"); // Clear invalid token
+      }
+    }
+  }, [navigate]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -19,37 +40,43 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true); // Show loading spinner
     setErrorMessage(""); // Clear any previous error messages
-  
+
     try {
       const response = await axios.post("http://localhost:5000/api/login", formData, {
         headers: { "Content-Type": "application/json" },
       });
-  
-      setIsLoading(false); // Hide loading spinner
-  
+
       if (response.status === 200) {
-        const { token, id, fullname, username } = response.data; // Include 'id' and 'fullname'
-  
-        console.log("Token and User ID received from backend:", token, id); // Debugging log
-  
-        // Save token, id, fullname, and username in localStorage
+        const { token, id, fullname, username } = response.data;
+
+        // Save token and user info in localStorage
         localStorage.setItem("token", token);
-        localStorage.setItem("id", id); // Store user ID for future use
-        localStorage.setItem("fullname", fullname); // Store user's full name
-        localStorage.setItem("username", username); // Store username
-  
-        // Redirect to the homepage after successful login
-        navigate("/home");
+        localStorage.setItem("id", id);
+        localStorage.setItem("fullname", fullname);
+        localStorage.setItem("username", username);
+
+        // Add a slight delay for the animation to finish before redirecting
+        setTimeout(() => {
+          navigate("/home");
+        }, 500); // 500ms delay matches the animation duration
       }
     } catch (error) {
       setIsLoading(false); // Hide loading spinner
-      console.error("Login error:", error.response?.data || error.message); // Debugging log
+      console.error("Login error:", error.response?.data || error.message);
       setErrorMessage(error.response?.data?.message || "Invalid login credentials."); // Show error message
+    } finally {
+      setIsLoading(false); // Ensure spinner is hidden even if there's an error
     }
   };
 
   return (
-    <div className="flex h-screen">
+    <motion.div
+      initial={{ opacity: 0, y: -20 }} // Start with opacity 0 and slightly above
+      animate={{ opacity: 1, y: 0 }} // Animate to full opacity and default position
+      exit={{ opacity: 0, y: 20 }} // Exit with a slight downward fade
+      transition={{ duration: 0.5, ease: "easeInOut" }} // Smooth transition timing
+      className="flex h-screen"
+    >
       {/* Left Section */}
       <div
         className="w-1/2 flex flex-col justify-between bg-cover bg-center"
@@ -134,7 +161,7 @@ const Login = () => {
           Admin Login
         </Link>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
