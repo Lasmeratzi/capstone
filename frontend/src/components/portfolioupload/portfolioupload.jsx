@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion"; // Import Framer Motion
 
 const PortfolioUpload = ({ portfolioItem, onSuccess }) => {
   const [title, setTitle] = useState("");
@@ -27,12 +28,14 @@ const PortfolioUpload = ({ portfolioItem, onSuccess }) => {
 
     const token = localStorage.getItem("token");
     const formData = new FormData();
+
     formData.append("title", title);
     formData.append("description", description);
     if (image) formData.append("image", image);
 
     try {
       if (portfolioItem) {
+        // Update existing portfolio item
         await axios.patch(`http://localhost:5000/api/portfolio/${portfolioItem.id}`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -41,14 +44,13 @@ const PortfolioUpload = ({ portfolioItem, onSuccess }) => {
         });
         setSuccessMessage("Portfolio item updated successfully!");
 
-        // Trigger onSuccess callback to close modal
         if (onSuccess) {
           onSuccess();
         }
 
-        // Navigate back to /profile
-        navigate("/profile");
+        navigate(0); // Reload page to display updated content
       } else {
+        // Upload new portfolio item
         await axios.post("http://localhost:5000/api/portfolio", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -57,8 +59,7 @@ const PortfolioUpload = ({ portfolioItem, onSuccess }) => {
         });
         setSuccessMessage("Portfolio item uploaded successfully!");
 
-        // Navigate back to /profile
-        navigate("/profile");
+        navigate(0); // Reload page to display new content
       }
     } catch (error) {
       console.error("Failed to submit portfolio item:", error);
@@ -67,7 +68,13 @@ const PortfolioUpload = ({ portfolioItem, onSuccess }) => {
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }} // Start slightly faded and scaled down
+      animate={{ opacity: 1, scale: 1 }} // Animate to full opacity and size
+      exit={{ opacity: 0, scale: 0.9 }} // Smoothly fade and shrink when exiting
+      transition={{ duration: 0.5, ease: "easeOut" }} // Smooth timing
+      className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md"
+    >
       <h2 className="text-2xl font-bold mb-4">
         {portfolioItem ? "Edit Portfolio Item" : "Upload Portfolio Item"}
       </h2>
@@ -118,7 +125,7 @@ const PortfolioUpload = ({ portfolioItem, onSuccess }) => {
           {portfolioItem ? "Update" : "Upload"}
         </button>
       </form>
-    </div>
+    </motion.div>
   );
 };
 

@@ -37,14 +37,14 @@ const getUserById = (id, callback) => {
   db.query(sql, [id], callback);
 };
 
-// Search for users by username (partial match)
-const searchUsersByUsername = (username, callback) => {
+// Search for users by username or fullname (partial match)
+const searchUsers = (query, callback) => {
   const sql = `
     SELECT id, fullname, username, bio, birthdate, pfp, account_status, commissions
     FROM users
-    WHERE username LIKE ?
+    WHERE username LIKE ? OR fullname LIKE ?
   `;
-  db.query(sql, [`%${username}%`], callback);
+  db.query(sql, [`%${query}%`, `%${query}%`], callback);
 };
 
 // Search for a user by email
@@ -146,11 +146,20 @@ const createPortfolioItem = (portfolioData, callback) => {
 // Get all portfolio items for a user
 const getPortfolioItemsByUser = (userId, callback) => {
   const sql = `
-    SELECT id, title, description, image_path, created_at, updated_at
-    FROM portfolio_items
-    WHERE user_id = ?
-  `;
+  SELECT id, user_id, title, description, image_path, created_at, updated_at
+  FROM portfolio_items
+  WHERE user_id = ?
+`;
   db.query(sql, [userId], callback);
+};
+// Get a portfolio item by ID
+const getPortfolioItemById = (id, callback) => {
+  const sql = `
+  SELECT id, user_id, title, description, image_path
+  FROM portfolio_items
+  WHERE id = ?
+`;
+  db.query(sql, [id], callback);
 };
 
 // Update a portfolio item
@@ -170,19 +179,30 @@ const updatePortfolioItem = (id, portfolioData, callback) => {
 };
 
 // Delete a portfolio item
-const deletePortfolioItem = (id, callback) => {
-  const sql = `
-    DELETE FROM portfolio_items
-    WHERE id = ?
-  `;
-  db.query(sql, [id], callback);
+const deletePortfolioItem = (id, userId, callback) => {
+  // Check ownership
+  getPortfolioItemById(id, (err, results) => {
+    if (err) return callback(err);
+    if (!results.length) return callback(new Error("Portfolio item not found."));
+    const portfolioItem = results[0];
+    if (portfolioItem.user_id !== userId) {
+      return callback(new Error("Unauthorized: User does not own this portfolio item."));
+    }
+  
+    const sql = `
+      DELETE FROM portfolio_items
+      WHERE id = ?
+    `;
+    db.query(sql, [id], callback);
+  });
+  
 };
 
 module.exports = {
   createUser,
   getAllUsers,
   getUserById,
-  searchUsersByUsername,
+  searchUsers, // Updated search logic
   searchUserByEmail,
   updateUser,
   updateAccountStatus,
@@ -192,6 +212,7 @@ module.exports = {
   leaveReview,
   createPortfolioItem, // Added portfolio CRUD functions
   getPortfolioItemsByUser,
+  getPortfolioItemById,
   updatePortfolioItem,
   deletePortfolioItem,
 };
