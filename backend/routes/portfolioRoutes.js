@@ -10,7 +10,7 @@ const router = express.Router();
 // Create a new portfolio item
 router.post("/portfolio", authenticateToken, upload.single("image"), portfolioController.createPortfolioItem);
 
-// Get all portfolio items for the authenticated user
+// Get portfolio items (supports both logged-in user and visited users via userId query)
 router.get("/portfolio", authenticateToken, portfolioController.getPortfolioItems);
 
 // Update a portfolio item

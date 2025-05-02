@@ -2,7 +2,7 @@ import React from "react";
 
 const Post = ({ post, userId, handleDelete }) => {
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md text-sm max-w-2xl mx-auto lg:ml-8 border border-gray-200">
+    <div className="bg-white p-4 rounded-lg shadow-md text-sm max-w-2xl mx-auto lg:ml-0 mb-5 border border-gray-200">
       <h4 className="font-semibold text-base text-gray-800">{post.title}</h4>
       {post.media_path && (
         <img
