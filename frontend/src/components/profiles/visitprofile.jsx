@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom"; // Extract user ID from the URL
 import axios from "axios";
 import Sidebar from "../sidebar/sidebar"; // Include the sidebar for navigation
 import VisitPortfolio from "./visitportfolio"; // Import VisitPortfolio component
+import VisitPost from "./visitpost"; // Import VisitPost component for displaying visited user's posts
 import { UserIcon, CakeIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 
@@ -11,6 +12,7 @@ const VisitProfile = () => {
   const [user, setUser] = useState(null); // State for user profile data
   const [loading, setLoading] = useState(true); // State for loading indication
   const [error, setError] = useState(null); // State for error handling
+  const [activeTab, setActiveTab] = useState("posts"); // Default: Posts
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -26,41 +28,25 @@ const VisitProfile = () => {
         console.error("Failed to fetch user profile:", error);
         setError("Unable to fetch user profile.");
       } finally {
-        setLoading(false); // Stop the loading spinner
+        setLoading(false);
       }
     };
 
-    fetchUserProfile(); // Trigger the fetch function
+    fetchUserProfile();
   }, [id]);
 
-  // Loading state
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen text-gray-500">
-        Loading profile...
-      </div>
-    );
+    return <div className="flex justify-center items-center h-screen text-gray-500">Loading profile...</div>;
   }
 
-  // Error state
   if (error) {
-    return (
-      <div className="flex justify-center items-center h-screen text-red-500">
-        {error}
-      </div>
-    );
+    return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>;
   }
 
-  // User not found state
   if (!user) {
-    return (
-      <div className="flex justify-center items-center h-screen text-gray-500">
-        User not found.
-      </div>
-    );
+    return <div className="flex justify-center items-center h-screen text-gray-500">User not found.</div>;
   }
 
-  // Render the visited user profile and portfolio
   return (
     <div className="flex">
       {/* Sidebar */}
@@ -78,31 +64,21 @@ const VisitProfile = () => {
       >
         {/* Profile Section */}
         <div className="flex items-start justify-between mb-4">
-          {/* Profile Image and Info */}
           <div className="flex items-start">
             <div className="w-32 flex flex-col items-center">
-              <img
-                src={`http://localhost:5000/uploads/${user.pfp}`}
-                alt={`${user.username}'s Profile`}
-                className="w-32 h-32 rounded-full object-cover shadow-lg border-2 border-gray-300"
-              />
+              <img src={`http://localhost:5000/uploads/${user.pfp}`} alt={`${user.username}'s Profile`} className="w-32 h-32 rounded-full object-cover shadow-lg border-2 border-gray-300" />
 
               {/* Commissions Status */}
               <div className="mt-2 text-center text-xs text-gray-700 font-medium">
                 <span className="mr-1">Commissions:</span>
-                <button
-                  className={`px-3 py-1 rounded-full shadow transition duration-300 ${
-                    user.commissions === "open"
-                      ? "bg-green-500 hover:bg-green-600 text-white"
-                      : "bg-orange-500 hover:bg-orange-600 text-white"
-                  }`}
-                >
+                <button className={`px-3 py-1 rounded-full shadow transition duration-300 ${
+                  user.commissions === "open" ? "bg-green-500 hover:bg-green-600 text-white" : "bg-orange-500 hover:bg-orange-600 text-white"
+                }`}>
                   {user.commissions === "open" ? "Open" : "Closed"}
                 </button>
               </div>
             </div>
 
-            {/* User Info */}
             <div className="ml-6 flex flex-col justify-between h-32">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{user.username}</h2>
@@ -116,18 +92,30 @@ const VisitProfile = () => {
                 </div>
               </div>
 
-              <p className="text-xs sm:text-sm text-gray-700 italic max-w-xs overflow-hidden text-ellipsis">
-                {user.bio ? `"${user.bio}"` : "No bio provided."}
-              </p>
+              <p className="text-xs sm:text-sm text-gray-700 italic max-w-xs overflow-hidden text-ellipsis">{user.bio ? `"${user.bio}"` : "No bio provided."}</p>
             </div>
           </div>
         </div>
 
         {/* Divider Line */}
-        <div className="border-b border-gray-200 mb-8"></div>
+        <div className="border-b border-gray-200 mb-4"></div>
 
-        {/* Portfolio Grid */}
-        <VisitPortfolio />
+        {/* Posts & Portfolio Tabs */}
+        <div className="flex border-b border-gray-300 mb-6 text-sm">
+          <button onClick={() => setActiveTab("posts")} className={`flex-1 text-center py-2 font-semibold ${
+            activeTab === "posts" ? "border-b-4 border-blue-500 text-blue-600" : "hover:bg-gray-100 text-gray-600"
+          }`}>
+            Posts
+          </button>
+          <button onClick={() => setActiveTab("portfolio")} className={`flex-1 text-center py-2 font-semibold ${
+            activeTab === "portfolio" ? "border-b-4 border-blue-500 text-blue-600" : "hover:bg-gray-100 text-gray-600"
+          }`}>
+            Portfolio
+          </button>
+        </div>
+
+        {/* Content Section */}
+        {activeTab === "posts" ? <VisitPost userId={user.id} /> : <VisitPortfolio />}
       </motion.div>
     </div>
   );
