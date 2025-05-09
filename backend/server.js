@@ -9,6 +9,7 @@ const logoutRoutes = require("./routes/logoutRoutes"); // Import logout routes
 const profileRoutes = require("./routes/profileRoutes");
 const portfolioRoutes = require("./routes/portfolioRoutes");
 const postsRoutes = require("./routes/postsRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 
 
 
@@ -37,6 +38,7 @@ app.use("/api", logoutRoutes); // Mount logout routes under "/api"
 app.use("/api", profileRoutes); // Mount profile-related routes
 app.use("/api", portfolioRoutes);
 app.use("/api", postsRoutes); // Register posts-related routes
+app.use("/api", chatRoutes); 
 
 // Welcome Route
 app.get("/", (req, res) => {
