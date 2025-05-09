@@ -14,6 +14,7 @@ import Tags from "./components/ADMIN/tags/tags";
 import DisplayProfile from "./components/ADMIN/displayprofile/displayprofile";
 import LandingPage from "./components/landing/landingpage";
 import MakePost from "./components/makepost/makepost";
+import ChatBot from "./components/chatbot/chatbot";
 
 function App() {
   return (
@@ -31,6 +32,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chatbot"
+          element={
+            <ProtectedRoute>
+              <ChatBot />
             </ProtectedRoute>
           }
         />
