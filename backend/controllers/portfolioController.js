@@ -1,4 +1,4 @@
-const signupModels = require("../models/signupModels"); // Models for database interactions
+const signupModels = require("../models/portfolioModels"); // Models for database interactions
 
 // Create a new portfolio item
 const createPortfolioItem = (req, res) => {

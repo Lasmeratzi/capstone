@@ -24,23 +24,24 @@ const DisplayProfile = () => {
   };
 
   // Update account status in the backend
-  const updateStatus = (id, newStatus) => {
-    const token = localStorage.getItem("token"); // Retrieve token from localStorage
-    axios
-      .patch(
+  const updateAccountStatus = async (id, newStatus) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.patch(
         `http://localhost:5000/api/users/${id}/status`,
         { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } } // Include Authorization header
-      )
-      .then(() => {
-        setProfiles(
-          profiles.map((profile) =>
-            profile.id === id ? { ...profile, account_status: newStatus } : profile
-          )
-        );
-        alert(`Account status updated to ${newStatus}!`);
-      })
-      .catch(() => alert("Failed to update account status. Please try again."));
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // 🚀 Refetch user profiles to reflect changes instantly
+      const updatedProfiles = await axios.get("http://localhost:5000/api/users", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProfiles(updatedProfiles.data);
+      alert(`Account status updated to ${newStatus}!`);
+    } catch (error) {
+      alert("Failed to update account status. Please try again.");
+    }
   };
 
   // Handle search input
@@ -116,13 +117,13 @@ const DisplayProfile = () => {
                     {profile.account_status === "active" && (
                       <>
                         <button
-                          onClick={() => updateStatus(profile.id, "on hold")}
+                          onClick={() => updateAccountStatus(profile.id, "on hold")}
                           className="px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
                         >
                           Put on Hold
                         </button>
                         <button
-                          onClick={() => updateStatus(profile.id, "banned")}
+                          onClick={() => updateAccountStatus(profile.id, "banned")}
                           className="ml-2 px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600"
                         >
                           Ban
@@ -132,13 +133,13 @@ const DisplayProfile = () => {
                     {profile.account_status === "on hold" && (
                       <>
                         <button
-                          onClick={() => updateStatus(profile.id, "active")}
+                          onClick={() => updateAccountStatus(profile.id, "active")}
                           className="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600"
                         >
                           Activate
                         </button>
                         <button
-                          onClick={() => updateStatus(profile.id, "banned")}
+                          onClick={() => updateAccountStatus(profile.id, "banned")}
                           className="ml-2 px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600"
                         >
                           Ban
@@ -148,13 +149,13 @@ const DisplayProfile = () => {
                     {profile.account_status === "banned" && (
                       <>
                         <button
-                          onClick={() => updateStatus(profile.id, "active")}
+                          onClick={() => updateAccountStatus(profile.id, "active")}
                           className="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600"
                         >
                           Activate
                         </button>
                         <button
-                          onClick={() => updateStatus(profile.id, "on hold")}
+                          onClick={() => updateAccountStatus(profile.id, "on hold")}
                           className="ml-2 px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
                         >
                           Put on Hold
