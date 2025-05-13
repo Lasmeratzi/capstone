@@ -74,14 +74,33 @@ const updateUser = (id, userData, callback) => {
 };
 
 // Update account status (active, on hold, banned)
-const updateAccountStatus = (id, status, callback) => {
-  const sql = `
-    UPDATE users
-    SET account_status = ?
-    WHERE id = ?
-  `;
-  console.log("Executing query to update account status:", { id, status });
-  db.query(sql, [status, id], callback);
+const updateAccountStatus = async (req, res) => {
+  const { userId, newAccountStatus } = req.body;  // Renamed `newStatus` to `newAccountStatus`
+  
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update the user's account status
+    user.accountStatus = newAccountStatus;  // Change from `status` to `accountStatus`
+    await user.save();
+
+    // Send response that account status was updated
+    res.status(200).json({ message: `Account status updated to ${newAccountStatus}` });
+
+    // If status is "banned" or "on hold", inform the frontend to log out
+    if (newAccountStatus === 'banned' || newAccountStatus === 'on hold') {
+      res.status(200).json({
+        message: 'Account has been banned/on hold, please log out.',
+        logoutRequired: true,
+      });
+    }
+  } catch (error) {
+    console.error('Error updating account status:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
 };
 
 // Update commissions field (open or closed)
@@ -127,82 +146,11 @@ const leaveReview = (reviewData, callback) => {
   db.query(sql, params, callback);
 };
 
-// Portfolio Items Management
-// Create a new portfolio item
-const createPortfolioItem = (portfolioData, callback) => {
-  const sql = `
-    INSERT INTO portfolio_items (user_id, title, description, image_path)
-    VALUES (?, ?, ?, ?)
-  `;
-  const params = [
-    portfolioData.user_id,
-    portfolioData.title,
-    portfolioData.description,
-    portfolioData.image_path,
-  ];
-  db.query(sql, params, callback);
-};
-
-// Get all portfolio items for a user
-const getPortfolioItemsByUser = (userId, callback) => {
-  const sql = `
-  SELECT id, user_id, title, description, image_path, created_at, updated_at
-  FROM portfolio_items
-  WHERE user_id = ?
-`;
-  db.query(sql, [userId], callback);
-};
-// Get a portfolio item by ID
-const getPortfolioItemById = (id, callback) => {
-  const sql = `
-  SELECT id, user_id, title, description, image_path
-  FROM portfolio_items
-  WHERE id = ?
-`;
-  db.query(sql, [id], callback);
-};
-
-// Update a portfolio item
-const updatePortfolioItem = (id, portfolioData, callback) => {
-  const sql = `
-    UPDATE portfolio_items
-    SET title = ?, description = ?, image_path = ?
-    WHERE id = ?
-  `;
-  const params = [
-    portfolioData.title,
-    portfolioData.description,
-    portfolioData.image_path,
-    id,
-  ];
-  db.query(sql, params, callback);
-};
-
-// Delete a portfolio item
-const deletePortfolioItem = (id, userId, callback) => {
-  // Check ownership
-  getPortfolioItemById(id, (err, results) => {
-    if (err) return callback(err);
-    if (!results.length) return callback(new Error("Portfolio item not found."));
-    const portfolioItem = results[0];
-    if (portfolioItem.user_id !== userId) {
-      return callback(new Error("Unauthorized: User does not own this portfolio item."));
-    }
-  
-    const sql = `
-      DELETE FROM portfolio_items
-      WHERE id = ?
-    `;
-    db.query(sql, [id], callback);
-  });
-  
-};
-
 module.exports = {
   createUser,
   getAllUsers,
   getUserById,
-  searchUsers, // Updated search logic
+  searchUsers,
   searchUserByEmail,
   updateUser,
   updateAccountStatus,
@@ -210,9 +158,4 @@ module.exports = {
   deleteUserById,
   followUser,
   leaveReview,
-  createPortfolioItem, // Added portfolio CRUD functions
-  getPortfolioItemsByUser,
-  getPortfolioItemById,
-  updatePortfolioItem,
-  deletePortfolioItem,
 };
