@@ -3,22 +3,23 @@ const db = require("../config/database");
 // Create a new post
 const createPost = (postData, callback) => {
   const sql = `
-    INSERT INTO posts (author_id, title, media_path)
-    VALUES (?, ?, ?)
+    INSERT INTO posts (author_id, title, media_path, post_status)
+    VALUES (?, ?, ?, ?)
   `;
   const params = [
     postData.author_id,
     postData.title,
     postData.media_path,
+    postData.post_status || "active", // Default status is "active"
   ];
   db.query(sql, params, callback);
 };
 
-// Get all posts (Now includes `author_pfp`)
+// Get all posts (Now includes `author_pfp` and `post_status`)
 const getAllPosts = (authorId, callback) => {
   let sql = `
     SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
-           users.username AS author, users.fullname, users.pfp AS author_pfp
+           users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
     FROM posts
     JOIN users ON posts.author_id = users.id
     ORDER BY posts.created_at DESC
@@ -29,7 +30,7 @@ const getAllPosts = (authorId, callback) => {
   if (authorId) {
     sql = `
       SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
-             users.username AS author, users.fullname, users.pfp AS author_pfp
+             users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
       FROM posts
       JOIN users ON posts.author_id = users.id
       WHERE posts.author_id = ?
@@ -41,11 +42,11 @@ const getAllPosts = (authorId, callback) => {
   db.query(sql, params, callback);
 };
 
-// Get posts by a specific author (Now includes `author_pfp`)
+// Get posts by a specific author (Now includes `author_pfp` and `post_status`)
 const getPostsByAuthorId = (authorId, callback) => {
   const sql = `
     SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
-           users.username AS author, users.fullname, users.pfp AS author_pfp
+           users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
     FROM posts
     JOIN users ON posts.author_id = users.id
     WHERE posts.author_id = ?
@@ -54,11 +55,11 @@ const getPostsByAuthorId = (authorId, callback) => {
   db.query(sql, [authorId], callback);
 };
 
-// Get a post by ID (Now includes `author_pfp`)
+// Get a post by ID (Now includes `author_pfp` and `post_status`)
 const getPostById = (id, callback) => {
   const sql = `
     SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
-           users.username AS author, users.fullname, users.pfp AS author_pfp
+           users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
     FROM posts
     JOIN users ON posts.author_id = users.id
     WHERE posts.id = ?
@@ -81,6 +82,16 @@ const updatePost = (id, postData, callback) => {
   db.query(sql, params, callback);
 };
 
+// Update post status (Admin moderation feature)
+const updatePostStatus = (postId, status, callback) => {
+  const sql = `
+    UPDATE posts
+    SET post_status = ?
+    WHERE id = ?
+  `;
+  db.query(sql, [status, postId], callback);
+};
+
 // Delete a post
 const deletePost = (id, callback) => {
   const sql = `
@@ -96,5 +107,6 @@ module.exports = {
   getPostsByAuthorId,
   getPostById,
   updatePost,
+  updatePostStatus, // New function for reporting and moderation
   deletePost,
 };

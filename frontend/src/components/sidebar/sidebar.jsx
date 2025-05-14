@@ -7,19 +7,14 @@ import {
   BellIcon,
   UserIcon,
   ArrowRightOnRectangleIcon,
-  ChatBubbleLeftRightIcon, // ✅ Chatbot icon
 } from "@heroicons/react/24/solid";
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isSearchBarOpen, setIsSearchBarOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
-  const toggleSearchBar = () => {
-    setIsSearchBarOpen((prevState) => !prevState);
-  };
-
-  const isActive = (path) => (location.pathname === path ? "text-[#5E66FF] font-bold" : "text-white");
+  const isActive = (path) => location.pathname === path;
 
   return (
     <div
@@ -37,7 +32,7 @@ const Sidebar = () => {
         {/* Home */}
         <button
           onClick={() => navigate("/home")}
-          className={`flex items-center hover:text-[#5E66FF] ${isActive("/home")} transition-colors duration-300`}
+          className={`flex items-center hover:text-[#5E66FF] ${isActive("/home") ? "text-[#5E66FF] font-bold" : "text-white"} transition-colors duration-300`}
         >
           <HomeIcon className="h-8 w-8" />
           <span className="ml-4 text-lg">Home</span>
@@ -46,7 +41,7 @@ const Sidebar = () => {
         {/* Search */}
         <button
           onClick={() => navigate("/searchprofile")}
-          className={`flex items-center hover:text-[#5E66FF] ${isActive("/search")} transition-colors duration-300`}
+          className={`flex items-center hover:text-[#5E66FF] ${isActive("/searchprofile") ? "text-[#5E66FF] font-bold" : "text-white"} transition-colors duration-300`}
         >
           <MagnifyingGlassIcon className="h-8 w-8" />
           <span className="ml-4 text-lg">Search</span>
@@ -55,7 +50,7 @@ const Sidebar = () => {
         {/* Explore */}
         <button
           onClick={() => navigate("/explore")}
-          className={`flex items-center hover:text-[#5E66FF] ${isActive("/explore")} transition-colors duration-300`}
+          className={`flex items-center hover:text-[#5E66FF] ${isActive("/explore") ? "text-[#5E66FF] font-bold" : "text-white"} transition-colors duration-300`}
         >
           <GlobeAltIcon className="h-8 w-8" />
           <span className="ml-4 text-lg">Explore</span>
@@ -64,7 +59,7 @@ const Sidebar = () => {
         {/* Notifications */}
         <button
           onClick={() => navigate("/notifications")}
-          className={`flex items-center hover:text-[#5E66FF] ${isActive("/notifications")} transition-colors duration-300`}
+          className={`flex items-center hover:text-[#5E66FF] ${isActive("/notifications") ? "text-[#5E66FF] font-bold" : "text-white"} transition-colors duration-300`}
         >
           <BellIcon className="h-8 w-8" />
           <span className="ml-4 text-lg">Notifications</span>
@@ -73,19 +68,25 @@ const Sidebar = () => {
         {/* Profile */}
         <button
           onClick={() => navigate("/profile")}
-          className={`flex items-center hover:text-[#5E66FF] ${isActive("/profile")} transition-colors duration-300`}
+          className={`flex items-center hover:text-[#5E66FF] ${isActive("/profile") ? "text-[#5E66FF] font-bold" : "text-white"} transition-colors duration-300`}
         >
           <UserIcon className="h-8 w-8" />
           <span className="ml-4 text-lg">Profile</span>
         </button>
 
-        {/* ✅ Chatbot */}
+        {/* ✅ Updated Chatbot with Synced Icon & Label Transition */}
         <button
           onClick={() => navigate("/chatbot")}
-          className={`flex items-center hover:text-[#5E66FF] ${isActive("/chatbot")} transition-colors duration-300`}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className={`flex items-center hover:text-[#5E66FF] ${isActive("/chatbot") ? "text-[#5E66FF] font-bold" : "text-white"} transition-colors duration-300 ease-in-out`}
         >
-          <ChatBubbleLeftRightIcon className="h-8 w-8" />
-          <span className="ml-4 text-lg">Chatbot</span>
+          <img
+            src={isHovered || isActive("/chatbot") ? "/qwenhover.png" : "/qwenwhite.png"}
+            alt="AI Icon"
+            className="h-8 w-8 transition-opacity duration-300 ease-in-out" // ✅ Synced transition for icon
+          />
+          <span className="ml-4 text-lg transition-colors duration-300 ease-in-out">Chatbot</span> {/* ✅ Synced label transition */}
         </button>
       </nav>
 

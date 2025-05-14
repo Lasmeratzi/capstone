@@ -22,6 +22,9 @@ router.get("/posts/:id", authenticateToken, postsController.getPostById);
 // Update a post
 router.patch("/posts/:id", authenticateToken, upload.single("media"), postsController.updatePost);
 
+// Update post status (Admin moderation feature)
+router.patch("/posts/:id/status", authenticateToken, postsController.updatePostStatus); // 🚀 New route for moderation
+
 // Delete a post
 router.delete("/posts/:id", authenticateToken, postsController.deletePost);
 

@@ -2,7 +2,14 @@ import React from "react";
 
 const Post = ({ post, userId, handleDelete }) => {
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md text-sm max-w-2xl mx-auto lg:ml-0 mb-5 border border-gray-200">
+    <div className="relative bg-white p-4 rounded-lg shadow-md text-sm max-w-2xl mx-auto lg:ml-0 mb-5 border border-gray-200">
+      {/* Overlay for 'Taken Down' Posts */}
+      {post.post_status === "down" && (
+        <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg">
+          <p className="text-white text-lg font-semibold">🚫 Post is taken down</p>
+        </div>
+      )}
+
       {/* Author Info (Top) */}
       <div className="flex items-center gap-3 mb-3">
         {/* Profile Picture */}
@@ -43,7 +50,7 @@ const Post = ({ post, userId, handleDelete }) => {
       </p>
 
       {/* Actions (Edit/Delete) */}
-      {post.author_id === userId && (
+      {post.author_id === userId && post.post_status !== "down" && (
         <div className="flex justify-end gap-2 mt-3">
           <button
             onClick={() => alert("Edit functionality goes here")}

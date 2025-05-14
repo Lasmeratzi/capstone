@@ -11,7 +11,7 @@ const createPost = (req, res) => {
     return res.status(400).json({ message: "Title is required." });
   }
 
-  const postData = { author_id: authorId, title, media_path: mediaPath };
+  const postData = { author_id: authorId, title, media_path: mediaPath, post_status: "active" };
 
   postsModels.createPost(postData, (err, result) => {
     if (err) {
@@ -21,7 +21,7 @@ const createPost = (req, res) => {
   });
 };
 
-// Get all posts (Now includes `author_pfp`)
+// Get all posts (Now includes `author_pfp` and `post_status`)
 const getAllPosts = (req, res) => {
   const authorId = req.query.author_id;
 
@@ -29,11 +29,12 @@ const getAllPosts = (req, res) => {
     if (err) {
       return res.status(500).json({ message: "Database error.", error: err });
     }
-    
-    // Ensure response includes author's profile picture
+
+    // Ensure response includes author's profile picture and post status
     res.status(200).json(results.map(post => ({
       ...post,
-      author_pfp: post.author_pfp || "default.png" // Use default if no profile picture
+      author_pfp: post.author_pfp || "default.png", // Use default if no profile picture
+      post_status: post.post_status || "active" // Ensure post_status is included
     })));
   });
 };
@@ -50,7 +51,7 @@ const getUserPosts = (req, res) => {
   });
 };
 
-// Get a post by ID (Now includes `author_pfp`)
+// Get a post by ID (Now includes `author_pfp` and `post_status`)
 const getPostById = (req, res) => {
   const { id } = req.params;
 
@@ -61,11 +62,12 @@ const getPostById = (req, res) => {
     if (!result.length) {
       return res.status(404).json({ message: "Post not found." });
     }
-    
-    // Ensure author's profile picture is sent
+
+    // Ensure author's profile picture and post status are sent
     res.status(200).json({
       ...result[0],
-      author_pfp: result[0].author_pfp || "default.png"
+      author_pfp: result[0].author_pfp || "default.png",
+      post_status: result[0].post_status || "active"
     });
   });
 };
@@ -93,6 +95,21 @@ const updatePost = (req, res) => {
   });
 };
 
+// Update post status (Admin moderation feature)
+const updatePostStatus = (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!["active", "down"].includes(status)) {
+    return res.status(400).json({ message: "Invalid status value." });
+  }
+
+  postsModels.updatePostStatus(id, status, (err) => {
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    res.status(200).json({ message: `Post status updated to ${status}.` });
+  });
+};
+
 // Delete a post
 const deletePost = (req, res) => {
   const { id } = req.params;
@@ -114,5 +131,6 @@ module.exports = {
   getUserPosts,
   getPostById,
   updatePost,
+  updatePostStatus, // New function for admin moderation
   deletePost,
 };
