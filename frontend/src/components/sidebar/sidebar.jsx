@@ -89,21 +89,23 @@ const Sidebar = () => {
           <span className="ml-4 text-lg transition-colors duration-300 ease-in-out">Chatbot</span> {/* ✅ Synced label transition */}
         </button>
       </nav>
+{/* Divider Line Above Logout (Limited Width) */}
+<div className="w-fit border-t border-gray-600 mt-8 mb-4 px-18" /> {/* ✅ Adjusted width */}
 
-      {/* Logout */}
-      <div className="mt-8">
-        <button
-          onClick={() => {
-            localStorage.clear();
-            sessionStorage.clear();
-            navigate("/login");
-          }}
-          className="flex items-center text-white hover:text-red-500 transition-colors duration-300"
-        >
-          <ArrowRightOnRectangleIcon className="h-8 w-8" />
-          <span className="ml-4 text-lg">Logout</span>
-        </button>
-      </div>
+{/* Logout */}
+<div>
+  <button
+    onClick={() => {
+      localStorage.clear();
+      sessionStorage.clear();
+      navigate("/login");
+    }}
+    className="flex items-center text-white hover:text-red-500 transition-colors duration-300"
+  >
+    <ArrowRightOnRectangleIcon className="h-8 w-8" />
+    <span className="ml-4 text-lg">Logout</span>
+  </button>
+</div>
     </div>
   );
 };
