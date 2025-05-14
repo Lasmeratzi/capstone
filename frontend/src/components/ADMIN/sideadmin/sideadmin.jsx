@@ -53,7 +53,7 @@ const SideAdmin = () => {
           {/* Posts */}
           <li>
             <button
-              onClick={() => alert("Navigating to Posts...")}
+              onClick={() => navigate("/displayposts")}
               className="w-full text-left px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition duration-150 text-sm"
             >
               Posts

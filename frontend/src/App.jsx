@@ -15,6 +15,7 @@ import DisplayProfile from "./components/ADMIN/displayprofile/displayprofile";
 import LandingPage from "./components/landing/landingpage";
 import MakePost from "./components/makepost/makepost";
 import ChatBot from "./components/chatbot/chatbot";
+import DisplayPosts from "./components/ADMIN/displayposts/displayposts";
 
 function App() {
   return (
@@ -74,6 +75,7 @@ function App() {
         <Route path="/tags" element={<Tags />} />
         <Route path="/displayprofile" element={<DisplayProfile />} />
         <Route path="/makepost" element={<MakePost />} />
+        <Route path="/displayposts" element={<DisplayPosts />} />
       </Routes>
     </Router>
   );
