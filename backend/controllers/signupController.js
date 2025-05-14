@@ -75,9 +75,11 @@ const loginUser = async (req, res) => {
 
       // Restrict login if account status is not "active"
       if (user.account_status !== "active") {
-  localStorage.removeItem("token"); // Force logout
-  return res.status(403).json({ message: `Login denied: Account is ${user.account_status}.` });
-}
+        console.warn(`Login attempt blocked for ${email}: Account is ${user.account_status}`);
+        return res.status(403).json({
+          message: `Login denied: Account is ${user.account_status}.`,
+        });
+      }
 
       // Verify password
       const isValidPassword = await bcrypt.compare(password, user.password);
