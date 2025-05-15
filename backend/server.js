@@ -10,6 +10,7 @@ const profileRoutes = require("./routes/profileRoutes");
 const portfolioRoutes = require("./routes/portfolioRoutes");
 const postsRoutes = require("./routes/postsRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const commentsRoutes = require("./routes/commentsRoutes");
 
 
 
@@ -39,6 +40,7 @@ app.use("/api", profileRoutes); // Mount profile-related routes
 app.use("/api", portfolioRoutes);
 app.use("/api", postsRoutes); // Register posts-related routes
 app.use("/api", chatRoutes); 
+app.use("/api", commentsRoutes); // Register comments-related routes
 
 // Welcome Route
 app.get("/", (req, res) => {
