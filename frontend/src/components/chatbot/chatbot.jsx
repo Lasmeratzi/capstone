@@ -95,12 +95,12 @@ function ChatBot() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -50 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="flex flex-col flex-grow p-8 relative"
+        className="flex flex-col flex-grow px-8 pb-4 pt-5 relative"
       >
         {/* Title */}
-<div className="flex items-center mb-3 space-x-3">
+<div className="flex items-center mb-2 space-x-3">
   <img src="/illura.png" alt="Illura Logo" className="h-10" />
-  <h2 className="text-3xl font-bold tracking-wide text-[#5E66FF]">
+  <h2 className="text-2xl font-bold tracking-wide text-[#5E66FF]">
     Chatbot Assistance
   </h2>
   <div className="flex items-center space-x-2 ml-2">
