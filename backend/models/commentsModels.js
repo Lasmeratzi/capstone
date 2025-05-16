@@ -26,11 +26,12 @@ const getCommentsByPostId = (postId, callback) => {
 // Get a single comment by ID
 const getCommentById = (commentId, callback) => {
   const sql = `
-    SELECT comments.id, comments.comment_text, comments.created_at,
-           users.username AS author, users.pfp AS author_pfp
-    FROM comments
-    JOIN users ON comments.author_id = users.id
-    WHERE comments.id = ?
+    SELECT comments.id, comments.comment_text, comments.created_at, comments.author_id,
+       users.username AS author, users.pfp AS author_pfp
+FROM comments
+JOIN users ON comments.author_id = users.id
+WHERE comments.id = ?
+
   `;
   db.query(sql, [commentId], callback);
 };
@@ -68,11 +69,21 @@ const getRecentCommentsByPostId = (postId, limit = 3, callback) => {
   db.query(sql, [postId, limit], callback);
 };
 
+const getCommentCountByPostId = (postId, callback) => {
+  const sql = "SELECT COUNT(*) AS count FROM comments WHERE post_id = ?";
+  db.query(sql, [postId], (err, results) => {
+    if (err) return callback(err);
+    const count = results[0].count;
+    callback(null, count);
+  });
+};
+
 module.exports = {
   createComment,
   getCommentsByPostId,
   getCommentById,
+  getCommentCountByPostId,  // updated here
   updateComment,
   deleteComment,
-  getRecentCommentsByPostId, // add this
+  getRecentCommentsByPostId,
 };
