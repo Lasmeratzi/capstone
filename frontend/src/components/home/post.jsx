@@ -1,9 +1,35 @@
-import React, { useState } from "react";
-import { MessageCircle } from "lucide-react"; // install lucide-react if you haven’t
+import React, { useState, useEffect } from "react";
+import { MessageCircle } from "lucide-react";
+import axios from "axios";
 import Comments from "../comments/comments";
 
 const Post = ({ post, userId, handleDelete }) => {
   const [showComments, setShowComments] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
+
+  // Fetch comment count for this post
+  const fetchCommentCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await axios.get(
+        `http://localhost:5000/api/comments/count/${post.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setCommentCount(response.data.count ?? 0);
+    } catch (error) {
+      console.error("Failed to fetch comment count", error);
+      setCommentCount(0);
+    }
+  };
+
+  // Fetch comment count whenever post.id changes
+  useEffect(() => {
+    fetchCommentCount();
+  }, [post.id]);
 
   return (
     <div className="relative bg-white p-4 rounded-lg shadow-md text-sm max-w-2xl mx-auto lg:ml-0 mb-5 border border-gray-200">
@@ -62,19 +88,28 @@ const Post = ({ post, userId, handleDelete }) => {
         </div>
       )}
 
-      {/* Comment Icon */}
+      {/* Comment Icon with count */}
       <div className="flex justify-center mt-4">
         <button
           onClick={() => setShowComments(!showComments)}
           className="flex items-center gap-1 text-gray-600 hover:text-blue-500"
         >
           <MessageCircle size={18} />
-          <span className="text-sm">{showComments ? "Hide Comments" : "Show Comments"}</span>
+          <span className="text-sm">
+            Comments ({commentCount})
+          </span>
         </button>
       </div>
 
       {/* Comments Section */}
-      {showComments && <Comments postId={post.id} userId={userId} />}
+      {showComments && 
+      <Comments 
+  postId={post.id}
+  userId={userId}
+  updateCommentCount={setCommentCount}
+/>
+
+      }
     </div>
   );
 };
