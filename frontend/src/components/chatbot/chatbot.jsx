@@ -162,7 +162,7 @@ function ChatBot() {
     </div>
 {/* AI Disclaimer Below Input Field */}
 <p className="mt-2 text-xs text-gray-500 text-center">
-  Illura Chatbot is powered by AI and may generate responses automatically. While we strive for accuracy, information could be incorrect or incomplete. Please verify critical details before relying on them.
+  Illura Chatbot uses AI to generate responses automatically. While we aim for accuracy, please verify important details as information may be incomplete or incorrect.
 </p>
   </div>
 </div>
