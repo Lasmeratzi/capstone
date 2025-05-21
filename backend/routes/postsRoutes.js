@@ -14,18 +14,18 @@ router.post("/posts", authenticateToken, upload.single("media"), postsController
 router.get("/posts", authenticateToken, postsController.getAllPosts);
 
 // Get posts by the logged-in user
-router.get("/posts/user", authenticateToken, postsController.getUserPosts); // New route
+router.get("/posts/user", authenticateToken, postsController.getUserPosts);
 
 // Get a post by ID
 router.get("/posts/:id", authenticateToken, postsController.getPostById);
 
-// Update a post
+// Update a post (Only if user is the author)
 router.patch("/posts/:id", authenticateToken, upload.single("media"), postsController.updatePost);
 
 // Update post status (Admin moderation feature)
-router.patch("/posts/:id/status", authenticateToken, postsController.updatePostStatus); // 🚀 New route for moderation
+router.patch("/posts/:id/status", authenticateToken, postsController.updatePostStatus);
 
-// Delete a post
+// Delete a post (Only if user is the author)
 router.delete("/posts/:id", authenticateToken, postsController.deletePost);
 
 module.exports = router;
