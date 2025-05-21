@@ -7,31 +7,39 @@ const OwnPost = ({ userId }) => {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    const fetchUserPosts = async () => {
-      try {
-        if (!userId) return; // Ensure userId is defined
+   const fetchUserPosts = async () => {
+  try {
+    if (!userId) return;
 
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setErrorMessage("Unauthorized: Please log in.");
-          return;
-        }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setErrorMessage("Unauthorized: Please log in.");
+      return;
+    }
 
-        // Updated API call to fetch only the user's posts
-        const response = await axios.get("http://localhost:5000/api/posts/user", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    const response = await axios.get("http://localhost:5000/api/posts/user", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-        setUserPosts(response.data);
-      } catch (error) {
-        console.error("Failed to fetch user posts:", error);
-        setErrorMessage("Failed to load posts. Please try again.");
-      }
-    };
+    // Normalize posts to always have author_id set to userId
+    const normalizedPosts = response.data.map((post) => ({
+      ...post,
+      author_id: userId, // since they're your own posts
+    }));
+
+    setUserPosts(normalizedPosts);
+  } catch (error) {
+    console.error("Failed to fetch user posts:", error);
+    setErrorMessage("Failed to load posts. Please try again.");
+  }
+};
+
 
     fetchUserPosts();
   }, [userId]);
 
+
+  
   const handleDelete = async (postId) => {
     try {
       const token = localStorage.getItem("token");

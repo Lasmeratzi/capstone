@@ -14,6 +14,7 @@ const createComment = (commentData, callback) => {
 const getCommentsByPostId = (postId, callback) => {
   const sql = `
     SELECT comments.id, comments.comment_text, comments.created_at,
+           comments.author_id,  -- added this
            users.username AS author, users.pfp AS author_pfp
     FROM comments
     JOIN users ON comments.author_id = users.id
@@ -22,6 +23,7 @@ const getCommentsByPostId = (postId, callback) => {
   `;
   db.query(sql, [postId], callback);
 };
+
 
 // Get a single comment by ID
 const getCommentById = (commentId, callback) => {
