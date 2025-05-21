@@ -17,8 +17,10 @@ const commentsRoutes = require("./routes/commentsRoutes");
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable CORS for cross-origin requests
-app.use(express.json()); // Parse JSON request bodies
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));  // <-- ADD THIS LINE
+
 
 // Disable browser caching for authenticated pages
 app.use((req, res, next) => {

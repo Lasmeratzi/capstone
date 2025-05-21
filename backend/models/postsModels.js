@@ -19,18 +19,17 @@ const createPost = (postData, callback) => {
 const getAllPosts = (authorId, callback) => {
   let sql = `
     SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
-           users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
+           users.id AS author_id, users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
     FROM posts
     JOIN users ON posts.author_id = users.id
     ORDER BY posts.created_at DESC
   `;
   const params = [];
 
-  // Filter by author_id if provided
   if (authorId) {
     sql = `
       SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
-             users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
+             users.id AS author_id, users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
       FROM posts
       JOIN users ON posts.author_id = users.id
       WHERE posts.author_id = ?
@@ -59,7 +58,8 @@ const getPostsByAuthorId = (authorId, callback) => {
 const getPostById = (id, callback) => {
   const sql = `
     SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
-           users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
+           users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status,
+           posts.author_id  -- Added to verify ownership for updates/deletion
     FROM posts
     JOIN users ON posts.author_id = users.id
     WHERE posts.id = ?
@@ -67,20 +67,20 @@ const getPostById = (id, callback) => {
   db.query(sql, [id], callback);
 };
 
-// Update a post
-const updatePost = (id, postData, callback) => {
+// Update a post (Only if user is the author)
+// Update post by ID with data
+const updatePostById = (id, postData, callback) => {
+  const { title, media_path } = postData;
+
   const sql = `
     UPDATE posts
     SET title = ?, media_path = ?
     WHERE id = ?
   `;
-  const params = [
-    postData.title,         // Updated title
-    postData.media_path,    // Updated media path (optional)
-    id,                     // Post ID
-  ];
-  db.query(sql, params, callback);
+  db.query(sql, [title, media_path, id], callback);
 };
+
+
 
 // Update post status (Admin moderation feature)
 const updatePostStatus = (postId, status, callback) => {
@@ -92,13 +92,18 @@ const updatePostStatus = (postId, status, callback) => {
   db.query(sql, [status, postId], callback);
 };
 
-// Delete a post
-const deletePost = (id, callback) => {
+// Delete a post (Only if user is the author)
+const deletePost = (id, authorId, callback) => {
+  if (!id || !authorId) {
+    return callback(new Error("Invalid post ID or author ID"));
+  }
+
   const sql = `
     DELETE FROM posts
-    WHERE id = ?
+    WHERE id = ? AND author_id = ?
   `;
-  db.query(sql, [id], callback);
+  
+  db.query(sql, [id, authorId], callback);
 };
 
 module.exports = {
@@ -106,7 +111,7 @@ module.exports = {
   getAllPosts,
   getPostsByAuthorId,
   getPostById,
-  updatePost,
-  updatePostStatus, // New function for reporting and moderation
+  updatePostById,
+  updatePostStatus,
   deletePost,
 };
