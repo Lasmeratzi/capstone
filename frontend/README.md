@@ -6,4 +6,7 @@
 
 cd frontend
 npm run dev
+
+cd backend
+npm start
  
