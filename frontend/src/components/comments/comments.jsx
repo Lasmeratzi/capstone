@@ -9,44 +9,40 @@ const Comments = ({ postId, userId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [limit, setLimit] = useState(3);
   const [commentCount, setCommentCount] = useState(0);
-
-  // Track which comment is currently being edited and its text
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingText, setEditingText] = useState("");
 
+  const token = localStorage.getItem("token");
+
   const fetchComments = async () => {
     try {
-      const token = localStorage.getItem("token");
       if (!token) {
         setErrorMessage("Unauthorized: Please log in.");
         return;
       }
 
-      const response = await axios.get(
+      const { data } = await axios.get(
         `http://localhost:5000/api/comments/recent/${postId}?limit=${limit}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      setComments(response.data);
+
+      setComments(data);
       setErrorMessage("");
-    } catch (error) {
+    } catch {
       setErrorMessage("Failed to load comments.");
     }
   };
 
   const fetchCommentCount = async () => {
     try {
-      const token = localStorage.getItem("token");
       if (!token) return;
 
-      const response = await axios.get(
+      const { data } = await axios.get(
         `http://localhost:5000/api/comments/count/${postId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      setCommentCount(response.data.count);
+
+      setCommentCount(data.count);
     } catch (error) {
       console.error("Failed to fetch comment count.");
     }
@@ -65,7 +61,6 @@ const Comments = ({ postId, userId }) => {
     setErrorMessage("");
 
     try {
-      const token = localStorage.getItem("token");
       if (!token) {
         setErrorMessage("Unauthorized: Please log in.");
         setIsSubmitting(false);
@@ -81,33 +76,30 @@ const Comments = ({ postId, userId }) => {
       setCommentText("");
       fetchComments();
       fetchCommentCount();
-    } catch (error) {
+    } catch {
       setErrorMessage("Failed to post comment.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Start editing a comment
   const handleEditClick = (comment) => {
     setEditingCommentId(comment.id);
     setEditingText(comment.comment_text);
   };
 
-  // Cancel editing
   const handleCancelEdit = () => {
     setEditingCommentId(null);
     setEditingText("");
   };
 
-  // Save edited comment
   const handleSaveEdit = async (commentId) => {
     if (!editingText.trim()) {
       setErrorMessage("Comment cannot be empty.");
       return;
     }
+
     try {
-      const token = localStorage.getItem("token");
       if (!token) {
         setErrorMessage("Unauthorized: Please log in.");
         return;
@@ -123,35 +115,34 @@ const Comments = ({ postId, userId }) => {
       setEditingText("");
       fetchComments();
       fetchCommentCount();
-    } catch (error) {
+    } catch {
       setErrorMessage("Failed to update comment.");
     }
   };
 
-  // Delete comment
   const handleDelete = async (commentId) => {
     if (!window.confirm("Are you sure you want to delete this comment?")) return;
 
     try {
-      const token = localStorage.getItem("token");
       if (!token) {
         setErrorMessage("Unauthorized: Please log in.");
         return;
       }
 
-      await axios.delete(`http://localhost:5000/api/comments/${commentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(
+        `http://localhost:5000/api/comments/${commentId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       fetchComments();
       fetchCommentCount();
-    } catch (error) {
+    } catch {
       setErrorMessage("Failed to delete comment.");
     }
   };
 
   const handleShowMore = () => {
-    setLimit((prevLimit) => prevLimit + 3);
+    setLimit((prev) => prev + 3);
   };
 
   return (
@@ -165,7 +156,7 @@ const Comments = ({ postId, userId }) => {
       )}
 
       <div className="space-y-4">
-        {comments.length > 0 ? (
+        {comments.length ? (
           comments.map((comment) => (
             <div
               key={comment.id}
@@ -178,21 +169,23 @@ const Comments = ({ postId, userId }) => {
                   className="w-9 h-9 rounded-full object-cover border"
                 />
               ) : (
-                <div className="w-9 h-9 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-gray-600 text-xs">N/A</span>
+                <div className="w-9 h-9 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600">
+                  N/A
                 </div>
               )}
+
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <p className="font-medium text-sm text-gray-800">
                     {comment.author}
                   </p>
                   <p className="text-gray-400 text-xs">
-                    {new Date(comment.created_at).toLocaleString()}
+                    {comment.created_at
+                      ? new Date(comment.created_at).toLocaleString()
+                      : "Just now"}
                   </p>
                 </div>
 
-                {/* Editable comment text or static */}
                 {editingCommentId === comment.id ? (
                   <textarea
                     className="w-full mt-1 p-2 border border-gray-300 rounded-md text-sm"
@@ -201,10 +194,11 @@ const Comments = ({ postId, userId }) => {
                     rows={3}
                   />
                 ) : (
-                  <p className="text-gray-700 text-sm mt-1">{comment.comment_text}</p>
+                  <p className="text-gray-700 text-sm mt-1">
+                    {comment.comment_text}
+                  </p>
                 )}
 
-                {/* Edit/Delete buttons shown only if logged-in user is author */}
                 {userId === comment.author_id && (
                   <div className="mt-2 flex gap-2">
                     {editingCommentId === comment.id ? (
