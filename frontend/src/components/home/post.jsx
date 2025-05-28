@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, MoreVertical, Loader, Trash, Pencil } from "lucide-react";
 import axios from "axios";
 import Comments from "../comments/comments";
 
 const Post = ({ post, userId, handleDelete }) => {
   const [showComments, setShowComments] = useState(false);
   const [commentCount, setCommentCount] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(post.title);
+  const [editedMedia, setEditedMedia] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Fetch comment count for this post
+  // Fetch comment count
   const fetchCommentCount = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -26,10 +32,59 @@ const Post = ({ post, userId, handleDelete }) => {
     }
   };
 
-  // Fetch comment count whenever post.id changes
   useEffect(() => {
     fetchCommentCount();
   }, [post.id]);
+
+  const handleEditSubmit = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token missing!");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("title", editedTitle);
+      if (editedMedia) {
+        formData.append("media", editedMedia);
+      }
+
+      // Debug form data content
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ", " + pair[1]);
+      }
+
+      const response = await axios.patch(
+        `http://localhost:5000/api/posts/${post.id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Edit response:", response.data);
+      setIsEditing(false);
+      setMenuOpen(false);
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to update post:", error);
+      alert("Failed to update post. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const confirmDeletePost = () => {
+    setConfirmDelete(false); // Close confirmation modal
+    handleDelete(post.id); // Proceed with deletion
+  };
 
   return (
     <div className="relative bg-white p-4 rounded-lg shadow-md text-sm max-w-2xl mx-auto lg:ml-0 mb-5 border border-gray-200">
@@ -39,77 +94,152 @@ const Post = ({ post, userId, handleDelete }) => {
         </div>
       )}
 
-      <div className="flex items-center gap-3 mb-3">
-        {post.author_pfp ? (
-          <img
-            src={`http://localhost:5000/uploads/${post.author_pfp}`}
-            alt={post.author}
-            className="w-10 h-10 rounded-full border border-gray-300"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-            <span className="text-gray-600 text-xs">N/A</span>
+      {/* Post Header with Author Info & 3-Dot Menu */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          {post.author_pfp ? (
+            <img
+              src={`http://localhost:5000/uploads/${post.author_pfp}`}
+              alt={post.author}
+              className="w-10 h-10 rounded-full border border-gray-300"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+              <span className="text-gray-600 text-xs">N/A</span>
+            </div>
+          )}
+          <div>
+            <p className="font-bold text-gray-800">{post.author}</p>
+            <p className="text-gray-600 text-sm">{post.fullname}</p>
+          </div>
+        </div>
+
+        {/* Three-dot menu for own posts */}
+        {post.author_id === userId && (
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <MoreVertical size={20} />
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border transform transition-all duration-200">
+                <button
+                  onClick={() => {
+                    setIsEditing(true);
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition"
+                >
+                  <Pencil size={16} />
+                  Edit Post
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100 transition"
+                >
+                  <Trash size={16} />
+                  Delete Post
+                </button>
+              </div>
+            )}
           </div>
         )}
-        <div>
-          <p className="font-bold text-gray-800">{post.author}</p>
-          <p className="text-gray-600 text-sm">{post.fullname}</p>
-        </div>
       </div>
 
-      <h4 className="font-semibold text-base text-gray-800">{post.title}</h4>
-      {post.media_path && (
-        <img
-          src={`http://localhost:5000/uploads/${post.media_path}`}
-          alt={post.title}
-          className="w-full object-contain rounded mt-2"
-        />
-      )}
+      {!isEditing ? (
+        <>
+          <h4 className="font-semibold text-base text-gray-800">{post.title}</h4>
+          {post.media_path && (
+            <img
+              src={`http://localhost:5000/uploads/${post.media_path}`}
+              alt={post.title}
+              className="w-full object-contain rounded mt-2"
+            />
+          )}
 
-      <p className="text-gray-500 text-xs mt-2">
-        Uploaded on {new Date(post.created_at).toLocaleDateString()} at{" "}
-        {new Date(post.created_at).toLocaleTimeString()}
-      </p>
+          {/* Comment toggle and count */}
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center gap-2 mt-3 text-gray-600 hover:text-gray-900"
+          >
+            <MessageCircle size={18} />
+            <span>{commentCount} {commentCount === 1 ? "Comment" : "Comments"}</span>
+          </button>
 
-      {post.author_id === userId && post.post_status !== "down" && (
-        <div className="flex justify-end gap-2 mt-3">
-          <button
-            onClick={() => alert("Edit functionality goes here")}
-            className="text-blue-500 font-medium text-xs hover:text-blue-600"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => handleDelete(post.id)}
-            className="text-red-500 font-medium text-xs hover:text-red-600"
-          >
-            Delete
-          </button>
+          {showComments && <Comments postId={post.id} userId={userId} />}
+
+        </>
+      ) : (
+        <div className="mt-3 space-y-4">
+          <textarea
+            value={editedTitle}
+            onChange={(e) => setEditedTitle(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded resize-none"
+            rows="3"
+          />
+          <div>
+            <label className="block text-sm text-gray-700 mb-1">
+              Change media (optional):
+            </label>
+            <input
+              type="file"
+              onChange={(e) => setEditedMedia(e.target.files[0])}
+              className="block w-full text-sm text-gray-500 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </div>
+
+          {/* Edit Buttons */}
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setIsEditing(false)}
+              className="px-4 py-2 bg-gray-300 text-gray-800 rounded transition hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleEditSubmit}
+              className={`px-4 py-2 rounded text-white ${
+                isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 transition"
+              }`}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader className="animate-spin w-5 h-5 inline" />
+              ) : (
+                "Confirm"
+              )}
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Comment Icon with count */}
-      <div className="flex justify-center mt-4">
-        <button
-          onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1 text-gray-600 hover:text-blue-500"
-        >
-          <MessageCircle size={18} />
-          <span className="text-sm">
-            Comments ({commentCount})
-          </span>
-        </button>
-      </div>
-
-      {/* Comments Section */}
-      {showComments && 
-      <Comments 
-  postId={post.id}
-  userId={userId}
-  updateCommentCount={setCommentCount}
-/>
-
-      }
+      {/* Confirmation Modal for Deleting */}
+      {confirmDelete && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <p className="text-lg font-semibold text-gray-800 mb-4">
+              Are you sure you want to delete this post?
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeletePost}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
