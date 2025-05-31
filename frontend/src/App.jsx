@@ -15,7 +15,10 @@ import DisplayProfile from "./components/ADMIN/displayprofile/displayprofile";
 import LandingPage from "./components/landing/landingpage";
 import MakePost from "./components/makepost/makepost";
 import ChatBot from "./components/chatbot/chatbot";
+import Terms from "./components/terms/terms";
 import DisplayPosts from "./components/ADMIN/displayposts/displayposts";
+import About from "./components/about/about";
+
 
 function App() {
   return (
@@ -26,7 +29,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgotpass" element={<Forgotpass />} />
-
+        <Route path="/about" element={<About />} />
+        <Route path="/terms" element={<Terms/>} />
         {/* Protected Routes */}
         <Route
           path="/home"
