@@ -56,6 +56,13 @@ const Navbar = () => {
           >
             Contact Us
           </button>
+          
+          <button
+            onClick={() => navigate("/terms")}
+            className="text-white hover:text-[#5E66FF] text-sm font-light"
+          >
+           Terms & Services
+          </button>
         </nav>
 
         {/* Search */}
