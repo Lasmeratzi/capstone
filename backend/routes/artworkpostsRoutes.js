@@ -1,0 +1,30 @@
+const express = require("express");
+const { authenticateToken } = require("../middleware/authMiddleware");
+const artworkPostsController = require("../controllers/artworkpostsController");
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+
+const router = express.Router();
+
+router.post("/artwork-posts", authenticateToken, upload.array("media", 10), artworkPostsController.createArtworkPost);
+
+router.post("/artwork-posts", authenticateToken, upload.none(), artworkPostsController.createArtworkPost);
+// Create a new artwork post
+router.post("/artwork-posts", authenticateToken, artworkPostsController.createArtworkPost);
+
+// Get all artwork posts
+router.get("/artwork-posts", authenticateToken, artworkPostsController.getAllArtworkPosts);
+
+// Get an artwork post by ID
+router.get("/artwork-posts/:id", authenticateToken, artworkPostsController.getArtworkPostById);
+
+// Get posts by the logged-in user
+router.get("/artwork-posts/user", authenticateToken, artworkPostsController.getUserArtworkPosts);
+
+// Update an artwork post (Only if user is the author)
+router.patch("/artwork-posts/:id", authenticateToken, artworkPostsController.updateArtworkPost);
+
+// Delete an artwork post (Only if user is the author)
+router.delete("/artwork-posts/:id", authenticateToken, artworkPostsController.deleteArtworkPost);
+
+module.exports = router;
