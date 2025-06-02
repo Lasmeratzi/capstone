@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MessageCircle, MoreVertical, Loader, Trash, Pencil } from "lucide-react";
+import { MessageCircle, MoreVertical, Loader, Trash, Pencil, X } from "lucide-react";
 import axios from "axios";
 import Comments from "../comments/comments";
 
@@ -12,6 +12,7 @@ const Post = ({ post, userId, handleDelete }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   // Fetch comment count
   const fetchCommentCount = async () => {
@@ -151,13 +152,15 @@ const Post = ({ post, userId, handleDelete }) => {
 
       {!isEditing ? (
         <>
-          <h4 className="font-semibold text-base text-gray-800">{post.title}</h4>
+          <h4 className=" text-base text-gray-800">{post.title}</h4>
           {post.media_path && (
-            <img
-              src={`http://localhost:5000/uploads/${post.media_path}`}
-              alt={post.title}
-              className="w-full object-contain rounded mt-2"
-            />
+            <div onClick={() => setIsImageModalOpen(true)} className="cursor-pointer">
+              <img
+                src={`http://localhost:5000/uploads/${post.media_path}`}
+                alt={post.title}
+                className="w-full object-contain rounded mt-2 hover:opacity-80 transition"
+              />
+            </div>
           )}
 
           {/* Comment toggle and count */}
@@ -171,6 +174,59 @@ const Post = ({ post, userId, handleDelete }) => {
 
           {showComments && <Comments postId={post.id} userId={userId} />}
 
+          {/* Image Modal with Comments */}
+          {isImageModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4">
+              <div className="relative bg-white rounded-lg max-w-6xl w-full h-[80vh] flex">
+                {/* Image container - fixed size */}
+                <div className="flex-[2] overflow-hidden flex items-center justify-center p-4 bg-gray-100">
+                  <img
+                    src={`http://localhost:5000/uploads/${post.media_path}`}
+                    alt={post.title}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+                
+                {/* Comments container */}
+                <div className="flex-1 flex flex-col border-l border-gray-200">
+                  {/* Post header */}
+                  <div className="p-4 border-b border-gray-200">
+                    <div className="flex items-center gap-3">
+                      {post.author_pfp ? (
+                        <img
+                          src={`http://localhost:5000/uploads/${post.author_pfp}`}
+                          alt={post.author}
+                          className="w-10 h-10 rounded-full border border-gray-300"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                          <span className="text-gray-600 text-xs">N/A</span>
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-bold text-gray-800">{post.author}</p>
+                        <p className="text-gray-600 text-sm">{post.fullname}</p>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-gray-800">{post.title}</p>
+                  </div>
+                  
+                  {/* Scrollable comments section */}
+                  <div className="flex-1 overflow-y-auto">
+                    <Comments postId={post.id} userId={userId} />
+                  </div>
+                </div>
+                
+                {/* Close button */}
+                <button
+                  onClick={() => setIsImageModalOpen(false)}
+                  className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 transition"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <div className="mt-3 space-y-4">
@@ -243,5 +299,4 @@ const Post = ({ post, userId, handleDelete }) => {
     </div>
   );
 };
-
 export default Post;
