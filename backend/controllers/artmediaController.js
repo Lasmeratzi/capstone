@@ -10,9 +10,10 @@ const addArtworkMedia = (req, res) => {
   }
 
   const mediaEntries = files.map((file) => ({
-    post_id: postId,
-    media_path: `uploads/${file.filename}`,
-  }));
+  post_id: postId,
+  media_path: file.filename,
+}));
+
 
   const insertMedia = () => {
     let completed = 0;
