@@ -4,6 +4,15 @@ import { X } from "lucide-react";
 
 const API_BASE = "http://localhost:5000";
 
+// Helper: fix media path by stripping leading 'uploads/' if present
+const getMediaUrl = (media_path) => {
+  // Remove leading "uploads/" if present to avoid duplication
+  const cleanPath = media_path.startsWith("uploads/")
+    ? media_path.slice("uploads/".length)
+    : media_path;
+  return `${API_BASE}/uploads/artwork/${cleanPath}`;
+};
+
 const ArtPosts = () => {
   const [artPosts, setArtPosts] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
@@ -122,17 +131,22 @@ const ArtPosts = () => {
             <p className="text-gray-600 mb-3">{post.description}</p>
 
             {post.media?.length > 0 && (
-              <div className={`grid ${getGalleryLayoutClass(post.media.length)} gap-2 rounded-lg overflow-hidden`}>
+              <div
+                className={`grid ${getGalleryLayoutClass(post.media.length)} gap-2 rounded-lg overflow-hidden`}
+              >
                 {post.media.map((file, index) => (
                   <div
                     key={file.id}
-                    className={`relative aspect-square ${getMediaClass(post.media.length, index)}`}
+                    className={`relative aspect-square ${getMediaClass(
+                      post.media.length,
+                      index
+                    )}`}
                     onClick={() => setSelectedMedia(file)}
                   >
                     {file.media_path.endsWith(".mp4") ? (
                       <div className="w-full h-full bg-black flex items-center justify-center">
                         <video
-                          src={`${API_BASE}/${file.media_path}`}
+                          src={getMediaUrl(file.media_path)}
                           className="w-full h-full object-cover"
                           muted
                           preload="metadata"
@@ -140,7 +154,11 @@ const ArtPosts = () => {
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="w-12 h-12 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <svg
+                              className="w-6 h-6 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
                               <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
                             </svg>
                           </div>
@@ -148,7 +166,7 @@ const ArtPosts = () => {
                       </div>
                     ) : (
                       <img
-                        src={`${API_BASE}/${file.media_path}`}
+                        src={getMediaUrl(file.media_path)}
                         alt="Artwork media"
                         className="w-full h-full object-cover"
                         loading="lazy"
@@ -181,14 +199,14 @@ const ArtPosts = () => {
             </button>
             {selectedMedia.media_path.endsWith(".mp4") ? (
               <video
-                src={`${API_BASE}/${selectedMedia.media_path}`}
+                src={getMediaUrl(selectedMedia.media_path)}
                 controls
                 autoPlay
                 className="max-h-[80vh] w-full rounded"
               />
             ) : (
               <img
-                src={`${API_BASE}/${selectedMedia.media_path}`}
+                src={getMediaUrl(selectedMedia.media_path)}
                 alt="Artwork media preview"
                 className="max-h-[80vh] w-auto max-w-full mx-auto rounded"
               />
