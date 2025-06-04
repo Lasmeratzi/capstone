@@ -1,5 +1,4 @@
 const express = require("express");
-const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
 
@@ -12,11 +11,17 @@ const postsRoutes = require("./routes/postsRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const commentsRoutes = require("./routes/commentsRoutes");
 const artworkpostsRoutes = require("./routes/artworkpostsRoutes");
-const artmediaRoutes = require("./routes/artmediaRoutes");  // <-- added this line
+const artmediaRoutes = require("./routes/artmediaRoutes");
+const auctionRoutes = require("./routes/auctionRoutes");
 
 const app = express();
 
-app.use(cors());
+const cors = require("cors");
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -28,7 +33,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// 👉 Serve uploads with CORS
+app.use("/uploads", cors(), express.static(path.join(__dirname, "uploads")));
 
 app.use("/api", signupRoutes);
 app.use("/api", loginRoutes);
@@ -39,7 +45,8 @@ app.use("/api", postsRoutes);
 app.use("/api", chatRoutes);
 app.use("/api", commentsRoutes);
 app.use("/api", artworkpostsRoutes);
-app.use("/api", artmediaRoutes);  // <-- register the new route handler
+app.use("/api", artmediaRoutes);
+app.use("/api", auctionRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, and Bid APIs.");
