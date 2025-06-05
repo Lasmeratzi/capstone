@@ -13,10 +13,18 @@ const createAuction = (auctionData, callback) => {
 // Get all auctions
 const getAllAuctions = (callback) => {
   const sql = `
-    SELECT * FROM auctions ORDER BY created_at DESC
+    SELECT 
+  auctions.*,
+  users.username AS author_username,
+  users.fullname AS author_fullname,
+  users.pfp AS author_pfp
+  FROM auctions
+  JOIN users ON auctions.author_id = users.id
+  ORDER BY auctions.created_at DESC
   `;
   db.query(sql, callback);
 };
+
 
 // Get a single auction by ID
 const getAuctionById = (auctionId, callback) => {
