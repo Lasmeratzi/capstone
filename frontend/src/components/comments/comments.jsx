@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { MessageCircle } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+
 
 const Comments = ({ postId, userId }) => {
   const [comments, setComments] = useState([]);
@@ -181,11 +183,10 @@ const Comments = ({ postId, userId }) => {
                   </p>
                   <p className="text-gray-400 text-xs">
                     {comment.created_at
-                      ? new Date(comment.created_at).toLocaleString()
+                      ? formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })
                       : "Just now"}
                   </p>
                 </div>
-
                 {editingCommentId === comment.id ? (
                   <textarea
                     className="w-full mt-1 p-2 border border-gray-300 rounded-md text-sm"

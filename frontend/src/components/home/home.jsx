@@ -3,15 +3,49 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../sidebar/sidebar";
 import MakePost from "../makepost/makepost";
+import MakeArt from "../makepost/makeart";
 import Post from "../home/post";
+import ArtPosts from "../home/artpost"; // your correct relative path
+import RSideHome from "../home/rsidehome";
 import { motion } from "framer-motion";
+
+// Simplified ArtPost card component to display one artwork post
+const ArtPostCard = ({ post }) => {
+  // assuming post has id, title, media (array), author info, created_at etc
+  return (
+    <div
+      key={post.id}
+      className="border border-gray-300 rounded p-4 mb-4 shadow-sm bg-white"
+    >
+      <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
+      <div className="flex overflow-x-auto space-x-2 mb-3">
+        {post.media?.map((mediaItem) => (
+          <img
+            key={mediaItem.id}
+            src={`http://localhost:5000/${mediaItem.file_path}`}
+            alt={post.title}
+            className="h-40 object-cover rounded"
+          />
+        ))}
+      </div>
+      <p className="text-sm text-gray-600 mb-1">
+        By: {post.author?.username || "Unknown"}
+      </p>
+      <p className="text-xs text-gray-500">
+        {new Date(post.created_at).toLocaleString()}
+      </p>
+    </div>
+  );
+};
 
 const Home = () => {
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [artPosts, setArtPosts] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [isMakePostOpen, setIsMakePostOpen] = useState(false);
+  const [isMakeArtOpen, setIsMakeArtOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -44,6 +78,11 @@ const Home = () => {
         });
         setPosts(postsResponse.data);
 
+        const artPostsResponse = await axios.get("http://localhost:5000/api/artwork-posts", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setArtPosts(artPostsResponse.data);
+
         const accountsResponse = await axios.get("http://localhost:5000/api/users", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -60,7 +99,7 @@ const Home = () => {
     };
 
     fetchProfileAndPosts();
-  }, []);
+  }, [navigate]);
 
   const toggleMakePostModal = () => {
     setIsMakePostOpen(!isMakePostOpen);
@@ -69,6 +108,16 @@ const Home = () => {
   const closeMakePostModal = (e) => {
     if (e.target.id === "makePostModal") {
       setIsMakePostOpen(false);
+    }
+  };
+
+  const toggleMakeArtModal = () => {
+    setIsMakeArtOpen(!isMakeArtOpen);
+  };
+
+  const closeMakeArtModal = (e) => {
+    if (e.target.id === "makeArtModal") {
+      setIsMakeArtOpen(false);
     }
   };
 
@@ -117,15 +166,23 @@ const Home = () => {
           </button>
         </div>
 
-        {/* Make a Post Prompt */}
+        {/* Make a Post + Make Artwork Buttons */}
         <div className="p-4 border-b mb-4 border-gray-300 flex justify-between items-center">
           <p className="text-gray-700 font-medium text-lg">Want to share something?</p>
-          <button
-            onClick={toggleMakePostModal}
-            className="px-4 py-2 bg-blue-500 text-white font-semibold rounded shadow hover:bg-blue-600 text-sm"
-          >
-            Make a post
-          </button>
+          <div className="space-x-2">
+            <button
+              onClick={toggleMakePostModal}
+              className="px-4 py-2 bg-blue-500 text-white font-semibold rounded shadow hover:bg-blue-600 text-sm"
+            >
+              Make a post
+            </button>
+            <button
+              onClick={toggleMakeArtModal}
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded shadow hover:bg-green-700 text-sm"
+            >
+              Make artwork
+            </button>
+          </div>
         </div>
 
         {/* Posts Feed */}
@@ -149,67 +206,14 @@ const Home = () => {
             </p>
           )}
         </div>
+
+       <div className="mt-6">
+  <ArtPosts />
+</div>
       </motion.div>
 
       {/* Right Sidebar */}
-      <div className="w-95 py-6 pr-40">
-        {/* Logged In User */}
-        <div
-          className="flex items-center mb-6 cursor-pointer"
-          onClick={() => navigate("/profile")}
-        >
-          {user.pfp ? (
-            <img
-              src={`http://localhost:5000/uploads/${user.pfp}`}
-              alt="Profile"
-              className="w-12 h-12 rounded-full border border-gray-300"
-            />
-          ) : (
-            <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-              <span className="text-gray-600 text-sm">N/A</span>
-            </div>
-          )}
-          <div className="ml-3">
-            <p className="font-bold text-gray-800">{user.username}</p>
-            <p className="text-gray-600 text-sm">{user.fullname}</p>
-          </div>
-        </div>
-
-        {/* Recent Users */}
-        <div>
-          <h3 className="text-gray-700 font-semibold mb-3">Follow other artists</h3>
-          <div className="space-y-3">
-            {accounts.slice(0, 3).map((account) => (
-              <div
-                key={account.id}
-                className="flex items-center bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition"
-              >
-                <img
-                  src={`http://localhost:5000/uploads/${account.pfp || "default.png"}`}
-                  alt={account.username}
-                  className="w-10 h-10 rounded-full border"
-                />
-                <div className="ml-3">
-                  <p className="font-medium text-gray-800">{account.username}</p>
-                  <p className="text-gray-500 text-sm">{account.fullname}</p>
-                </div>
-              </div>
-            ))}
-            {accounts.length === 0 && (
-              <p className="text-gray-500 text-sm">No other users available.</p>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="mt-10 text-xs text-gray-400 space-x-2">
-            <span className="hover:underline cursor-pointer">About</span>·
-            <span className="hover:underline cursor-pointer">Help</span>·
-            <span className="hover:underline cursor-pointer">Privacy</span>·
-            <span className="hover:underline cursor-pointer">Terms</span>·
-            <p className="mt-3">&copy; 2025 Illura from Studio</p>
-          </div>
-        </div>
-      </div>
+      <RSideHome user={user} accounts={accounts} />
 
       {/* MakePost Modal */}
       {isMakePostOpen && (
@@ -226,6 +230,25 @@ const Home = () => {
               &times;
             </button>
             <MakePost onSuccess={toggleMakePostModal} />
+          </div>
+        </div>
+      )}
+
+      {/* MakeArt Modal */}
+      {isMakeArtOpen && (
+        <div
+          id="makeArtModal"
+          onClick={closeMakeArtModal}
+          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+        >
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full relative">
+            <button
+              onClick={toggleMakeArtModal}
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+            >
+              &times;
+            </button>
+            <MakeArt />
           </div>
         </div>
       )}
