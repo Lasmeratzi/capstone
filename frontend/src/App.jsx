@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
 import Login from "./components/login/login";
 import Home from "./components/home/home";
-import ArtPost from "./components/home/artpost";
 import Profile from "./components/profiles/profile";
 import VisitProfile from "./components/profiles/visitprofile"; // Import VisitProfile
 import SearchProfile from "./components/search/searchprofile"; // Import SearchProfiles
@@ -16,7 +15,7 @@ import DisplayProfile from "./components/ADMIN/displayprofile/displayprofile";
 import LandingPage from "./components/landing/landingpage";
 import MakePost from "./components/makepost/makepost";
 import MakeArt from "./components/makepost/makeart";
-import ArtMedia from "./components/makepost/artmedia";
+import MakeAuction from "./components/makepost/makeauction";
 import ChatBot from "./components/chatbot/chatbot";
 import Terms from "./components/terms/terms";
 import DisplayPosts from "./components/ADMIN/displayposts/displayposts";
@@ -83,8 +82,7 @@ function App() {
         <Route path="/displayprofile" element={<DisplayProfile />} />
         <Route path="/makepost" element={<MakePost />} />
         <Route path="/makeart" element={<MakeArt />} />
-        <Route path="/artmedia" element={<ArtMedia />} />
-        <Route path="/artpost" element={<ArtPost />} />
+        <Route path="/makeauction" element={<MakeAuction />} />
         <Route path="/displayposts" element={<DisplayPosts />} />
       </Routes>
     </Router>
