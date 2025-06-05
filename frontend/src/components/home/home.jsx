@@ -4,14 +4,14 @@ import axios from "axios";
 import Sidebar from "../sidebar/sidebar";
 import MakePost from "../makepost/makepost";
 import MakeArt from "../makepost/makeart";
+import MakeAuction from "../makepost/makeauction";
 import Post from "../home/post";
-import ArtPosts from "../home/artpost"; // your correct relative path
+import ArtPosts from "../home/artpost";
+import Auctions from "../home/auctions";
 import RSideHome from "../home/rsidehome";
 import { motion } from "framer-motion";
 
-// Simplified ArtPost card component to display one artwork post
 const ArtPostCard = ({ post }) => {
-  // assuming post has id, title, media (array), author info, created_at etc
   return (
     <div
       key={post.id}
@@ -46,6 +46,8 @@ const Home = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [isMakePostOpen, setIsMakePostOpen] = useState(false);
   const [isMakeArtOpen, setIsMakeArtOpen] = useState(false);
+  const [isMakeAuctionOpen, setIsMakeAuctionOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("posts");
 
   const navigate = useNavigate();
 
@@ -86,7 +88,11 @@ const Home = () => {
         const accountsResponse = await axios.get("http://localhost:5000/api/users", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setAccounts(accountsResponse.data.filter((account) => account.id !== userResponse.data.id));
+        setAccounts(
+          accountsResponse.data.filter(
+            (account) => account.id !== userResponse.data.id
+          )
+        );
       } catch (error) {
         console.error("Failed to fetch data:", error);
         if (error.response?.status === 403) {
@@ -105,20 +111,8 @@ const Home = () => {
     setIsMakePostOpen(!isMakePostOpen);
   };
 
-  const closeMakePostModal = (e) => {
-    if (e.target.id === "makePostModal") {
-      setIsMakePostOpen(false);
-    }
-  };
-
   const toggleMakeArtModal = () => {
     setIsMakeArtOpen(!isMakeArtOpen);
-  };
-
-  const closeMakeArtModal = (e) => {
-    if (e.target.id === "makeArtModal") {
-      setIsMakeArtOpen(false);
-    }
   };
 
   const handleDelete = async (postId) => {
@@ -158,68 +152,116 @@ const Home = () => {
       >
         {/* Top Tabs */}
         <div className="flex border-b border-gray-300">
-          <button className="flex-1 text-center py-4 font-semibold text-lg hover:bg-gray-100 transition border-b-4 border-blue-500 text-blue-600">
+          <button
+            onClick={() => setActiveTab("posts")}
+            className={`flex-1 text-center py-4 font-semibold text-lg hover:bg-gray-100 transition ${
+              activeTab === "posts"
+                ? "border-b-4 border-blue-500 text-blue-600"
+                : "text-gray-600"
+            }`}
+          >
             Posts
           </button>
-          <button className="flex-1 text-center py-4 font-semibold text-lg hover:bg-gray-100 transition text-gray-600">
+          <button
+            onClick={() => setActiveTab("auctions")}
+            className={`flex-1 text-center py-4 font-semibold text-lg hover:bg-gray-100 transition ${
+              activeTab === "auctions"
+                ? "border-b-4 border-blue-500 text-blue-600"
+                : "text-gray-600"
+            }`}
+          >
             Auctions
           </button>
         </div>
 
-        {/* Make a Post + Make Artwork Buttons */}
+        {/* Top Buttons */}
         <div className="p-4 border-b mb-4 border-gray-300 flex justify-between items-center">
-          <p className="text-gray-700 font-medium text-lg">Want to share something?</p>
-          <div className="space-x-2">
-            <button
-              onClick={toggleMakePostModal}
-              className="px-4 py-2 bg-blue-500 text-white font-semibold rounded shadow hover:bg-blue-600 text-sm"
-            >
-              Make a post
-            </button>
-            <button
-              onClick={toggleMakeArtModal}
-              className="px-4 py-2 bg-green-600 text-white font-semibold rounded shadow hover:bg-green-700 text-sm"
-            >
-              Make artwork
-            </button>
-          </div>
+          {activeTab === "posts" && (
+            <>
+              <p className="text-gray-700 font-medium text-lg">
+                Want to share something?
+              </p>
+              <div className="space-x-2">
+                <button
+                  onClick={toggleMakePostModal}
+                  className="px-4 py-2 bg-blue-500 text-white font-semibold rounded shadow hover:bg-blue-600 text-sm"
+                >
+                  Make a post
+                </button>
+                <button
+                  onClick={toggleMakeArtModal}
+                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded shadow hover:bg-green-700 text-sm"
+                >
+                  Share artwork
+                </button>
+              </div>
+            </>
+          )}
+
+          {activeTab === "auctions" && (
+            <>
+              <p className="text-gray-700 font-medium text-lg">
+                Want to auction something?
+              </p>
+              <div className="space-x-2">
+                <button
+                  onClick={() => setIsMakeAuctionOpen(true)}
+                  className="px-4 py-2 bg-purple-600 text-white font-semibold rounded shadow hover:bg-purple-700 text-sm"
+                >
+                  Make an auction
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Posts Feed */}
+        {/* Main Content */}
         <div className="flex flex-col">
-          {errorMessage && (
-            <p className="text-red-500 p-4 text-center">{errorMessage}</p>
+          {activeTab === "posts" && (
+            <>
+              {errorMessage && (
+                <p className="text-red-500 p-4 text-center">{errorMessage}</p>
+              )}
+
+              {posts.length > 0 ? (
+                posts.map((post) => (
+                  <Post
+                    key={post.id}
+                    post={post}
+                    userId={user.id}
+                    handleDelete={() => handleDelete(post.id)}
+                  />
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm text-center p-6">
+                  No posts available.
+                </p>
+              )}
+
+              <div className="mt-6">
+                <ArtPosts />
+              </div>
+            </>
           )}
 
-          {posts.length > 0 ? (
-            posts.map((post) => (
-              <Post
-                key={post.id}
-                post={post}
-                userId={user.id}
-                handleDelete={() => handleDelete(post.id)}
-              />
-            ))
-          ) : (
-            <p className="text-gray-500 text-sm text-center p-6">
-              No posts available.
-            </p>
+          {activeTab === "auctions" && (
+            <div className="mt-4">
+              <Auctions />
+            </div>
           )}
         </div>
-
-       <div className="mt-6">
-  <ArtPosts />
-</div>
       </motion.div>
 
       {/* Right Sidebar */}
       <RSideHome user={user} accounts={accounts} />
 
-      {/* MakePost Modal */}
+      {/* Modals */}
       {isMakePostOpen && (
         <div
           id="makePostModal"
-          onClick={closeMakePostModal}
+          onClick={(e) => {
+            if (e.target.id === "makePostModal") setIsMakePostOpen(false);
+          }}
           className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
         >
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full relative">
@@ -234,11 +276,12 @@ const Home = () => {
         </div>
       )}
 
-      {/* MakeArt Modal */}
       {isMakeArtOpen && (
         <div
           id="makeArtModal"
-          onClick={closeMakeArtModal}
+          onClick={(e) => {
+            if (e.target.id === "makeArtModal") setIsMakeArtOpen(false);
+          }}
           className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
         >
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full relative">
@@ -249,6 +292,26 @@ const Home = () => {
               &times;
             </button>
             <MakeArt />
+          </div>
+        </div>
+      )}
+
+      {isMakeAuctionOpen && (
+        <div
+          id="makeAuctionModal"
+          onClick={(e) => {
+            if (e.target.id === "makeAuctionModal") setIsMakeAuctionOpen(false);
+          }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+        >
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full relative">
+            <button
+              onClick={() => setIsMakeAuctionOpen(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+            >
+              &times;
+            </button>
+            <MakeAuction onSuccess={() => setIsMakeAuctionOpen(false)} />
           </div>
         </div>
       )}
