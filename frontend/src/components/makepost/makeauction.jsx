@@ -5,6 +5,7 @@ export default function MakeAuction() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [startingPrice, setStartingPrice] = useState("");
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -17,8 +18,8 @@ export default function MakeAuction() {
     e.preventDefault();
     setError("");
 
-    if (!title || !description || !endTime || files.length === 0) {
-      setError("Title, description, end time, and images are required.");
+    if (!title || !description || !endTime || !startingPrice || files.length === 0) {
+      setError("All fields and at least one image are required.");
       return;
     }
 
@@ -29,7 +30,8 @@ export default function MakeAuction() {
       const auctionResponse = await axios.post("http://localhost:5000/api/auctions", {
         title,
         description,
-        end_time: endTime, // passing end time to backend
+        end_time: endTime,
+        starting_price: startingPrice,
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
@@ -52,6 +54,7 @@ export default function MakeAuction() {
       setTitle("");
       setDescription("");
       setEndTime("");
+      setStartingPrice("");
       setFiles([]);
 
     } catch (error) {
@@ -99,6 +102,19 @@ export default function MakeAuction() {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Starting Price (₱)</label>
+          <input
+            type="number"
+            value={startingPrice}
+            onChange={(e) => setStartingPrice(e.target.value)}
+            required
+            min="0"
+            step="0.01"
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Upload Images (multiple)</label>
           <input
             type="file"
@@ -111,6 +127,19 @@ export default function MakeAuction() {
               file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           />
         </div>
+
+        {files.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {files.map((file, index) => (
+              <img
+                key={index}
+                src={URL.createObjectURL(file)}
+                alt={`preview-${index}`}
+                className="w-24 h-24 object-cover rounded"
+              />
+            ))}
+          </div>
+        )}
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
 

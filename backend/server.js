@@ -14,6 +14,7 @@ const artworkpostsRoutes = require("./routes/artworkpostsRoutes");
 const artmediaRoutes = require("./routes/artmediaRoutes");
 const auctionRoutes = require("./routes/auctionRoutes");
 const auctionMediaRoutes = require("./routes/auctionmediaRoutes"); // ✅ added this line
+const auctionBidsRoutes = require("./routes/auctionbidsRoutes");
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use("/api", artworkpostsRoutes);
 app.use("/api", artmediaRoutes);
 app.use("/api", auctionRoutes);
 app.use("/api", auctionMediaRoutes); // ✅ added this line
+app.use("/api", auctionBidsRoutes); 
 
 app.get("/", (req, res) => {
   res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, Artwork, Auction, and Media APIs.");
