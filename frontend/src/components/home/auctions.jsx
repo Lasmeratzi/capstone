@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { X } from "lucide-react";
+import AuctionBids from "../comments/auctionbids"; // Adjust path as needed
 
 const API_BASE = "http://localhost:5000";
 
@@ -92,6 +93,16 @@ const Auctions = () => {
             </h3>
             <p className="text-gray-600 text-sm mb-2">{auction.description}</p>
 
+            {/* Price Info */}
+            <div className="flex gap-4 mb-2 text-sm">
+              <p className="text-gray-800 font-medium">
+                Starting Price: <span className="text-blue-600">₱{auction.starting_price}</span>
+              </p>
+              <p className="text-gray-800 font-medium">
+                Current Price: <span className="text-green-600">₱{auction.current_price}</span>
+              </p>
+            </div>
+
             {/* Auction Status */}
             <p
               className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
@@ -128,6 +139,16 @@ const Auctions = () => {
                     />
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Auction Bidding Form - Only show if active */}
+            {auction.status === "active" && (
+              <div className="mt-4">
+                <AuctionBids 
+                  auctionId={auction.id} 
+                  currentPrice={parseFloat(auction.current_price)} 
+                />
               </div>
             )}
           </div>
