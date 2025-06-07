@@ -4,8 +4,11 @@ import axios from "axios";
 import Sidebar from "../sidebar/sidebar"; // Include the sidebar for navigation
 import VisitPortfolio from "./visitportfolio"; // Import VisitPortfolio component
 import VisitPost from "./visitpost"; // Import VisitPost component for displaying visited user's posts
+import VisitArt from "./visitart"; // Import VisitArt component for visited user's artwork
+import VisitAuct from "./visitauct"; // Import VisitAuct component for visited user's auctions
 import { UserIcon, CakeIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
+import { NewspaperIcon, PhotoIcon, Squares2X2Icon, TagIcon } from "@heroicons/react/24/outline";
 
 const VisitProfile = () => {
   const { id } = useParams(); // Extract user ID from URL parameters
@@ -72,8 +75,8 @@ const VisitProfile = () => {
               <div className="mt-2 text-center text-xs text-gray-700 font-medium">
                 <span className="mr-1">Commissions:</span>
                 <button className={`px-3 py-1 rounded-full shadow transition duration-300 ${
-                  user.commissions === "open" ? "bg-green-500 hover:bg-green-600 text-white" : "bg-orange-500 hover:bg-orange-600 text-white"
-                }`}>
+                  user.commissions === "open" ? "bg-green-500 text-white" : "bg-orange-500 text-white"
+                }`} disabled>
                   {user.commissions === "open" ? "Open" : "Closed"}
                 </button>
               </div>
@@ -100,22 +103,62 @@ const VisitProfile = () => {
         {/* Divider Line */}
         <div className="border-b border-gray-200 mb-4"></div>
 
-        {/* Posts & Portfolio Tabs */}
+        {/* Tabs: Posts, Portfolio, Art, Auction */}
         <div className="flex border-b border-gray-300 mb-6 text-sm">
-          <button onClick={() => setActiveTab("posts")} className={`flex-1 text-center py-2 font-semibold ${
-            activeTab === "posts" ? "border-b-4 border-blue-500 text-blue-600" : "hover:bg-gray-100 text-gray-600"
-          }`}>
+          <button
+            onClick={() => setActiveTab("posts")}
+            className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
+              activeTab === "posts"
+                ? "border-b-4 border-blue-500 text-blue-600"
+                : "hover:bg-gray-100 text-gray-600"
+            }`}
+          >
+            <NewspaperIcon className="h-5 w-5" />
             Posts
           </button>
-          <button onClick={() => setActiveTab("portfolio")} className={`flex-1 text-center py-2 font-semibold ${
-            activeTab === "portfolio" ? "border-b-4 border-blue-500 text-blue-600" : "hover:bg-gray-100 text-gray-600"
-          }`}>
+
+          <button
+            onClick={() => setActiveTab("visitart")}
+            className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
+              activeTab === "visitart"
+                ? "border-b-4 border-blue-500 text-blue-600"
+                : "hover:bg-gray-100 text-gray-600"
+            }`}
+          >
+            <PhotoIcon className="h-5 w-5" />
+            Art
+          </button>
+
+          <button
+            onClick={() => setActiveTab("portfolio")}
+            className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
+              activeTab === "portfolio"
+                ? "border-b-4 border-blue-500 text-blue-600"
+                : "hover:bg-gray-100 text-gray-600"
+            }`}
+          >
+            <Squares2X2Icon className="h-5 w-5" />
             Portfolio
+          </button>
+
+          <button
+            onClick={() => setActiveTab("visitauct")}
+            className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
+              activeTab === "visitauct"
+                ? "border-b-4 border-blue-500 text-blue-600"
+                : "hover:bg-gray-100 text-gray-600"
+            }`}
+          >
+            <TagIcon className="h-5 w-5" />
+            Auctions
           </button>
         </div>
 
         {/* Content Section */}
-        {activeTab === "posts" ? <VisitPost userId={user.id} /> : <VisitPortfolio />}
+        {activeTab === "posts" && <VisitPost userId={user.id} />}
+        {activeTab === "visitart" && <VisitArt userId={user.id} />}
+        {activeTab === "portfolio" && <VisitPortfolio userId={user.id} />}
+        {activeTab === "visitauct" && <VisitAuct userId={user.id} />}
       </motion.div>
     </div>
   );
