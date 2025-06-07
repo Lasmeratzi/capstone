@@ -41,15 +41,13 @@ const getArtworkPostById = (id, callback) => {
 // Get posts by a specific author
 const getArtworkPostsByAuthorId = (authorId, callback) => {
   const sql = `
-  SELECT artwork_posts.id, artwork_posts.title, artwork_posts.description, artwork_posts.created_at,
-         users.id AS author_id, users.username AS author, users.fullname, users.pfp AS author_pfp
-  FROM artwork_posts
-  JOIN users ON artwork_posts.author_id = users.id
-  WHERE artwork_posts.author_id = ?
-  ORDER BY artwork_posts.created_at DESC
-`;
-
-
+    SELECT artwork_posts.id, artwork_posts.title, artwork_posts.description, artwork_posts.created_at,
+           users.id AS author_id, users.username AS author, users.fullname, users.pfp AS author_pfp
+    FROM artwork_posts
+    JOIN users ON artwork_posts.author_id = users.id
+    WHERE artwork_posts.author_id = ?
+    ORDER BY artwork_posts.created_at DESC
+  `;
   db.query(sql, [authorId], callback);
 };
 

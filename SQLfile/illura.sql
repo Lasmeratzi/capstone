@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 04, 2025 at 05:13 PM
+-- Generation Time: Jun 07, 2025 at 08:04 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -38,10 +38,11 @@ CREATE TABLE `artwork_media` (
 --
 
 INSERT INTO `artwork_media` (`id`, `post_id`, `media_path`) VALUES
-(8, 21, 'uploads/1748994999800-0530m9hgk1s41.jpg'),
-(9, 21, 'uploads/1748994999806-albularyos.jpg'),
 (14, 24, '1748997637717-Screenshot 2024-07-18 152542.jpg'),
-(15, 24, '1748997637718-Screenshot 2024-07-18 205725.jpg');
+(15, 24, '1748997637718-Screenshot 2024-07-18 205725.jpg'),
+(16, 25, '1749052030959-chill.jpg'),
+(17, 25, '1749052030963-flw.jpg'),
+(18, 26, '1749224986145-kensh.jpg');
 
 -- --------------------------------------------------------
 
@@ -62,8 +63,9 @@ CREATE TABLE `artwork_posts` (
 --
 
 INSERT INTO `artwork_posts` (`id`, `author_id`, `title`, `description`, `created_at`) VALUES
-(21, 28, 'asd', 'cvb', '2025-06-03 23:56:39'),
-(24, 28, 'qwert', 'asd', '2025-06-04 00:40:37');
+(24, 28, 'qwert', 'asd', '2025-06-04 00:40:37'),
+(25, 34, 'title', 'descripxc', '2025-06-04 15:47:10'),
+(26, 28, 'fgfg', 'hjhj', '2025-06-06 15:49:46');
 
 -- --------------------------------------------------------
 
@@ -76,11 +78,46 @@ CREATE TABLE `auctions` (
   `author_id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
+  `starting_price` decimal(10,2) NOT NULL,
+  `current_price` decimal(10,2) DEFAULT NULL,
   `end_time` datetime NOT NULL,
   `status` enum('pending','active','ended','stopped') DEFAULT 'pending',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `auctions`
+--
+
+INSERT INTO `auctions` (`id`, `author_id`, `title`, `description`, `starting_price`, `current_price`, `end_time`, `status`, `created_at`, `updated_at`) VALUES
+(2, 34, 'titletest', 'descrtest', 0.00, NULL, '2025-06-06 12:00:00', 'pending', '2025-06-04 16:03:14', '2025-06-04 16:03:14'),
+(3, 28, '2ndtest', 'again', 0.00, NULL, '2025-06-09 12:00:00', 'pending', '2025-06-06 15:48:10', '2025-06-06 15:48:10'),
+(4, 34, 'auctiontest3', 'test3', 2000.00, 2000.00, '2025-06-09 12:00:00', 'pending', '2025-06-07 03:08:35', '2025-06-07 03:08:35'),
+(5, 35, 'dadada', 'fgfg', 1000.00, 2180.00, '2025-06-10 12:00:00', 'active', '2025-06-07 04:33:24', '2025-06-07 06:00:03');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `auction_bids`
+--
+
+CREATE TABLE `auction_bids` (
+  `id` int(11) NOT NULL,
+  `auction_id` int(11) NOT NULL,
+  `bidder_id` int(11) NOT NULL,
+  `bid_amount` decimal(10,2) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `auction_bids`
+--
+
+INSERT INTO `auction_bids` (`id`, `auction_id`, `bidder_id`, `bid_amount`, `created_at`) VALUES
+(1, 5, 28, 2000.00, '2025-06-07 05:16:11'),
+(2, 5, 28, 2170.00, '2025-06-07 05:17:05'),
+(3, 5, 34, 2180.00, '2025-06-07 06:00:02');
 
 -- --------------------------------------------------------
 
@@ -94,6 +131,16 @@ CREATE TABLE `auction_media` (
   `media_path` varchar(500) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `auction_media`
+--
+
+INSERT INTO `auction_media` (`id`, `auction_id`, `media_path`, `created_at`) VALUES
+(1, 2, 'auctions/1749052994956-oct.jpg', '2025-06-04 16:03:14'),
+(2, 3, 'auctions/1749224890760-clem-onojeghuo-XW-Z9L930CY-unsplash.jpg', '2025-06-06 15:48:10'),
+(3, 4, 'auctions/1749265715408-chill.jpg', '2025-06-07 03:08:35'),
+(4, 5, 'auctions/1749270804353-Screenshot 2024-07-18 152542.jpg', '2025-06-07 04:33:24');
 
 -- --------------------------------------------------------
 
@@ -162,7 +209,8 @@ CREATE TABLE `posts` (
 --
 
 INSERT INTO `posts` (`id`, `author_id`, `title`, `media_path`, `created_at`, `updated_at`, `post_status`) VALUES
-(38, 34, 'adadadad', '2026da0f53159f06ec83082bac9919fc', '2025-06-01 16:25:58', '2025-06-01 16:25:58', 'active');
+(38, 34, 'adadadad', '2026da0f53159f06ec83082bac9919fc', '2025-06-01 16:25:58', '2025-06-01 16:25:58', 'active'),
+(39, 28, 'potspost', '0b3e8ef4fbf7665e44b970557022dcfb', '2025-06-06 15:49:13', '2025-06-06 15:49:13', 'active');
 
 -- --------------------------------------------------------
 
@@ -232,6 +280,14 @@ ALTER TABLE `auctions`
   ADD KEY `author_id` (`author_id`);
 
 --
+-- Indexes for table `auction_bids`
+--
+ALTER TABLE `auction_bids`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `auction_id` (`auction_id`),
+  ADD KEY `bidder_id` (`bidder_id`);
+
+--
 -- Indexes for table `auction_media`
 --
 ALTER TABLE `auction_media`
@@ -282,25 +338,31 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `artwork_media`
 --
 ALTER TABLE `artwork_media`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `artwork_posts`
 --
 ALTER TABLE `artwork_posts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `auctions`
 --
 ALTER TABLE `auctions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `auction_bids`
+--
+ALTER TABLE `auction_bids`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `auction_media`
 --
 ALTER TABLE `auction_media`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `comments`
@@ -318,7 +380,7 @@ ALTER TABLE `portfolio_items`
 -- AUTO_INCREMENT for table `posts`
 --
 ALTER TABLE `posts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `tags`
@@ -353,6 +415,13 @@ ALTER TABLE `artwork_posts`
 --
 ALTER TABLE `auctions`
   ADD CONSTRAINT `auctions_ibfk_1` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `auction_bids`
+--
+ALTER TABLE `auction_bids`
+  ADD CONSTRAINT `auction_bids_ibfk_1` FOREIGN KEY (`auction_id`) REFERENCES `auctions` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `auction_bids_ibfk_2` FOREIGN KEY (`bidder_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `auction_media`

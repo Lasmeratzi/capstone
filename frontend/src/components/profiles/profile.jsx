@@ -4,9 +4,12 @@ import Sidebar from "../sidebar/sidebar";
 import PortfolioGrid from "../profiles/portfoliogrid";
 import PortfolioUpload from "../portfolioupload/portfolioupload";
 import OwnPost from "../profiles/ownpost"; // Import OwnPost.jsx
+import OwnArt from "../profiles/ownart"; // <-- Added OwnArt.jsx import
+import OwnAuct from "../profiles/ownauct"; // <-- Added OwnAuct.jsx import
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { UserIcon, CakeIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
+import { NewspaperIcon, PhotoIcon, Squares2X2Icon, TagIcon } from "@heroicons/react/24/outline";
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -93,7 +96,9 @@ const Profile = () => {
                 <button
                   onClick={toggleCommissions}
                   className={`px-3 py-1 rounded-full shadow transition duration-300 ${
-                    commissions === "open" ? "bg-green-500 hover:bg-green-600 text-white" : "bg-orange-500 hover:bg-orange-600 text-white"
+                    commissions === "open"
+                      ? "bg-green-500 hover:bg-green-600 text-white"
+                      : "bg-orange-500 hover:bg-orange-600 text-white"
                   }`}
                 >
                   {commissions === "open" ? "Open" : "Closed"}
@@ -135,32 +140,67 @@ const Profile = () => {
         {/* Divider Line */}
         <div className="border-b border-gray-200 mb-4"></div>
 
-        {/* Posts & Portfolio Tabs (Smaller Version) */}
-        <div className="flex border-b border-gray-300 mb-6 text-sm">
-          <button
-            onClick={() => setActiveTab("posts")}
-            className={`flex-1 text-center py-2 font-semibold ${
-              activeTab === "posts" ? "border-b-4 border-blue-500 text-blue-600" : "hover:bg-gray-100 text-gray-600"
-            }`}
-          >
-            Posts
-          </button>
-          <button
-            onClick={() => setActiveTab("portfolio")}
-            className={`flex-1 text-center py-2 font-semibold ${
-              activeTab === "portfolio" ? "border-b-4 border-blue-500 text-blue-600" : "hover:bg-gray-100 text-gray-600"
-            }`}
-          >
-            Portfolio
-          </button>
-        </div>
+        {/* Tabs: Posts, Portfolio, Own Art, Own Auction */}
+  <div className="flex border-b border-gray-300 mb-6 text-sm">
+  <button
+    onClick={() => setActiveTab("posts")}
+    className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
+      activeTab === "posts"
+        ? "border-b-4 border-blue-500 text-blue-600"
+        : "hover:bg-gray-100 text-gray-600"
+    }`}
+  >
+    <NewspaperIcon className="h-5 w-5" />
+    Posts
+  </button>
+
+  <button
+    onClick={() => setActiveTab("ownart")}
+    className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
+      activeTab === "ownart"
+        ? "border-b-4 border-blue-500 text-blue-600"
+        : "hover:bg-gray-100 text-gray-600"
+    }`}
+  >
+    <PhotoIcon className="h-5 w-5" />
+    Own Art
+  </button>
+
+  <button
+    onClick={() => setActiveTab("portfolio")}
+    className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
+      activeTab === "portfolio"
+        ? "border-b-4 border-blue-500 text-blue-600"
+        : "hover:bg-gray-100 text-gray-600"
+    }`}
+  >
+    <Squares2X2Icon className="h-5 w-5" />
+    Portfolio
+  </button>
+
+  <button
+  onClick={() => setActiveTab("ownauct")}
+  className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
+    activeTab === "ownauct"
+      ? "border-b-4 border-blue-500 text-blue-600"
+      : "hover:bg-gray-100 text-gray-600"
+  }`}
+>
+  <TagIcon className="h-5 w-5" />
+  Own Auction
+</button>
+
+</div>
+
+
 
         {/* Content Section */}
-        {activeTab === "posts" ? (
-          <OwnPost userId={user.id} />
-        ) : (
+        {activeTab === "posts" && <OwnPost userId={user.id} />}
+        {activeTab === "ownart" && <OwnArt userId={user.id} />}
+        {activeTab === "portfolio" && (
           <PortfolioGrid portfolioItems={portfolioItems} loggedInUserId={user.id} />
         )}
+        {activeTab === "ownauct" && <OwnAuct userId={user.id} />}
 
         {/* Upload Modal */}
         {isUploadModalOpen && (

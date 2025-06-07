@@ -46,15 +46,15 @@ const getArtworkPostById = (req, res) => {
 
 // Get posts by the logged-in user
 const getUserArtworkPosts = (req, res) => {
-  const authorId = req.user.id;
+  const authorId = req.user.id; // Ensure this comes from authentication
 
   artworkPostsModels.getArtworkPostsByAuthorId(authorId, (err, results) => {
-    if (err) {
-      return res.status(500).json({ message: "Database error.", error: err });
-    }
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
     res.status(200).json(results);
   });
 };
+
+
 
 // Update an artwork post (Only if user is the author)
 const updateArtworkPost = (req, res) => {
