@@ -10,6 +10,8 @@ router.post("/auctions", authenticateToken, auctionController.createAuction);
 // Get all auctions
 router.get("/auctions", authenticateToken, auctionController.getAllAuctions);
 
+router.get("/auctions/user", authenticateToken, auctionController.getUserAuctions);
+
 // Get single auction by ID
 router.get("/auctions/:auctionId", authenticateToken, auctionController.getAuctionById);
 
