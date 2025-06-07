@@ -17,7 +17,7 @@ const Login = () => {
         const payload = JSON.parse(atob(token.split(".")[1])); // Decode JWT
         const currentTime = Math.floor(Date.now() / 1000);
         if (payload.exp && payload.exp > currentTime) {
-          navigate("/home"); // Redirect if token is valid
+          navigate("/login"); // Redirect if token is valid
         } else {
           console.error("Token expired. Clearing token.");
           localStorage.removeItem("token"); // Clear expired token
@@ -27,7 +27,7 @@ const Login = () => {
         localStorage.removeItem("token"); // Clear invalid token
       }
     }
-  }, [navigate]);
+  }, [navigate]); 
 
   // Handle input changes
   const handleChange = (e) => {
