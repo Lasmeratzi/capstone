@@ -1,25 +1,25 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
-import Login from "./components/login/login";
-import Home from "./components/home/home";
-import Profile from "./components/profiles/profile";
-import VisitProfile from "./components/profiles/visitprofile"; // Import VisitProfile
-import SearchProfile from "./components/search/searchprofile"; // Import SearchProfiles
-import Signup from "./components/signup/signup";
-import Forgotpass from "./components/forgotpass/forgotpass";
-import Homeadmin from "./components/ADMIN/homeadmin/homeadmin";
-import Loginadmin from "./components/ADMIN/loginadmin/loginadmin";
-import Tags from "./components/ADMIN/tags/tags";
-import DisplayProfile from "./components/ADMIN/displayprofile/displayprofile";
-import LandingPage from "./components/landing/landingpage";
-import MakePost from "./components/makepost/makepost";
-import MakeArt from "./components/makepost/makeart";
-import MakeAuction from "./components/makepost/makeauction";
-import ChatBot from "./components/chatbot/chatbot";
-import Terms from "./components/terms/terms";
-import DisplayPosts from "./components/ADMIN/displayposts/displayposts";
-import About from "./components/about/about";
+import ProtectedRoute from "./pages/ProtectedRoute"; // Import ProtectedRoute
+import Login from "./pages/login/login";
+import Home from "./pages/home/home";
+import Profile from "./pages/profiles/profile";
+import VisitProfile from "./pages/profiles/visitprofile"; // Import VisitProfile
+import SearchProfile from "./pages/search/searchprofile"; // Import SearchProfiles
+import Signup from "./pages/signup/signup";
+import Forgotpass from "./pages/forgotpass/forgotpass";
+import Homeadmin from "./pages/ADMIN/homeadmin/homeadmin";
+import Loginadmin from "./pages/ADMIN/loginadmin/loginadmin";
+import Tags from "./pages/ADMIN/tags/tags";
+import DisplayProfile from "./pages/ADMIN/displayprofile/displayprofile";
+import LandingPage from "./pages/landing/landingpage";
+import MakePost from "./pages/makepost/makepost";
+import MakeArt from "./pages/makepost/makeart";
+import MakeAuction from "./pages/makepost/makeauction";
+import ChatBot from "./pages/chatbot/chatbot";
+import Terms from "./pages/terms/terms";
+import DisplayPosts from "./pages/ADMIN/displayposts/displayposts";
+import About from "./pages/about/about";
 
 
 function App() {
