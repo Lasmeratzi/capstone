@@ -1,24 +1,28 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ProtectedRoute from "./pages/ProtectedRoute"; // Import ProtectedRoute
+import ProtectedRoute from "./pages/ProtectedRoute"; 
+import AdminProtectedRoute from "./pages/AdminProtectedRoute"; 
 import Login from "./pages/login/login";
 import Home from "./pages/home/home";
+import Notifications from "./pages/notifications/notifications";
 import Profile from "./pages/profiles/profile";
-import VisitProfile from "./pages/profiles/visitprofile"; // Import VisitProfile
-import SearchProfile from "./pages/search/searchprofile"; // Import SearchProfiles
+import AuctionWins from "./pages/auctionwins/auctionwins";
+import VisitProfile from "./pages/profiles/visitprofile"; 
+import SearchProfile from "./pages/search/searchprofile"; 
 import Signup from "./pages/signup/signup";
 import Forgotpass from "./pages/forgotpass/forgotpass";
 import Homeadmin from "./pages/ADMIN/homeadmin/homeadmin";
 import Loginadmin from "./pages/ADMIN/loginadmin/loginadmin";
 import Tags from "./pages/ADMIN/tags/tags";
 import DisplayProfile from "./pages/ADMIN/displayprofile/displayprofile";
+import DisplayPosts from "./pages/ADMIN/displayposts/displayposts";
+import DisplayAuctions from "./pages/ADMIN/displayauctions/displayauctions"; 
 import LandingPage from "./pages/landing/landingpage";
 import MakePost from "./pages/makepost/makepost";
 import MakeArt from "./pages/makepost/makeart";
 import MakeAuction from "./pages/makepost/makeauction";
 import ChatBot from "./pages/chatbot/chatbot";
 import Terms from "./pages/terms/terms";
-import DisplayPosts from "./pages/ADMIN/displayposts/displayposts";
 import About from "./pages/about/about";
 
 
@@ -33,12 +37,31 @@ function App() {
         <Route path="/forgotpass" element={<Forgotpass />} />
         <Route path="/about" element={<About />} />
         <Route path="/terms" element={<Terms/>} />
+        <Route path="/makepost" element={<MakePost/>} />
+        <Route path="/makeart" element={<MakeArt/>} />
+        <Route path="/makeauction" element={<MakeAuction/>} />
         {/* Protected Routes */}
         <Route
           path="/home"
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/auctionwins"
+          element={
+            <ProtectedRoute>
+              <AuctionWins />
             </ProtectedRoute>
           }
         />
@@ -70,20 +93,42 @@ function App() {
           path="/searchprofile"
           element={
             <ProtectedRoute>
-              <SearchProfile /> {/* Match the corrected import and component name */}
+              <SearchProfile /> 
             </ProtectedRoute>
           }
         />
 
         {/* Admin Routes */}
-        <Route path="/homeadmin" element={<Homeadmin />} />
         <Route path="/loginadmin" element={<Loginadmin />} />
-        <Route path="/tags" element={<Tags />} />
-        <Route path="/displayprofile" element={<DisplayProfile />} />
-        <Route path="/makepost" element={<MakePost />} />
-        <Route path="/makeart" element={<MakeArt />} />
-        <Route path="/makeauction" element={<MakeAuction />} />
-        <Route path="/displayposts" element={<DisplayPosts />} />
+        {/* Admin Protected Routes */}
+        <Route path="/homeadmin" element={
+          <AdminProtectedRoute adminOnly={true}>
+            <Homeadmin />
+          </AdminProtectedRoute>
+        } />
+        <Route path="/tags" element={
+          <AdminProtectedRoute adminOnly={true}>
+            <Tags />
+          </AdminProtectedRoute>
+        } />
+        <Route path="/displayprofile" element={
+          <AdminProtectedRoute adminOnly={true}>
+            <DisplayProfile />
+          </AdminProtectedRoute>
+        } />
+        <Route path="/displayposts" element={
+          <AdminProtectedRoute adminOnly={true}>
+            <DisplayPosts />
+          </AdminProtectedRoute>
+        } />
+        <Route path="/displayauctions" element={
+          <AdminProtectedRoute adminOnly={true}>
+            <DisplayAuctions />
+          </AdminProtectedRoute>
+        } />
+
+        
+       
       </Routes>
     </Router>
   );

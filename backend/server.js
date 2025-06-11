@@ -13,8 +13,15 @@ const commentsRoutes = require("./routes/commentsRoutes");
 const artworkpostsRoutes = require("./routes/artworkpostsRoutes");
 const artmediaRoutes = require("./routes/artmediaRoutes");
 const auctionRoutes = require("./routes/auctionRoutes");
-const auctionMediaRoutes = require("./routes/auctionmediaRoutes"); // ✅ added this line
-const auctionBidsRoutes = require("./routes/auctionbidsRoutes");
+const auctionMediaRoutes = require("./routes/auctionmediaRoutes"); 
+const auctionbidsRoutes = require("./routes/auctionbidsRoutes");
+const walletRoutes = require("./routes/walletRoutes");
+const adminLoginRoutes = require("./routes/adminLoginRoutes");
+const adminLogoutRoutes = require("./routes/adminLogoutRoutes");
+const notificationsRoutes = require("./routes/notificationsRoutes");
+
+// 👉 Import the auction cron job
+const checkAndEndAuctions = require("./jobs/auctionJobs");
 
 const app = express();
 
@@ -49,12 +56,20 @@ app.use("/api", commentsRoutes);
 app.use("/api", artworkpostsRoutes);
 app.use("/api", artmediaRoutes);
 app.use("/api", auctionRoutes);
-app.use("/api", auctionMediaRoutes); // ✅ added this line
-app.use("/api", auctionBidsRoutes); 
+app.use("/api", auctionMediaRoutes); 
+app.use("/api/auctionbids", auctionbidsRoutes);
+app.use("/api", walletRoutes);
+app.use("/api", adminLoginRoutes); 
+app.use("/api", adminLogoutRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, Artwork, Auction, and Media APIs.");
 });
 
 const PORT = process.env.PORT || 5000;
+
+// 👉 Start the auction cron job before starting the server
+checkAndEndAuctions();
+
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
