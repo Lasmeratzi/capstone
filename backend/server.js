@@ -19,6 +19,7 @@ const walletRoutes = require("./routes/walletRoutes");
 const adminLoginRoutes = require("./routes/adminLoginRoutes");
 const adminLogoutRoutes = require("./routes/adminLogoutRoutes");
 const notificationsRoutes = require("./routes/notificationsRoutes");
+const verifyrequestRoutes = require("./routes/verifyrequestRoutes");
 
 // 👉 Import the auction cron job
 const checkAndEndAuctions = require("./jobs/auctionJobs");
@@ -62,6 +63,7 @@ app.use("/api", walletRoutes);
 app.use("/api", adminLoginRoutes); 
 app.use("/api", adminLogoutRoutes);
 app.use("/api/notifications", notificationsRoutes);
+app.use("/api", verifyrequestRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, Artwork, Auction, and Media APIs.");
