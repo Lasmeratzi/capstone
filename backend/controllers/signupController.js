@@ -48,11 +48,11 @@ const getUserById = (req, res) => {
 
 // Search users by username
 const searchUsers = (req, res) => {
-  const { username } = req.query; // Get the search term from query parameters
+  const { username } = req.query; 
 
   signupModels.searchUsersByUsername(username, (err, results) => {
     if (err) return res.status(500).json({ message: "Database error.", error: err });
-    res.status(200).json(results); // Return the search results
+    res.status(200).json(results); 
   });
 };
 
