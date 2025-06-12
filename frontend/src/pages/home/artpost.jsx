@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { X } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 const API_BASE = "http://localhost:5000";
 
-// Helper: fix media path by stripping leading 'uploads/' if present
 const getMediaUrl = (media_path) => {
-  // Remove leading "uploads/" if present to avoid duplication
   const cleanPath = media_path.startsWith("uploads/")
     ? media_path.slice("uploads/".length)
     : media_path;
@@ -17,7 +15,12 @@ const ArtPosts = () => {
   const [artPosts, setArtPosts] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [currentMedia, setCurrentMedia] = useState({
+    file: null,
+    index: 0,
+    mediaArray: []
+  });
+  const [showMediaViewer, setShowMediaViewer] = useState(false);
 
   const fetchArtPostsWithMedia = async () => {
     setLoading(true);
@@ -60,19 +63,153 @@ const ArtPosts = () => {
     fetchArtPostsWithMedia();
   }, []);
 
-  const getGalleryLayoutClass = (mediaCount) => {
-    if (mediaCount === 1) return "grid-cols-1";
-    if (mediaCount === 2) return "grid-cols-2";
-    if (mediaCount === 3) return "grid-cols-2";
-    if (mediaCount === 4) return "grid-cols-2";
-    return "grid-cols-3";
+  const openMediaViewer = (file, index, mediaArray) => {
+    setCurrentMedia({
+      file,
+      index,
+      mediaArray
+    });
+    setShowMediaViewer(true);
   };
 
-  const getMediaClass = (mediaCount, index) => {
-    if (mediaCount === 1) return "row-span-2 col-span-2";
-    if (mediaCount === 2) return "row-span-2";
-    if (mediaCount === 3 && index === 0) return "row-span-2 col-span-1";
-    return "";
+  const navigateMedia = (direction) => {
+    const newIndex = direction === 'next' 
+      ? (currentMedia.index + 1) % currentMedia.mediaArray.length
+      : (currentMedia.index - 1 + currentMedia.mediaArray.length) % currentMedia.mediaArray.length;
+    
+    setCurrentMedia({
+      ...currentMedia,
+      file: currentMedia.mediaArray[newIndex],
+      index: newIndex
+    });
+  };
+
+  const renderMediaGrid = (media) => {
+    const count = media.length;
+    
+    if (count === 1) {
+      return (
+        <div className="w-full rounded-lg overflow-hidden">
+          <MediaItem 
+            file={media[0]} 
+            onClick={() => openMediaViewer(media[0], 0, media)} 
+          />
+        </div>
+      );
+    }
+
+    if (count === 2) {
+      return (
+        <div className="grid grid-cols-2 gap-1">
+          {media.map((file, index) => (
+            <div key={file.id} className="aspect-square">
+              <MediaItem 
+                file={file} 
+                onClick={() => openMediaViewer(file, index, media)} 
+              />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (count === 3) {
+      return (
+        <div className="grid grid-cols-2 gap-1">
+          <div className="row-span-2 aspect-square">
+            <MediaItem 
+              file={media[0]} 
+              onClick={() => openMediaViewer(media[0], 0, media)} 
+            />
+          </div>
+          <div className="aspect-square">
+            <MediaItem 
+              file={media[1]} 
+              onClick={() => openMediaViewer(media[1], 1, media)} 
+            />
+          </div>
+          <div className="aspect-square">
+            <MediaItem 
+              file={media[2]} 
+              onClick={() => openMediaViewer(media[2], 2, media)} 
+            />
+          </div>
+        </div>
+      );
+    }
+
+    if (count === 4) {
+      return (
+        <div className="grid grid-cols-2 gap-1">
+          {media.map((file, index) => (
+            <div key={file.id} className="aspect-square">
+              <MediaItem 
+                file={file} 
+                onClick={() => openMediaViewer(file, index, media)} 
+              />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // For 5+ images - show first 4 with +X overlay on the 4th image
+    return (
+      <div className="grid grid-cols-2 gap-1">
+        {media.slice(0, 4).map((file, index) => (
+          <div 
+            key={file.id} 
+            className={`aspect-square relative ${index === 3 ? 'cursor-pointer' : ''}`}
+            onClick={() => index === 3 
+              ? openMediaViewer(media[3], 3, media) 
+              : openMediaViewer(file, index, media)}
+          >
+            <MediaItem file={file} />
+            {index === 3 && (
+              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center text-white font-bold text-xl">
+                +{media.length - 4}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const MediaItem = ({ file, onClick }) => {
+    return (
+      <div className="w-full h-full" onClick={onClick}>
+        {file.media_path.endsWith(".mp4") ? (
+          <div className="w-full h-full bg-black flex items-center justify-center">
+            <video
+              src={getMediaUrl(file.media_path)}
+              className="w-full h-full object-cover"
+              muted
+              preload="metadata"
+              playsInline
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-12 h-12 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <img
+            src={getMediaUrl(file.media_path)}
+            alt="Artwork media"
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        )}
+      </div>
+    );
   };
 
   if (loading) {
@@ -131,49 +268,8 @@ const ArtPosts = () => {
             <p className="text-gray-600 mb-3">{post.description}</p>
 
             {post.media?.length > 0 && (
-              <div
-                className={`grid ${getGalleryLayoutClass(post.media.length)} gap-2 rounded-lg overflow-hidden`}
-              >
-                {post.media.map((file, index) => (
-                  <div
-                    key={file.id}
-                    className={`relative aspect-square ${getMediaClass(
-                      post.media.length,
-                      index
-                    )}`}
-                    onClick={() => setSelectedMedia(file)}
-                  >
-                    {file.media_path.endsWith(".mp4") ? (
-                      <div className="w-full h-full bg-black flex items-center justify-center">
-                        <video
-                          src={getMediaUrl(file.media_path)}
-                          className="w-full h-full object-cover"
-                          muted
-                          preload="metadata"
-                          playsInline
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-12 h-12 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                            <svg
-                              className="w-6 h-6 text-white"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <img
-                        src={getMediaUrl(file.media_path)}
-                        alt="Artwork media"
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    )}
-                  </div>
-                ))}
+              <div className="mt-3">
+                {renderMediaGrid(post.media)}
               </div>
             )}
           </div>
@@ -182,35 +278,63 @@ const ArtPosts = () => {
         <p className="text-gray-500 text-center">No artwork posts yet.</p>
       )}
 
-      {selectedMedia && (
+      {showMediaViewer && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4"
-          onClick={() => setSelectedMedia(null)}
+          onClick={() => setShowMediaViewer(false)}
         >
           <div
             className="relative max-w-4xl w-full max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              onClick={() => setSelectedMedia(null)}
+              onClick={() => setShowMediaViewer(false)}
               className="absolute -top-12 right-0 text-white hover:text-gray-300 transition"
             >
               <X size={32} />
             </button>
-            {selectedMedia.media_path.endsWith(".mp4") ? (
-              <video
-                src={getMediaUrl(selectedMedia.media_path)}
-                controls
-                autoPlay
-                className="max-h-[80vh] w-full rounded"
-              />
-            ) : (
-              <img
-                src={getMediaUrl(selectedMedia.media_path)}
-                alt="Artwork media preview"
-                className="max-h-[80vh] w-auto max-w-full mx-auto rounded"
-              />
-            )}
+
+            <div className="relative h-full">
+              {currentMedia.mediaArray.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateMedia('prev');
+                    }}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-10"
+                  >
+                    <ChevronLeft size={32} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateMedia('next');
+                    }}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-10"
+                  >
+                    <ChevronRight size={32} />
+                  </button>
+                </>
+              )}
+              {currentMedia.file.media_path.endsWith(".mp4") ? (
+                <video
+                  src={getMediaUrl(currentMedia.file.media_path)}
+                  controls
+                  autoPlay
+                  className="max-h-[80vh] w-full rounded"
+                />
+              ) : (
+                <img
+                  src={getMediaUrl(currentMedia.file.media_path)}
+                  alt="Artwork media preview"
+                  className="max-h-[80vh] w-auto max-w-full mx-auto rounded"
+                />
+              )}
+              <div className="absolute bottom-4 left-0 right-0 text-center text-white">
+                {currentMedia.index + 1} of {currentMedia.mediaArray.length}
+              </div>
+            </div>
           </div>
         </div>
       )}
