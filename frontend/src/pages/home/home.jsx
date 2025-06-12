@@ -275,46 +275,14 @@ const Home = () => {
           </div>
         </div>
       )}
-
-      {isMakeArtOpen && (
-        <div
-          id="makeArtModal"
-          onClick={(e) => {
-            if (e.target.id === "makeArtModal") setIsMakeArtOpen(false);
-          }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
-        >
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full relative">
-            <button
-              onClick={toggleMakeArtModal}
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
-            >
-              &times;
-            </button>
-            <MakeArt />
-          </div>
-        </div>
-      )}
-
+       {isMakeArtOpen && (
+  <MakeArt onClose={toggleMakeArtModal} />
+)}
       {isMakeAuctionOpen && (
-        <div
-          id="makeAuctionModal"
-          onClick={(e) => {
-            if (e.target.id === "makeAuctionModal") setIsMakeAuctionOpen(false);
-          }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
-        >
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full relative">
-            <button
-              onClick={() => setIsMakeAuctionOpen(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
-            >
-              &times;
-            </button>
-            <MakeAuction onSuccess={() => setIsMakeAuctionOpen(false)} />
-          </div>
-        </div>
-      )}
+  <MakeAuction 
+    onClose={() => setIsMakeAuctionOpen(false)} 
+  />
+)}
     </div>
   );
 };
