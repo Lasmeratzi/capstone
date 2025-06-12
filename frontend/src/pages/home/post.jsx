@@ -2,6 +2,13 @@ import React, { useState, useEffect } from "react";
 import { MessageCircle, MoreVertical, Loader, Trash, Pencil, X } from "lucide-react";
 import axios from "axios";
 import Comments from "../comments/comments";
+import { FaCheckCircle } from "react-icons/fa";
+
+const VerifiedBadge = () => (
+  <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 ml-1">
+    <FaCheckCircle className="w-3 h-3 text-white" />
+  </div>
+);
 
 const Post = ({ post, userId, handleDelete }) => {
   const [showComments, setShowComments] = useState(false);
@@ -54,11 +61,6 @@ const Post = ({ post, userId, handleDelete }) => {
         formData.append("media", editedMedia);
       }
 
-      // Debug form data content
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ", " + pair[1]);
-      }
-
       const response = await axios.patch(
         `http://localhost:5000/api/posts/${post.id}`,
         formData,
@@ -70,7 +72,6 @@ const Post = ({ post, userId, handleDelete }) => {
         }
       );
 
-      console.log("Edit response:", response.data);
       setIsEditing(false);
       setMenuOpen(false);
       window.location.reload();
@@ -83,8 +84,8 @@ const Post = ({ post, userId, handleDelete }) => {
   };
 
   const confirmDeletePost = () => {
-    setConfirmDelete(false); // Close confirmation modal
-    handleDelete(post.id); // Proceed with deletion
+    setConfirmDelete(false);
+    handleDelete(post.id);
   };
 
   return (
@@ -110,8 +111,17 @@ const Post = ({ post, userId, handleDelete }) => {
             </div>
           )}
           <div>
-            <p className="font-bold text-gray-800">{post.author}</p>
+            <div className="flex items-center">
+              <p className="font-bold text-gray-800">{post.author}</p>
+              {post.is_verified && <VerifiedBadge />}
+            </div>
             <p className="text-gray-600 text-sm">{post.fullname}</p>
+            {post.verification_request_status === "pending" && (
+              <span className="text-xs text-yellow-500">Verification pending</span>
+            )}
+            {post.verification_request_status === "rejected" && (
+              <span className="text-xs text-red-500">Verification rejected</span>
+            )}
           </div>
         </div>
 
@@ -150,9 +160,10 @@ const Post = ({ post, userId, handleDelete }) => {
         )}
       </div>
 
+      {/* Rest of the post content */}
       {!isEditing ? (
         <>
-          <h4 className=" text-base text-gray-800">{post.title}</h4>
+          <h4 className="text-base text-gray-800">{post.title}</h4>
           {post.media_path && (
             <div onClick={() => setIsImageModalOpen(true)} className="cursor-pointer">
               <img
@@ -178,7 +189,7 @@ const Post = ({ post, userId, handleDelete }) => {
           {isImageModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4">
               <div className="relative bg-white rounded-lg max-w-6xl w-full h-[80vh] flex">
-                {/* Image container - fixed size */}
+                {/* Image container */}
                 <div className="flex-[2] overflow-hidden flex items-center justify-center p-4 bg-gray-100">
                   <img
                     src={`http://localhost:5000/uploads/${post.media_path}`}
@@ -204,7 +215,10 @@ const Post = ({ post, userId, handleDelete }) => {
                         </div>
                       )}
                       <div>
-                        <p className="font-bold text-gray-800">{post.author}</p>
+                        <div className="flex items-center">
+                          <p className="font-bold text-gray-800">{post.author}</p>
+                          {post.is_verified && <VerifiedBadge />}
+                        </div>
                         <p className="text-gray-600 text-sm">{post.fullname}</p>
                       </div>
                     </div>
@@ -299,4 +313,5 @@ const Post = ({ post, userId, handleDelete }) => {
     </div>
   );
 };
+
 export default Post;

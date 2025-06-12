@@ -27,25 +27,29 @@ const getAllUsers = (callback) => {
   db.query(sql, callback);
 };
 
-// Get a user by ID
 const getUserById = (id, callback) => {
   const sql = `
-    SELECT id, fullname, username, bio, birthdate, pfp, account_status, commissions
+    SELECT id, fullname, username, bio, birthdate, pfp, account_status, commissions, 
+           verification_request_status, twitter_link, instagram_link, facebook_link
     FROM users
     WHERE id = ?
   `;
   db.query(sql, [id], callback);
 };
 
-// Search for users by username or fullname (partial match)
 const searchUsers = (query, callback) => {
   const sql = `
-    SELECT id, fullname, username, bio, birthdate, pfp, account_status, commissions
-    FROM users
-    WHERE username LIKE ? OR fullname LIKE ?
+    SELECT 
+      u.id, u.fullname, u.username, u.bio, u.birthdate, u.pfp, u.account_status, u.commissions,
+      vr.status AS verification_request_status
+    FROM users u
+    LEFT JOIN verification_requests vr ON u.id = vr.user_id
+    WHERE u.username LIKE ? OR u.fullname LIKE ?
+    ORDER BY vr.request_date DESC
   `;
   db.query(sql, [`%${query}%`, `%${query}%`], callback);
 };
+
 
 // Search for a user by email
 const searchUserByEmail = (email, callback) => {
@@ -56,52 +60,46 @@ const searchUserByEmail = (email, callback) => {
   db.query(sql, [email], callback);
 };
 
-// Update a user's details (profile information)
 const updateUser = (id, userData, callback) => {
-  const sql = `
-    UPDATE users
-    SET fullname = ?, bio = ?, birthdate = ?, pfp = ?
-    WHERE id = ?
-  `;
-  const params = [
-    userData.fullname,
-    userData.bio,
-    userData.birthdate,
-    userData.pfp,
-    id,
-  ];
-  db.query(sql, params, callback);
+  const updates = [];
+  const values = [];
+
+  if (userData.username !== undefined) {
+    updates.push("username = ?");
+    values.push(userData.username);
+  }
+  if (userData.bio !== undefined) {
+    updates.push("bio = ?");
+    values.push(userData.bio);
+  }
+  if (userData.pfp !== undefined) {
+    updates.push("pfp = ?");
+    values.push(userData.pfp);
+  }
+
+  if (updates.length === 0) {
+    return callback(null, { affectedRows: 0 }); // nothing to update
+  }
+
+  values.push(id);
+
+  const sql = `UPDATE users SET ${updates.join(", ")} WHERE id = ?`;
+
+  db.query(sql, values, callback);
 };
+
+
 
 // Update account status (active, on hold, banned)
-const updateAccountStatus = async (req, res) => {
-  const { userId, newAccountStatus } = req.body;  // Renamed `newStatus` to `newAccountStatus`
-  
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Update the user's account status
-    user.accountStatus = newAccountStatus;  // Change from `status` to `accountStatus`
-    await user.save();
-
-    // Send response that account status was updated
-    res.status(200).json({ message: `Account status updated to ${newAccountStatus}` });
-
-    // If status is "banned" or "on hold", inform the frontend to log out
-    if (newAccountStatus === 'banned' || newAccountStatus === 'on hold') {
-      res.status(200).json({
-        message: 'Account has been banned/on hold, please log out.',
-        logoutRequired: true,
-      });
-    }
-  } catch (error) {
-    console.error('Error updating account status:', error);
-    res.status(500).json({ message: 'Server error.' });
-  }
+const updateAccountStatus = (id, newAccountStatus, callback) => {
+  const sql = `
+    UPDATE users
+    SET account_status = ?
+    WHERE id = ?
+  `;
+  db.query(sql, [newAccountStatus, id], callback);
 };
+
 
 // Update commissions field (open or closed)
 const updateCommissions = (id, commissions, callback) => {
@@ -122,29 +120,22 @@ const deleteUserById = (id, callback) => {
   db.query(sql, [id], callback);
 };
 
-// Follow a user
-const followUser = (followerId, followedId, callback) => {
+const getUserWithVerificationStatusById = (id, callback) => {
   const sql = `
-    INSERT INTO followers (follower_id, followed_id)
-    VALUES (?, ?)
+    SELECT 
+      u.id, u.fullname, u.username, u.bio, u.birthdate, u.pfp, u.account_status, u.commissions,
+      u.twitter_link, u.instagram_link, u.facebook_link,
+      vr.status AS verification_request_status
+    FROM users u
+    LEFT JOIN verification_requests vr ON u.id = vr.user_id
+    WHERE u.id = ?
+    ORDER BY vr.request_date DESC
+    LIMIT 1
   `;
-  db.query(sql, [followerId, followedId], callback);
+  db.query(sql, [id], callback);
 };
 
-// Leave a review for a user
-const leaveReview = (reviewData, callback) => {
-  const sql = `
-    INSERT INTO reviews (reviewer_id, reviewed_id, rating, comment)
-    VALUES (?, ?, ?, ?)
-  `;
-  const params = [
-    reviewData.reviewerId,
-    reviewData.reviewedId,
-    reviewData.rating,
-    reviewData.comment,
-  ];
-  db.query(sql, params, callback);
-};
+
 
 module.exports = {
   createUser,
@@ -156,6 +147,5 @@ module.exports = {
   updateAccountStatus,
   updateCommissions,
   deleteUserById,
-  followUser,
-  leaveReview,
+  getUserWithVerificationStatusById,
 };
