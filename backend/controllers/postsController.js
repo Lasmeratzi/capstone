@@ -109,12 +109,6 @@ const updatePost = (req, res) => {
   });
 };
 
-module.exports = {
-  updatePost,
-  // other controller exports
-};
-
-
 // Update post status (Admin moderation feature)
 const updatePostStatus = (req, res) => {
   const { id } = req.params;
