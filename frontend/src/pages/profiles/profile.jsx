@@ -3,47 +3,65 @@ import axios from "axios";
 import Sidebar from "../sidebar/sidebar";
 import PortfolioGrid from "../profiles/portfoliogrid";
 import PortfolioUpload from "../portfolioupload/portfolioupload";
+import VerifyRequest from "../verifyrequest/verifyrequest";
 import OwnPost from "../profiles/ownpost"; 
 import OwnArt from "../profiles/ownart"; 
 import OwnAuct from "../profiles/ownauct"; 
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
-import { UserIcon, CakeIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, CakeIcon, PencilSquareIcon, NewspaperIcon, PhotoIcon, Squares2X2Icon, TagIcon, BoltIcon, CheckIcon, XMarkIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
-import { NewspaperIcon, PhotoIcon, Squares2X2Icon, TagIcon } from "@heroicons/react/24/outline";
 import Wallet from "../wallet/wallet";
-import { BoltIcon } from "@heroicons/react/24/outline";
+import { FaInstagram, FaFacebook } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
+import { FaPaintBrush, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
-
+const VerifiedBadge = () => (
+  <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500">
+    <CheckIcon className="w-3 h-3 text-white" />
+  </div>
+);
 
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [commissions, setCommissions] = useState("closed");
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("posts"); // Default: Posts
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("posts");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editUsername, setEditUsername] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editPfp, setEditPfp] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-
-        const userResponse = await axios.get("http://localhost:5000/api/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUser(userResponse.data);
-        setCommissions(userResponse.data.commissions);
-
-        const portfolioResponse = await axios.get("http://localhost:5000/api/portfolio", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setPortfolioItems(portfolioResponse.data);
-      } catch (error) {
-        console.error("Failed to fetch profile or portfolio items:", error);
-      }
-    };
-
     fetchProfile();
+    fetchPortfolio();
   }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const userResponse = await axios.get("http://localhost:5000/api/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser(userResponse.data);
+      setCommissions(userResponse.data.commissions);
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+    }
+  };
+
+  const fetchPortfolio = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const portfolioResponse = await axios.get("http://localhost:5000/api/portfolio", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPortfolioItems(portfolioResponse.data);
+    } catch (error) {
+      console.error("Failed to fetch portfolio items:", error);
+    }
+  };
 
   const toggleCommissions = async () => {
     const token = localStorage.getItem("token");
@@ -62,6 +80,45 @@ const Profile = () => {
   };
 
   const toggleUploadModal = () => setIsUploadModalOpen(!isUploadModalOpen);
+  const toggleVerifyModal = () => setIsVerifyModalOpen(!isVerifyModalOpen);
+
+  const startEditing = () => {
+    setIsEditing(true);
+    setEditUsername(user.username);
+    setEditBio(user.bio || "");
+    setEditPfp(null);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+  };
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("username", editUsername);
+    formData.append("bio", editBio);
+    if (editPfp) formData.append("pfp", editPfp);
+
+    try {
+      await axios.patch("http://localhost:5000/api/profile", formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      setIsLoading(false);
+    }
+  };
+
+  const handlePfpChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setEditPfp(file);
+    }
+  };
 
   if (!user) {
     return (
@@ -84,133 +141,217 @@ const Profile = () => {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="ml-60 flex-grow px-40 py-4"
       >
-        {/* Profile Info */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-start">
-            <div className="w-32 flex flex-col items-center">
+        {/* Updated Profile Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-6 mb-4">
+          {/* Profile Picture + Commissions */}
+          <div className="w-32 flex flex-col items-center mx-auto sm:mx-0">
+            <div className="relative group">
               <img
-                src={`http://localhost:5000/uploads/${user.pfp}`}
+                src={
+                  editPfp
+                    ? URL.createObjectURL(editPfp)
+                    : `http://localhost:5000/uploads/${user.pfp}`
+                }
                 alt={`${user.username}'s Profile`}
-                className="w-32 h-32 rounded-full object-cover shadow-lg border-2 border-gray-300"
+                className="w-32 h-32 rounded-full object-cover shadow-lg border-2 border-gray-300 transition-all duration-300"
               />
-
-              {/* Commissions status */}
-              <div className="mt-2 text-center text-xs text-gray-700 font-medium">
-                <span className="mr-1">Commissions:</span>
-                <button
-                  onClick={toggleCommissions}
-                  className={`px-3 py-1 rounded-full shadow transition duration-300 ${
-                    commissions === "open"
-                      ? "bg-green-500 hover:bg-green-600 text-white"
-                      : "bg-orange-500 hover:bg-orange-600 text-white"
-                  }`}
-                >
-                  {commissions === "open" ? "Open" : "Closed"}
-                </button>
-              </div>
+              {isEditing && (
+                <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full cursor-pointer transition-opacity opacity-0 group-hover:opacity-100">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePfpChange}
+                    className="hidden"
+                  />
+                  <span className="text-white text-sm font-medium">Change Photo</span>
+                </label>
+              )}
+            </div>
+           <div className="mt-3 flex flex-col items-center">
+  <div className="flex items-center text-gray-600 font-medium text-xs uppercase tracking-wider mb-1">
+    <FaPaintBrush className="mr-1.5 text-gray-400" size={12} />
+    <span>Commissions</span>
+  </div>
+  <button
+    onClick={toggleCommissions}
+    className={`px-4 py-1.5 rounded-full flex items-center gap-2 shadow-sm transition-all duration-200 ${
+      commissions === "open"
+        ? "bg-green-500 hover:bg-green-600 text-white"
+        : "bg-rose-500 hover:bg-rose-600 text-white"
+    }`}
+  >
+    {commissions === "open" ? (
+      <>
+        <FaCheckCircle size={14} />
+        <span className="text-sm font-medium">Open</span>
+      </>
+    ) : (
+      <>
+        <FaTimesCircle size={14} />
+        <span className="text-sm font-medium">Closed</span>
+      </>
+    )}
+  </button>
+</div>
+          </div>
+          {/* Profile Details */}
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center flex-wrap gap-2">
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value)}
+                  className="text-2xl sm:text-3xl font-bold text-gray-800 bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                />
+              ) : (
+                <>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{user.username}</h2>
+                  {user.isVerified && (
+                    <span title="Verified" className="text-blue-500">
+                      <VerifiedBadge />
+                    </span>
+                  )}
+                  <button
+                    onClick={startEditing}
+                    className="p-1 text-gray-500 hover:text-blue-600 transition-colors"
+                    title="Edit Profile"
+                  >
+                    <PencilSquareIcon className="w-5 h-5" />
+                  </button>
+                </>
+              )}
             </div>
 
-            <div className="ml-6 flex flex-col justify-between h-32">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{user.username}</h2>
-                <div className="flex items-center text-sm sm:text-lg text-gray-600 mt-1">
-                  <UserIcon className="w-5 h-5 mr-2 text-gray-500" />
-                  {user.fullname}
-                </div>
-                <div className="flex items-center text-xs sm:text-sm text-gray-500 mt-1">
-                  <CakeIcon className="w-5 h-5 mr-2 text-gray-400" />
-                  {new Date(user.birthdate).toLocaleDateString()}
-                </div>
-              </div>
+            <div className="text-xl text-gray-600">{user.fullname}</div>
 
-              <p className="text-xs sm:text-sm text-gray-700 italic max-w-xs overflow-hidden text-ellipsis">
+            <div className="flex items-center text-sm text-gray-500">
+              <CakeIcon className="w-5 h-5 mr-2 text-gray-400" />
+              {new Date(user.birthdate).toLocaleDateString()}
+            </div>
+
+            {isEditing ? (
+              <textarea
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                className="text-sm text-gray-700 bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none px-1 py-0.5 resize-none"
+                placeholder="Tell us about yourself..."
+                rows="2"
+              />
+            ) : (
+              <p className="text-sm text-gray-700 italic max-w-xl overflow-hidden text-ellipsis">
                 {user.bio ? `"${user.bio}"` : "No bio provided."}
               </p>
+            )}
+
+            <div className="text-xs mt-1">
+              {user.verification_request_status === "pending" && (
+                <p className="text-yellow-500">Your verification is under review.</p>
+              )}
+              {user.verification_request_status === "rejected" && (
+                <p className="text-red-500">Your verification request was rejected.</p>
+              )}
             </div>
+              {user.isVerified && (
+                <div className="flex gap-3 mt-1">
+                  {user.twitter_link && (
+                    <a href={user.twitter_link} target="_blank" rel="noopener noreferrer" className="text-black hover:text-gray-700">
+                      <FaXTwitter size={20} />
+                    </a>
+                  )}
+                  {user.instagram_link && (
+                    <a href={user.instagram_link} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:text-pink-500">
+                      <FaInstagram size={20} />
+                    </a>
+                  )}
+                  {user.facebook_link && (
+                    <a href={user.facebook_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-500">
+                      <FaFacebook size={20} />
+                    </a>
+                  )}
+                </div>
+              )}
           </div>
         </div>
 
-        {/* Upload Button */}
-        <div className="flex justify-start mb-4">
-          <button
-            onClick={toggleUploadModal}
-            className="flex items-center gap-3 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-md transition-all duration-300 ease-in-out"
-          >
-            <PlusCircleIcon className="h-5 w-5" />
-            <span className="text-sm">Portfolio</span>
-          </button>
-        </div>
+        {isEditing && (
+          <div className="flex justify-start space-x-3 mb-4">
+            <button
+              onClick={handleProfileUpdate}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow transition-all"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <CheckIcon className="h-4 w-4" />
+                  Save Changes
+                </>
+              )}
+            </button>
+            <button
+              onClick={cancelEditing}
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded-md shadow transition-all"
+            >
+              <XMarkIcon className="h-4 w-4 inline mr-1" />
+              Cancel
+            </button>
+          </div>
+        )}
 
-        {/* Divider Line */}
+        {!isEditing && (
+          <div className="flex justify-start mb-4 gap-3">
+            <button
+              onClick={toggleUploadModal}
+              className="flex items-center gap-3 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-md transition-all duration-300 ease-in-out"
+            >
+              <PlusCircleIcon className="h-5 w-5" />
+              <span className="text-sm">Portfolio</span>
+            </button>
+            {!user.isVerified && (
+              <button
+                onClick={toggleVerifyModal}
+                className="flex items-center gap-3 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md shadow-md transition-all duration-300 ease-in-out"
+              >
+                <ShieldCheckIcon className="h-5 w-5" />
+                <span className="text-sm">Verify Account</span>
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="border-b border-gray-200 mb-4"></div>
 
-        {/* Tabs: Posts, Portfolio, Own Art, Own Auction */}
-  <div className="flex border-b border-gray-300 mb-6 text-sm">
-  <button
-    onClick={() => setActiveTab("posts")}
-    className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
-      activeTab === "posts"
-        ? "border-b-4 border-blue-500 text-blue-600"
-        : "hover:bg-gray-100 text-gray-600"
-    }`}
-  >
-    <NewspaperIcon className="h-5 w-5" />
-    Posts
-  </button>
+        <div className="flex border-b border-gray-300 mb-6 text-sm">
+          {[
+            { key: "posts", icon: NewspaperIcon, label: "Posts" },
+            { key: "ownart", icon: PhotoIcon, label: "Own Art" },
+            { key: "portfolio", icon: Squares2X2Icon, label: "Portfolio" },
+            { key: "ownauct", icon: TagIcon, label: "Own Auction" },
+            { key: "wallet", icon: BoltIcon, label: "Wallet" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
+                activeTab === tab.key
+                  ? "border-b-4 border-blue-500 text-blue-600"
+                  : "hover:bg-gray-100 text-gray-600"
+              }`}
+            >
+              <tab.icon className="h-5 w-5" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-  <button
-    onClick={() => setActiveTab("ownart")}
-    className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
-      activeTab === "ownart"
-        ? "border-b-4 border-blue-500 text-blue-600"
-        : "hover:bg-gray-100 text-gray-600"
-    }`}
-  >
-    <PhotoIcon className="h-5 w-5" />
-    Own Art
-  </button>
-
-  <button
-    onClick={() => setActiveTab("portfolio")}
-    className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
-      activeTab === "portfolio"
-        ? "border-b-4 border-blue-500 text-blue-600"
-        : "hover:bg-gray-100 text-gray-600"
-    }`}
-  >
-    <Squares2X2Icon className="h-5 w-5" />
-    Portfolio
-  </button>
-
-  <button
-  onClick={() => setActiveTab("ownauct")}
-  className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
-    activeTab === "ownauct"
-      ? "border-b-4 border-blue-500 text-blue-600"
-      : "hover:bg-gray-100 text-gray-600"
-  }`}
->
-  <TagIcon className="h-5 w-5" />
-  Own Auction
-</button>
-<button
-  onClick={() => setActiveTab("wallet")}
-  className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
-    activeTab === "wallet"
-      ? "border-b-4 border-blue-500 text-blue-600"
-      : "hover:bg-gray-100 text-gray-600"
-  }`}
->
-  <BoltIcon className="h-5 w-5" />
-  Wallet
-</button>
-
-
-</div>
-
-
-
-        {/* Content Section */}
         {activeTab === "posts" && <OwnPost userId={user.id} />}
         {activeTab === "ownart" && <OwnArt userId={user.id} />}
         {activeTab === "portfolio" && (
@@ -219,22 +360,30 @@ const Profile = () => {
         {activeTab === "ownauct" && <OwnAuct userId={user.id} />}
         {activeTab === "wallet" && <Wallet />}
 
-
-        {/* Upload Modal */}
         {isUploadModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full relative">
+            <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full relative mx-4 my-8">
               <button
                 onClick={toggleUploadModal}
                 className="absolute top-2 right-3 text-gray-500 hover:text-red-500 text-2xl"
               >
                 &times;
               </button>
-              <PortfolioUpload
-                onSuccess={() => {
-                  toggleUploadModal();
-                }}
-              />
+              <PortfolioUpload onSuccess={toggleUploadModal} />
+            </div>
+          </div>
+        )}
+
+        {isVerifyModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full relative mx-4 my-8">
+              <button
+                onClick={toggleVerifyModal}
+                className="absolute top-2 right-3 text-gray-500 hover:text-red-500 text-2xl"
+              >
+                &times;
+              </button>
+              <VerifyRequest onSuccess={toggleVerifyModal} />
             </div>
           </div>
         )}

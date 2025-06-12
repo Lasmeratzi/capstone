@@ -1,35 +1,40 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import Sidebar from "../sidebar/sidebar"; // Import the Sidebar component
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline"; // Search icon for better UI
+import Sidebar from "../sidebar/sidebar";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { FaCheckCircle } from "react-icons/fa";
+
+const VerifiedBadge = () => (
+  <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 ml-1">
+    <FaCheckCircle className="w-3 h-3 text-white" />
+  </div>
+);
 
 const SearchProfile = () => {
-  const [searchTerm, setSearchTerm] = useState(""); // Store the search term
-  const [results, setResults] = useState([]); // Store search results
-  const [loading, setLoading] = useState(false); // Loading state
-  const [error, setError] = useState(null); // Error state
-  const [debouncedTerm, setDebouncedTerm] = useState(""); // Debounced term for optimization
+  const [searchTerm, setSearchTerm] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [debouncedTerm, setDebouncedTerm] = useState("");
 
-  // Debounce Effect: Wait for 300ms after user stops typing before setting the search term
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedTerm(searchTerm);
     }, 300);
 
-    return () => clearTimeout(timer); // Clean up the timer
+    return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch results dynamically as the user types (triggered by debounced term)
   useEffect(() => {
     const fetchResults = async () => {
       if (!debouncedTerm.trim()) {
-        setResults([]); // Clear results if the search term is empty
+        setResults([]);
         return;
       }
 
-      setLoading(true); // Start loading
-      setError(null); // Clear previous errors
+      setLoading(true);
+      setError(null);
 
       try {
         const token = localStorage.getItem("token");
@@ -38,21 +43,20 @@ const SearchProfile = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        setResults(response.data); // Update results with API response
+        setResults(response.data);
       } catch (error) {
         setError(error.response?.data?.message || "Failed to fetch search results.");
       } finally {
-        setLoading(false); // Stop loading
+        setLoading(false);
       }
     };
 
     fetchResults();
-  }, [debouncedTerm]); // Trigger whenever the debounced term changes
+  }, [debouncedTerm]);
 
-  // Handle manual search when clicking the button
   const handleSearchClick = async () => {
-    setLoading(true); // Start loading
-    setError(null); // Clear previous errors
+    setLoading(true);
+    setError(null);
 
     try {
       const token = localStorage.getItem("token");
@@ -61,22 +65,20 @@ const SearchProfile = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setResults(response.data); // Update results with API response
+      setResults(response.data);
     } catch (error) {
       setError(error.response?.data?.message || "Failed to fetch search results.");
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
 
   return (
     <div className="flex">
-      {/* Sidebar for navigation */}
       <div className="fixed h-screen w-60">
         <Sidebar />
       </div>
 
-      {/* Main content */}
       <div className="ml-60 flex-grow py-6 px-40">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Search Profiles</h2>
 
@@ -86,12 +88,12 @@ const SearchProfile = () => {
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)} // Update search term dynamically
+            onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by username or fullname..."
             className="w-full text-gray-700 focus:outline-none"
           />
           <button
-            onClick={handleSearchClick} // Manual search when button is clicked
+            onClick={handleSearchClick}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-all duration-300"
           >
             Search
@@ -106,7 +108,7 @@ const SearchProfile = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {results.length > 0 ? (
             results.map((user) => (
-              <div key={user.id} className="bg-white shadow-md rounded-lg p-5">
+              <div key={user.id} className="bg-white shadow-md rounded-lg p-5 hover:shadow-lg transition-shadow duration-300">
                 <div className="flex items-center">
                   {/* Profile Picture */}
                   <img
@@ -116,18 +118,21 @@ const SearchProfile = () => {
                   />
                   {/* User Info */}
                   <div className="ml-4">
-                    <p className="text-lg font-semibold text-gray-800">{user.username}</p>
+                    <div className="flex items-center">
+                      <p className="text-lg font-semibold text-gray-800">{user.username}</p>
+                      {user.verification_request_status === "approved" && <VerifiedBadge />}
+                    </div>
                     <p className="text-sm text-gray-600">{user.fullname}</p>
                     {/* Commission Status */}
-                    <p
-                      className={`text-xs font-medium mt-1 px-2 py-1 rounded-full ${
+                    <div className="flex items-center mt-1">
+                      <div className={`text-xs font-medium px-2 py-1 rounded-full ${
                         user.commissions === "open"
                           ? "bg-green-100 text-green-700 border border-green-400"
                           : "bg-gray-200 text-gray-600 border border-gray-400"
-                      }`}
-                    >
-                      {user.commissions === "open" ? "Open for Commissions" : "Closed for Commissions"}
-                    </p>
+                      }`}>
+                        {user.commissions === "open" ? "Open for Commissions" : "Closed for Commissions"}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -141,7 +146,7 @@ const SearchProfile = () => {
               </div>
             ))
           ) : (
-            !loading && <p className="text-gray-500 text-center">No profiles found.</p>
+            !loading && debouncedTerm && <p className="text-gray-500 text-center col-span-full">No profiles found matching "{debouncedTerm}"</p>
           )}
         </div>
       </div>
