@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 12, 2025 at 01:58 AM
+-- Generation Time: Jun 12, 2025 at 01:56 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -66,7 +66,12 @@ INSERT INTO `artwork_media` (`id`, `post_id`, `media_path`) VALUES
 (17, 25, '1749052030963-flw.jpg'),
 (18, 26, '1749224986145-kensh.jpg'),
 (19, 27, '1749683946198-kda2.jpeg'),
-(20, 27, '1749683946214-kdaBG.jpeg');
+(20, 27, '1749683946214-kdaBG.jpeg'),
+(24, 29, '1749702465756-0530m9hgk1s41.jpg'),
+(25, 29, '1749702465762-albularyos.jpg'),
+(26, 29, '1749702465779-chill.jpg'),
+(27, 29, '1749702465785-clem-onojeghuo-XW-Z9L930CY-unsplash.jpg'),
+(28, 29, '1749702465791-django.jpg');
 
 -- --------------------------------------------------------
 
@@ -90,7 +95,8 @@ INSERT INTO `artwork_posts` (`id`, `author_id`, `title`, `description`, `created
 (24, 28, 'qwert', 'asd', '2025-06-04 00:40:37'),
 (25, 34, 'title', 'descripxc', '2025-06-04 15:47:10'),
 (26, 28, 'fgfg', 'hjhj', '2025-06-06 15:49:46'),
-(27, 34, 'afafa', 'werwer', '2025-06-11 23:19:06');
+(27, 34, 'afafa', 'werwer', '2025-06-11 23:19:06'),
+(29, 38, 'dfdg', 'dfgf', '2025-06-12 04:27:45');
 
 -- --------------------------------------------------------
 
@@ -120,7 +126,8 @@ INSERT INTO `auctions` (`id`, `author_id`, `title`, `description`, `starting_pri
 (33, 36, 'testaya', 'ayades', 1000.00, 1400.00, '2025-06-11 15:17:00', 'ended', '2025-06-11 07:15:45', '2025-06-11 07:17:00'),
 (34, 36, 'tetete', 'dfgdfg', 1000.00, 1400.00, '2025-06-11 15:52:00', 'ended', '2025-06-11 07:50:23', '2025-06-11 07:52:00'),
 (35, 28, 'wefw', 'sdfsf', 1000.00, 1000.00, '2025-06-11 16:30:00', 'ended', '2025-06-11 08:28:05', '2025-06-11 08:30:00'),
-(36, 36, 'Auction testt', 'description', 1000.00, 1800.00, '2025-06-11 20:10:00', 'ended', '2025-06-11 12:08:53', '2025-06-11 12:10:00');
+(36, 36, 'Auction testt', 'description', 1000.00, 1800.00, '2025-06-11 20:10:00', 'ended', '2025-06-11 12:08:53', '2025-06-11 12:10:00'),
+(37, 38, 'qweqwe', 'qweqwe', 1400.00, 1400.00, '2025-06-19 12:00:00', 'approved', '2025-06-12 04:48:37', '2025-06-12 04:49:07');
 
 -- --------------------------------------------------------
 
@@ -168,7 +175,9 @@ INSERT INTO `auction_media` (`id`, `auction_id`, `media_path`, `created_at`) VAL
 (31, 33, 'auctions/1749626145523-1.png', '2025-06-11 07:15:45'),
 (32, 34, 'auctions/1749628223359-chill.jpg', '2025-06-11 07:50:23'),
 (33, 35, 'auctions/1749630485637-2nd sem SCHED.png', '2025-06-11 08:28:05'),
-(34, 36, 'auctions/1749643733660-finaldimens.gif', '2025-06-11 12:08:54');
+(34, 36, 'auctions/1749643733660-finaldimens.gif', '2025-06-11 12:08:54'),
+(35, 37, 'auctions/1749703718038-albularyos.jpg', '2025-06-12 04:48:38'),
+(36, 37, 'auctions/1749703718048-dirtblock.png', '2025-06-12 04:48:38');
 
 -- --------------------------------------------------------
 
@@ -215,6 +224,19 @@ CREATE TABLE `escrow_releases` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `follows`
+--
+
+CREATE TABLE `follows` (
+  `id` int(11) NOT NULL,
+  `follower_id` int(11) NOT NULL,
+  `following_id` int(11) NOT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `notifications`
 --
 
@@ -242,7 +264,9 @@ INSERT INTO `notifications` (`id`, `user_id`, `message`, `is_read`, `created_at`
 (75, 36, 'Your auction \"Auction testt\" status has been updated to \"approved\".', 1, '2025-06-11 12:09:02'),
 (76, 36, 'Your auction \"Auction testt\" status has been updated to \"active\".', 1, '2025-06-11 12:09:06'),
 (77, 36, 'Your auction \"Auction testt\" has ended. Highest bidder: @xqcccc with ₱1800.00.', 1, '2025-06-11 12:10:00'),
-(78, 34, 'You won the auction \"Auction testt\" with ₱1800.00. Congratulations!', 1, '2025-06-11 12:10:00');
+(78, 34, 'You won the auction \"Auction testt\" with ₱1800.00. Congratulations!', 1, '2025-06-11 12:10:00'),
+(79, 38, 'Your auction \"qweqwe\" has been created and is pending approval.', 1, '2025-06-12 04:48:38'),
+(80, 38, 'Your auction \"qweqwe\" status has been updated to \"approved\".', 1, '2025-06-12 04:49:07');
 
 -- --------------------------------------------------------
 
@@ -355,8 +379,9 @@ INSERT INTO `users` (`id`, `username`, `email`, `password`, `fullname`, `bio`, `
 (28, 'dadarkDDD', 'asd@gmail.com', '$2b$10$ph27ZwaqpvGpgL4qvr6Lre28AUghCdmNDkfZbO/.uKxItLkXfs8YS', 'Dark dark', 'to be is what to be is what it is', '2025-06-05', '1749660963673-salutmoji.jpg', 'active', 'closed', '2025-06-01 16:06:58', '2025-06-11 22:07:55', 1, 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez'),
 (34, 'xQcWOWers', 'qwerty@gmail.com', '$2b$10$rRDYKbXVUL1fWJ4ACmzFGu6A./O1FfsCIWQqMmFDMq0ZzLMh9U/ze', 'Felix Nguyan', 'GAMBA streams', '2025-06-04', '1749683009262-3d-mountain-landscape-with-moonlit-sky.jpg', 'active', 'closed', '2025-06-01 16:23:36', '2025-06-11 23:11:25', 1, 'https://www.instagram.com/lasmeratzi/', 'https://www.instagram.com/lasmeratzi/', 'https://www.instagram.com/lasmeratzi/'),
 (35, 'slytherin', 'zxc@gmail.com', '$2b$10$nQDj54OV1//a2tOqzUUF1efVMKuxzCXnU4uDYhN0i9fZz4j77a2P.', 'Severus Spane', 'zxzx', '2025-06-05', '08b514258a46adcc92183279a607833d', 'active', 'closed', '2025-06-03 17:17:20', '2025-06-03 17:17:20', 0, NULL, NULL, NULL),
-(36, 'lowkeyloki', 'xcv@gmail.com', '$2b$10$hgEKp0ebG3wvSBvQayG3ve29/u5jmQ9sk.ntoUbpgPdV0hC/cUwei', 'Loki Odinson', 'gogog', '2025-06-09', '1bb32ca017a833b2be5a727f4bfde04b', 'active', 'closed', '2025-06-08 14:30:37', '2025-06-08 14:31:08', 0, NULL, NULL, NULL),
-(37, 'jimjoe', 'poi@gmail.com', '$2b$10$DnSSnZPQ5Ya9A2ZNRdarROh4gbO7XyWKKEOK6AdBF/RLxWoWOjL7W', 'Jim Jom', NULL, '2025-06-01', 'f9fb8290101fae7e86fc2c67d3d54423', 'active', 'closed', '2025-06-11 15:13:14', '2025-06-11 15:25:24', 0, NULL, NULL, NULL);
+(36, 'lowkeylokilang', 'xcv@gmail.com', '$2b$10$hgEKp0ebG3wvSBvQayG3ve29/u5jmQ9sk.ntoUbpgPdV0hC/cUwei', 'Loki Odinson', 'gogog', '2025-06-09', '1bb32ca017a833b2be5a727f4bfde04b', 'active', 'closed', '2025-06-08 14:30:37', '2025-06-12 07:23:31', 0, NULL, NULL, NULL),
+(37, 'jimjoe', 'poi@gmail.com', '$2b$10$DnSSnZPQ5Ya9A2ZNRdarROh4gbO7XyWKKEOK6AdBF/RLxWoWOjL7W', 'Jim Jom', NULL, '2025-06-01', 'f9fb8290101fae7e86fc2c67d3d54423', 'active', 'closed', '2025-06-11 15:13:14', '2025-06-11 15:25:24', 0, NULL, NULL, NULL),
+(38, 'dodngslm', 'qwe@gmail.com', '$2b$10$4gG0r/B67gB6dvSrZKhl9OpFy1g0.7V9D9jePwff.OOiZzccHCZuu', 'Dodong Dodoo', '141 ra gud', '2025-06-11', '1f2931932ed4a6ccfa0131db4629826f', 'active', 'closed', '2025-06-12 03:24:33', '2025-06-12 03:25:53', 0, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -470,6 +495,14 @@ ALTER TABLE `escrow_releases`
   ADD KEY `seller_id` (`seller_id`);
 
 --
+-- Indexes for table `follows`
+--
+ALTER TABLE `follows`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_follow` (`follower_id`,`following_id`),
+  ADD KEY `following_id` (`following_id`);
+
+--
 -- Indexes for table `notifications`
 --
 ALTER TABLE `notifications`
@@ -540,19 +573,19 @@ ALTER TABLE `admins`
 -- AUTO_INCREMENT for table `artwork_media`
 --
 ALTER TABLE `artwork_media`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `artwork_posts`
 --
 ALTER TABLE `artwork_posts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `auctions`
 --
 ALTER TABLE `auctions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `auction_bids`
@@ -564,7 +597,7 @@ ALTER TABLE `auction_bids`
 -- AUTO_INCREMENT for table `auction_media`
 --
 ALTER TABLE `auction_media`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `comments`
@@ -579,10 +612,16 @@ ALTER TABLE `escrow_releases`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `follows`
+--
+ALTER TABLE `follows`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=79;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -600,7 +639,7 @@ ALTER TABLE `portfolio_items`
 -- AUTO_INCREMENT for table `posts`
 --
 ALTER TABLE `posts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `tags`
@@ -612,13 +651,13 @@ ALTER TABLE `tags`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `verification_requests`
 --
 ALTER TABLE `verification_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `wallets`
@@ -674,6 +713,13 @@ ALTER TABLE `comments`
 ALTER TABLE `escrow_releases`
   ADD CONSTRAINT `escrow_releases_ibfk_1` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`),
   ADD CONSTRAINT `escrow_releases_ibfk_2` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`);
+
+--
+-- Constraints for table `follows`
+--
+ALTER TABLE `follows`
+  ADD CONSTRAINT `follows_ibfk_1` FOREIGN KEY (`follower_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `follows_ibfk_2` FOREIGN KEY (`following_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `notifications`
