@@ -181,18 +181,24 @@ const Home = () => {
               <p className="text-gray-700 font-medium text-lg">
                 Want to share something?
               </p>
-              <div className="space-x-2">
+              <div className="flex space-x-3">
                 <button
                   onClick={toggleMakePostModal}
-                  className="px-4 py-2 bg-blue-500 text-white font-semibold rounded shadow hover:bg-blue-600 text-sm"
+                  className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center"
                 >
-                  Make a post
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Create Post
                 </button>
                 <button
                   onClick={toggleMakeArtModal}
-                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded shadow hover:bg-green-700 text-sm"
+                  className="px-5 py-2.5 bg-gradient-to-r from-green-500 to-teal-500 text-white font-medium rounded-lg shadow-md hover:from-green-600 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 flex items-center"
                 >
-                  Share artwork
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                  </svg>
+                  Share Artwork
                 </button>
               </div>
             </>
@@ -203,12 +209,15 @@ const Home = () => {
               <p className="text-gray-700 font-medium text-lg">
                 Want to auction something?
               </p>
-              <div className="space-x-2">
+              <div className="flex space-x-3">
                 <button
                   onClick={() => setIsMakeAuctionOpen(true)}
-                  className="px-4 py-2 bg-purple-600 text-white font-semibold rounded shadow hover:bg-purple-700 text-sm"
+                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg shadow-md hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 flex items-center"
                 >
-                  Make an auction
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Start Auction
                 </button>
               </div>
             </>
@@ -262,27 +271,29 @@ const Home = () => {
           onClick={(e) => {
             if (e.target.id === "makePostModal") setIsMakePostOpen(false);
           }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+          className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex justify-center items-center z-50 transition-opacity duration-300"
         >
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full relative">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative mx-4">
             <button
               onClick={toggleMakePostModal}
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition-colors"
             >
-              &times;
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
             <MakePost onSuccess={toggleMakePostModal} />
           </div>
         </div>
       )}
-       {isMakeArtOpen && (
-  <MakeArt onClose={toggleMakeArtModal} />
-)}
+      {isMakeArtOpen && (
+        <MakeArt onClose={toggleMakeArtModal} />
+      )}
       {isMakeAuctionOpen && (
-  <MakeAuction 
-    onClose={() => setIsMakeAuctionOpen(false)} 
-  />
-)}
+        <MakeAuction 
+          onClose={() => setIsMakeAuctionOpen(false)} 
+        />
+      )}
     </div>
   );
 };
