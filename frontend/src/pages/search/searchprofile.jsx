@@ -17,15 +17,30 @@ const SearchProfile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [debouncedTerm, setDebouncedTerm] = useState("");
+  const [loggedInUserId, setLoggedInUserId] = useState(null);
 
+  // Get logged in user's ID from JWT token
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        setLoggedInUserId(decodedToken.id);
+      } catch (error) {
+        console.error("Failed to decode token:", error);
+      }
+    }
+  }, []);
+
+  // Debounce search term input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedTerm(searchTerm);
     }, 300);
-
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // Fetch results when debounced term changes
   useEffect(() => {
     const fetchResults = async () => {
       if (!debouncedTerm.trim()) {
@@ -54,6 +69,7 @@ const SearchProfile = () => {
     fetchResults();
   }, [debouncedTerm]);
 
+  // Manual search button click
   const handleSearchClick = async () => {
     setLoading(true);
     setError(null);
@@ -107,46 +123,51 @@ const SearchProfile = () => {
         {/* Search Results */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {results.length > 0 ? (
-            results.map((user) => (
-              <div key={user.id} className="bg-white shadow-md rounded-lg p-5 hover:shadow-lg transition-shadow duration-300">
-                <div className="flex items-center">
-                  {/* Profile Picture */}
-                  <img
-                    src={`http://localhost:5000/uploads/${user.pfp}`}
-                    alt={`${user.username}'s profile`}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-gray-300"
-                  />
-                  {/* User Info */}
-                  <div className="ml-4">
-                    <div className="flex items-center">
-                      <p className="text-lg font-semibold text-gray-800">{user.username}</p>
-                      {user.verification_request_status === "approved" && <VerifiedBadge />}
-                    </div>
-                    <p className="text-sm text-gray-600">{user.fullname}</p>
-                    {/* Commission Status */}
-                    <div className="flex items-center mt-1">
-                      <div className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        user.commissions === "open"
-                          ? "bg-green-100 text-green-700 border border-green-400"
-                          : "bg-gray-200 text-gray-600 border border-gray-400"
-                      }`}>
-                        {user.commissions === "open" ? "Open for Commissions" : "Closed for Commissions"}
+            results
+              .filter((user) => user.id !== loggedInUserId) // 👈 Filter out logged-in user
+              .map((user) => (
+                <div key={user.id} className="bg-white shadow-md rounded-lg p-5 hover:shadow-lg transition-shadow duration-300">
+                  <div className="flex items-center">
+                    <img
+                      src={`http://localhost:5000/uploads/${user.pfp}`}
+                      alt={`${user.username}'s profile`}
+                      className="w-14 h-14 rounded-full object-cover border-2 border-gray-300"
+                    />
+                    <div className="ml-4">
+                      <div className="flex items-center">
+                        <p className="text-lg font-semibold text-gray-800">{user.username}</p>
+                        {user.verification_request_status === "approved" && <VerifiedBadge />}
+                      </div>
+                      <p className="text-sm text-gray-600">{user.fullname}</p>
+                      <div className="flex items-center mt-1">
+                        <div
+                          className={`text-xs font-medium px-2 py-1 rounded-full ${
+                            user.commissions === "open"
+                              ? "bg-green-100 text-green-700 border border-green-400"
+                              : "bg-gray-200 text-gray-600 border border-gray-400"
+                          }`}
+                        >
+                          {user.commissions === "open" ? "Open for Commissions" : "Closed for Commissions"}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Visit Profile Button */}
-                <Link
-                  to={`/visitprofile/${user.id}`}
-                  className="mt-4 block text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-all duration-300"
-                >
-                  Visit Profile
-                </Link>
-              </div>
-            ))
+                  <Link
+                    to={`/visitprofile/${user.id}`}
+                    className="mt-4 block text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-all duration-300"
+                  >
+                    Visit Profile
+                  </Link>
+                </div>
+              ))
           ) : (
-            !loading && debouncedTerm && <p className="text-gray-500 text-center col-span-full">No profiles found matching "{debouncedTerm}"</p>
+            !loading &&
+            debouncedTerm && (
+              <p className="text-gray-500 text-center col-span-full">
+                No profiles found matching "{debouncedTerm}"
+              </p>
+            )
           )}
         </div>
       </div>

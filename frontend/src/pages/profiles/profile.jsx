@@ -13,6 +13,8 @@ import Wallet from "../wallet/wallet";
 import { FaInstagram, FaFacebook } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { FaPaintBrush, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import FollowStats from "../follow/followstats";
+
 
 const VerifiedBadge = () => (
   <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500">
@@ -194,35 +196,41 @@ const Profile = () => {
   </button>
 </div>
           </div>
-          {/* Profile Details */}
-          <div className="flex flex-col space-y-2">
-            <div className="flex items-center flex-wrap gap-2">
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editUsername}
-                  onChange={(e) => setEditUsername(e.target.value)}
-                  className="text-2xl sm:text-3xl font-bold text-gray-800 bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
-                />
-              ) : (
-                <>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{user.username}</h2>
-                  {user.isVerified && (
-                    <span title="Verified" className="text-blue-500">
-                      <VerifiedBadge />
-                    </span>
+              {/* Profile Details */}
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editUsername}
+                        onChange={(e) => setEditUsername(e.target.value)}
+                        className="text-2xl sm:text-3xl font-bold text-gray-800 bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                      />
+                    ) : (
+                      <>
+                        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{user.username}</h2>
+                        {user.isVerified && (
+                          <span title="Verified" className="text-blue-500">
+                            <VerifiedBadge />
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  {!isEditing && (
+                    <>
+                      <button
+                        onClick={startEditing}
+                        className="p-1 text-gray-500 hover:text-blue-600 transition-colors"
+                        title="Edit Profile"
+                      >
+                        <PencilSquareIcon className="w-5 h-5" />
+                      </button>
+                      <FollowStats targetUserId={user.id} />
+                    </>
                   )}
-                  <button
-                    onClick={startEditing}
-                    className="p-1 text-gray-500 hover:text-blue-600 transition-colors"
-                    title="Edit Profile"
-                  >
-                    <PencilSquareIcon className="w-5 h-5" />
-                  </button>
-                </>
-              )}
-            </div>
-
+                </div>
             <div className="text-xl text-gray-600">{user.fullname}</div>
 
             <div className="flex items-center text-sm text-gray-500">
@@ -361,7 +369,7 @@ const Profile = () => {
         {activeTab === "wallet" && <Wallet />}
 
         {isUploadModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="fixed inset-0 bg-gray-950/90 backdrop-blur-md flex justify-center items-center z-50 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
             <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full relative mx-4 my-8">
               <button
                 onClick={toggleUploadModal}
@@ -375,7 +383,7 @@ const Profile = () => {
         )}
 
         {isVerifyModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-lg flex justify-center items-center z-50 transition-all duration-300 ease-out">
             <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full relative mx-4 my-8">
               <button
                 onClick={toggleVerifyModal}
