@@ -11,6 +11,8 @@ import { motion } from "framer-motion";
 import { FaInstagram, FaFacebook } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { FaPaintBrush, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import FollowButton from "../follow/followbutton";
+import FollowStats from "../follow/followstats"; // import at the top
 
 const VerifiedBadge = () => (
   <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500">
@@ -26,6 +28,9 @@ const VisitProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("posts");
+  const [refreshStats, setRefreshStats] = useState(false); // 👈 new state
+
+  const handleRefreshStats = () => setRefreshStats(prev => !prev); // 👈 toggle handler
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -123,15 +128,19 @@ const VisitProfile = () => {
 
           {/* Profile Details */}
           <div className="flex flex-col space-y-2">
-            <div className="flex items-center flex-wrap gap-2">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{user.username}</h2>
-              {user.isVerified && (
-                <span title="Verified" className="text-blue-500">
-                  <VerifiedBadge />
-                </span>
-              )}
+          <div className="flex items-center flex-wrap gap-2">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{user.username}</h2>
+            {user.isVerified && (
+              <span title="Verified" className="text-blue-500">
+                <VerifiedBadge />
+              </span>
+            )}
+            <FollowButton targetUserId={user.id} /> {/* Moved here */}
+            {/* Follow Stats - Placed right below the username row */}
+            <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+              <FollowStats targetUserId={user.id} />
             </div>
-
+            </div>
             <div className="text-xl text-gray-600">{user.fullname}</div>
 
             <div className="flex items-center text-sm text-gray-500">
