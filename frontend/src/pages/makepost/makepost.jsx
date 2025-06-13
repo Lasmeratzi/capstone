@@ -80,7 +80,7 @@ const MakePost = ({ onSuccess }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-            Title <span className="text-red-500">*</span>
+            Description <span className="text-red-500">*</span>
           </label>
           <input
             type="text"

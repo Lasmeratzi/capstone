@@ -3,6 +3,7 @@ import { MessageCircle, MoreVertical, Loader, Trash, Pencil, X } from "lucide-re
 import axios from "axios";
 import Comments from "../comments/comments";
 import { FaCheckCircle } from "react-icons/fa";
+import PostLikes from "../likes/postlikes";
 
 const VerifiedBadge = () => (
   <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 ml-1">
@@ -174,15 +175,20 @@ const Post = ({ post, userId, handleDelete }) => {
             </div>
           )}
 
-          {/* Comment toggle and count */}
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-2 mt-3 text-gray-600 hover:text-gray-900"
-          >
-            <MessageCircle size={18} />
-            <span>{commentCount} {commentCount === 1 ? "Comment" : "Comments"}</span>
-          </button>
-
+          {/* Like and Comment buttons in one row */}
+          <div className="flex items-center gap-4 mt-3 border-t border-gray-100 pt-3">
+            <div className="flex items-center gap-1">
+              <PostLikes postId={post.id} />
+            </div>
+            <button
+              onClick={() => setShowComments(!showComments)}
+              className="flex items-center gap-1 text-gray-600 hover:text-gray-900"
+            >
+              <MessageCircle size={18} />
+              <span className="text-sm">{commentCount}</span>
+            </button>
+          </div>
+          
           {showComments && <Comments postId={post.id} userId={userId} />}
 
           {/* Image Modal with Comments */}
@@ -223,6 +229,16 @@ const Post = ({ post, userId, handleDelete }) => {
                       </div>
                     </div>
                     <p className="mt-3 text-gray-800">{post.title}</p>
+
+                    <div className="flex items-center gap-4 mt-3 pt-3">
+                      <div className="flex items-center gap-1">
+                        <PostLikes postId={post.id} />
+                      </div>
+                      <div className="flex items-center gap-1 text-gray-600">
+                        <MessageCircle size={18} />
+                        <span className="text-sm">{commentCount}</span>
+                      </div>
+                    </div>
                   </div>
                   
                   {/* Scrollable comments section */}

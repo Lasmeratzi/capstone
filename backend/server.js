@@ -20,6 +20,8 @@ const adminLoginRoutes = require("./routes/adminLoginRoutes");
 const adminLogoutRoutes = require("./routes/adminLogoutRoutes");
 const notificationsRoutes = require("./routes/notificationsRoutes");
 const verifyrequestRoutes = require("./routes/verifyrequestRoutes");
+const followRoutes = require("./routes/followRoutes");
+const postlikesRoutes = require("./routes/postlikesRoutes");
 
 // 👉 Import the auction cron job
 const checkAndEndAuctions = require("./jobs/auctionJobs");
@@ -44,7 +46,9 @@ app.use((req, res, next) => {
 });
 
 // 👉 Serve uploads with CORS
-app.use("/uploads", cors(), express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+
 
 app.use("/api", signupRoutes);
 app.use("/api", loginRoutes);
@@ -64,6 +68,8 @@ app.use("/api", adminLoginRoutes);
 app.use("/api", adminLogoutRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api", verifyrequestRoutes);
+app.use("/api/follow", followRoutes);
+app.use("/api", postlikesRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, Artwork, Auction, and Media APIs.");
