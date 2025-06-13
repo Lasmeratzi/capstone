@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
 const SignUp = () => {
@@ -313,7 +313,12 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center p-4"
+    style={{ 
+        backgroundImage: "url('src/assets/images/kdaBG.jpeg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center"
+      }}>
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
         {/* Progress bar */}
         <div className="bg-gray-100 h-2">
@@ -321,6 +326,8 @@ const SignUp = () => {
             className="bg-blue-600 h-full transition-all duration-300" 
             style={{ width: `${(currentStep / steps.length) * 100}%` }}
           ></div>
+        </div>
+        <div className="text-center pb-6">
         </div>
         
         {/* Header */}
@@ -344,7 +351,7 @@ const SignUp = () => {
         </div>
         
         {/* Navigation buttons */}
-        <div className="p-6 border-t border-gray-200 flex justify-between">
+        <div className="p-6 border-t border-gray-200 flex justify-center">
           {currentStep > 1 ? (
             <button
               type="button"
@@ -354,7 +361,7 @@ const SignUp = () => {
               Back
             </button>
           ) : (
-            <div></div> // Empty div for spacing
+            <div></div> 
           )}
           
           {currentStep < steps.length ? (
@@ -384,6 +391,14 @@ const SignUp = () => {
             </button>
           )}
         </div>
+        <div className="flex justify-center">
+        <Link to="/login" className="text-blue-600 hover:underline text-sm py-5">
+          Go back to Log In
+        </Link>
+      </div>
+      <div className="text-center text-xs text-gray-500 pb-4">
+          © 2025 Illura. All rights reserved.
+      </div>	
       </div>
     </div>
   );
