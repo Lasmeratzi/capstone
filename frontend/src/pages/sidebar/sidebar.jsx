@@ -9,19 +9,21 @@ import {
   UserIcon,
   ArrowRightOnRectangleIcon,
   TrophyIcon,
+  ChatBubbleLeftEllipsisIcon, // ✅ Messages icon
 } from "@heroicons/react/24/solid";
-
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false); // ✅ for messages
   const userId = localStorage.getItem("id");
   const token = localStorage.getItem("token");
 
   const isActive = (path) => location.pathname === path;
 
+  // 🔔 Fetch notifications
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -31,8 +33,7 @@ const Sidebar = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        // Check if there is any unread notification
-        const unreadExists = response.data.some(notif => !notif.is_read);
+        const unreadExists = response.data.some((notif) => !notif.is_read);
         setHasUnread(unreadExists);
       } catch (error) {
         console.error("Failed to fetch notifications for sidebar:", error);
@@ -40,6 +41,27 @@ const Sidebar = () => {
     };
 
     if (userId && token) fetchNotifications();
+  }, [userId, token]);
+
+  // 💬 Fetch unread messages
+  useEffect(() => {
+    const fetchUnreadMessages = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/messages/inbox`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        // check if any conversation has unread messages
+        const unreadMsgExists = response.data.some((conv) => conv.unreadCount > 0);
+        setHasUnreadMessages(unreadMsgExists);
+      } catch (error) {
+        console.error("Failed to fetch unread messages for sidebar:", error);
+      }
+    };
+
+    if (userId && token) fetchUnreadMessages();
   }, [userId, token]);
 
   const navItems = [
@@ -52,9 +74,14 @@ const Sidebar = () => {
       path: "/notifications",
       showBadge: hasUnread,
     },
+    {
+      label: "Messages",
+      icon: ChatBubbleLeftEllipsisIcon,
+      path: "/inbox",
+      showBadge: hasUnreadMessages, // ✅ unread messages badge
+    },
     { label: "Profile", icon: UserIcon, path: "/profile" },
     { label: "Auction Wins", icon: TrophyIcon, path: "/auctionwins" },
-
   ];
 
   return (
@@ -86,7 +113,7 @@ const Sidebar = () => {
             {showBadge && (
               <span
                 className="absolute top-0 left-5 block h-3 w-3 rounded-full bg-red-600 ring-2 ring-black"
-                aria-label="Unread notifications"
+                aria-label={`Unread ${label.toLowerCase()}`}
               />
             )}
             <span className="ml-4 text-lg">{label}</span>

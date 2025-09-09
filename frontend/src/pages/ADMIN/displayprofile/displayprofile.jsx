@@ -52,9 +52,14 @@ const DisplayProfile = () => {
   );
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <SideAdmin /> {/* Sidebar for navigation */}
-      <div className="flex-grow p-6">
+    <div className="flex bg-gray-100 min-h-screen">
+      {/* Fixed Sidebar */}
+      <div className="fixed h-full">
+        <SideAdmin />
+      </div>
+
+      {/* Scrollable Content */}
+      <div className="flex-grow p-6 ml-64"> {/* Adjust ml-64 based on your sidebar width */}
         <h1 className="text-lg font-bold text-gray-800">Illura Database &gt; Profiles</h1>
         <hr className="border-t border-gray-300 mt-2 mb-6" />
 
@@ -74,7 +79,7 @@ const DisplayProfile = () => {
         </div>
 
         {/* Profiles Table */}
-        <div className="bg-white p-4 shadow-md rounded-lg">
+        <div className="bg-white p-4 shadow-md rounded-lg overflow-x-auto">
           <table className="table-auto w-full text-left border border-gray-300 text-sm">
             <thead className="bg-gray-100">
               <tr>
