@@ -22,6 +22,8 @@ const notificationsRoutes = require("./routes/notificationsRoutes");
 const verifyrequestRoutes = require("./routes/verifyrequestRoutes");
 const followRoutes = require("./routes/followRoutes");
 const postlikesRoutes = require("./routes/postlikesRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+
 
 // 👉 Import the auction cron job
 const checkAndEndAuctions = require("./jobs/auctionJobs");
@@ -70,6 +72,8 @@ app.use("/api/notifications", notificationsRoutes);
 app.use("/api", verifyrequestRoutes);
 app.use("/api/follow", followRoutes);
 app.use("/api", postlikesRoutes);
+app.use("/api/messages", messageRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, Artwork, Auction, and Media APIs.");

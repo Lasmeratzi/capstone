@@ -25,7 +25,8 @@ import MakeAuction from "./pages/makepost/makeauction";
 import ChatBot from "./pages/chatbot/chatbot";
 import Terms from "./pages/terms/terms";
 import About from "./pages/about/about";
-
+import Inbox from "./pages/message/inbox";
+import Message from "./pages/message/message";
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
         <Route path="/makepost" element={<MakePost/>} />
         <Route path="/makeart" element={<MakeArt/>} />
         <Route path="/makeauction" element={<MakeAuction/>} />
+
         {/* Protected Routes */}
         <Route
           path="/home"
@@ -58,7 +60,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-         <Route
+        <Route
           path="/auctionwins"
           element={
             <ProtectedRoute>
@@ -99,8 +101,27 @@ function App() {
           }
         />
 
+        {/* ✅ Messaging Routes */}
+        <Route
+          path="/inbox"
+          element={
+            <ProtectedRoute>
+              <Inbox />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/messages/:otherUserId"
+          element={
+            <ProtectedRoute>
+              <Message />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Admin Routes */}
         <Route path="/loginadmin" element={<Loginadmin />} />
+        
         {/* Admin Protected Routes */}
         <Route path="/homeadmin" element={
           <AdminProtectedRoute adminOnly={true}>
@@ -132,9 +153,6 @@ function App() {
             <VerifyProfile />
           </AdminProtectedRoute>
         } />
-
-        
-       
       </Routes>
     </Router>
   );
