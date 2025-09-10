@@ -1,21 +1,42 @@
 const messageModel = require("../models/messageModels");
+let io; // socket.io instance
+
+// Attach socket.io to controller
+const initSocket = (socketIoInstance) => {
+  io = socketIoInstance;
+};
 
 // Send a message
 const sendMessage = (req, res) => {
   const senderId = req.user.id;
-  const { recipientId, message_text } = req.body; // match frontend
+  const { recipientId, message_text } = req.body;
 
   if (!recipientId || !message_text) {
-    return res.status(400).json({ message: "Recipient and message text are required." });
+    return res
+      .status(400)
+      .json({ message: "Recipient and message text are required." });
   }
 
   messageModel.createMessage(senderId, recipientId, message_text, (err, result) => {
     if (err) return res.status(500).json({ message: "Database error.", error: err });
+
+    const newMessage = {
+      id: result.insertId,
+      senderId,
+      recipientId,
+      text: message_text,
+      timestamp: new Date(),
+    };
+
+    // 🔥 Emit to both users in their rooms
+    if (io) {
+      io.to(senderId.toString()).emit("receiveMessage", newMessage);
+      io.to(recipientId.toString()).emit("receiveMessage", newMessage);
+    }
+
     res.status(201).json({ message: "Message sent!", messageId: result.insertId });
   });
 };
-
-
 
 // Get all messages with a specific user
 const getConversation = (req, res) => {
@@ -43,7 +64,7 @@ const markMessagesAsRead = (req, res) => {
   const userId = req.user.id;
   const { senderId } = req.params;
 
-  messageModel.markMessagesAsRead(userId, senderId, (err, result) => {
+  messageModel.markMessagesAsRead(userId, senderId, (err) => {
     if (err) return res.status(500).json({ message: "Database error.", error: err });
     res.status(200).json({ message: "Messages marked as read." });
   });
@@ -57,7 +78,9 @@ const deleteMessage = (req, res) => {
   messageModel.deleteMessage(userId, messageId, (err, result) => {
     if (err) return res.status(500).json({ message: "Database error.", error: err });
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Message not found or not authorized to delete." });
+      return res
+        .status(404)
+        .json({ message: "Message not found or not authorized to delete." });
     }
     res.status(200).json({ message: "Message deleted successfully." });
   });
@@ -66,15 +89,13 @@ const deleteMessage = (req, res) => {
 // Get inbox based on following list
 const getFollowingInbox = (req, res) => {
   const userId = req.user.id;
-
-  // Step 1: Get the list of users this user follows
   const followModels = require("../models/followModels");
+
   followModels.getFollowing(userId, (err, followingList) => {
     if (err) return res.status(500).json({ message: "Database error.", error: err });
 
     if (!followingList.length) return res.status(200).json([]);
 
-    const messageModel = require("../models/messageModels");
     const inboxPromises = followingList.map((followedUser) => {
       return new Promise((resolve, reject) => {
         messageModel.getConversation(userId, followedUser.id, (err, messages) => {
@@ -103,9 +124,8 @@ const getFollowingInbox = (req, res) => {
   });
 };
 
-
-
 module.exports = {
+  initSocket,
   sendMessage,
   getConversation,
   getInbox,
