@@ -9,7 +9,7 @@ import {
   UserIcon,
   ArrowRightOnRectangleIcon,
   TrophyIcon,
-  ChatBubbleLeftEllipsisIcon, // ✅ Messages icon
+  ChatBubbleLeftEllipsisIcon,
 } from "@heroicons/react/24/solid";
 
 const Sidebar = () => {
@@ -17,7 +17,7 @@ const Sidebar = () => {
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
-  const [hasUnreadMessages, setHasUnreadMessages] = useState(false); // ✅ for messages
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0); // ✅ number of unread messages
   const userId = localStorage.getItem("id");
   const token = localStorage.getItem("token");
 
@@ -40,7 +40,11 @@ const Sidebar = () => {
       }
     };
 
-    if (userId && token) fetchNotifications();
+    if (userId && token) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 10000); // 🔁 poll every 10s
+      return () => clearInterval(interval);
+    }
   }, [userId, token]);
 
   // 💬 Fetch unread messages
@@ -48,20 +52,27 @@ const Sidebar = () => {
     const fetchUnreadMessages = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/messages/inbox`,
+          `http://localhost:5000/api/messages/following-inbox`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        // check if any conversation has unread messages
-        const unreadMsgExists = response.data.some((conv) => conv.unreadCount > 0);
-        setHasUnreadMessages(unreadMsgExists);
+        // sum up total unread counts
+        const totalUnread = response.data.reduce(
+          (sum, conv) => sum + (conv.unreadCount || 0),
+          0
+        );
+        setUnreadMessagesCount(totalUnread);
       } catch (error) {
         console.error("Failed to fetch unread messages for sidebar:", error);
       }
     };
 
-    if (userId && token) fetchUnreadMessages();
+    if (userId && token) {
+      fetchUnreadMessages();
+      const interval = setInterval(fetchUnreadMessages, 10000); // 🔁 poll every 10s
+      return () => clearInterval(interval);
+    }
   }, [userId, token]);
 
   const navItems = [
@@ -72,13 +83,13 @@ const Sidebar = () => {
       label: "Notifications",
       icon: BellIcon,
       path: "/notifications",
-      showBadge: hasUnread,
+      showBadge: hasUnread ? "dot" : null, // ✅ dot only
     },
     {
       label: "Messages",
       icon: ChatBubbleLeftEllipsisIcon,
       path: "/inbox",
-      showBadge: hasUnreadMessages, // ✅ unread messages badge
+      showBadge: unreadMessagesCount > 0 ? unreadMessagesCount : null, // ✅ number badge
     },
     { label: "Profile", icon: UserIcon, path: "/profile" },
     { label: "Auction Wins", icon: TrophyIcon, path: "/auctionwins" },
@@ -110,12 +121,17 @@ const Sidebar = () => {
             } transition-colors duration-300`}
           >
             <Icon className="h-8 w-8" />
-            {showBadge && (
-              <span
-                className="absolute top-0 left-5 block h-3 w-3 rounded-full bg-red-600 ring-2 ring-black"
-                aria-label={`Unread ${label.toLowerCase()}`}
-              />
-            )}
+            {showBadge &&
+              (showBadge === "dot" ? (
+                <span
+                  className="absolute top-0 left-5 block h-3 w-3 rounded-full bg-red-600 ring-2 ring-black"
+                  aria-label={`Unread ${label.toLowerCase()}`}
+                />
+              ) : (
+                <span className="absolute -top-2 left-5 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow">
+                  {showBadge}
+                </span>
+              ))}
             <span className="ml-4 text-lg">{label}</span>
           </button>
         ))}
