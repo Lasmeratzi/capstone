@@ -9,19 +9,21 @@ import {
   UserIcon,
   ArrowRightOnRectangleIcon,
   TrophyIcon,
+  ChatBubbleLeftEllipsisIcon,
 } from "@heroicons/react/24/solid";
-
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0); // ✅ number of unread messages
   const userId = localStorage.getItem("id");
   const token = localStorage.getItem("token");
 
   const isActive = (path) => location.pathname === path;
 
+  // 🔔 Fetch notifications
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -31,15 +33,46 @@ const Sidebar = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        // Check if there is any unread notification
-        const unreadExists = response.data.some(notif => !notif.is_read);
+        const unreadExists = response.data.some((notif) => !notif.is_read);
         setHasUnread(unreadExists);
       } catch (error) {
         console.error("Failed to fetch notifications for sidebar:", error);
       }
     };
 
-    if (userId && token) fetchNotifications();
+    if (userId && token) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 10000); // 🔁 poll every 10s
+      return () => clearInterval(interval);
+    }
+  }, [userId, token]);
+
+  // 💬 Fetch unread messages
+  useEffect(() => {
+    const fetchUnreadMessages = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/messages/following-inbox`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        // sum up total unread counts
+        const totalUnread = response.data.reduce(
+          (sum, conv) => sum + (conv.unreadCount || 0),
+          0
+        );
+        setUnreadMessagesCount(totalUnread);
+      } catch (error) {
+        console.error("Failed to fetch unread messages for sidebar:", error);
+      }
+    };
+
+    if (userId && token) {
+      fetchUnreadMessages();
+      const interval = setInterval(fetchUnreadMessages, 10000); // 🔁 poll every 10s
+      return () => clearInterval(interval);
+    }
   }, [userId, token]);
 
   const navItems = [
@@ -50,11 +83,16 @@ const Sidebar = () => {
       label: "Notifications",
       icon: BellIcon,
       path: "/notifications",
-      showBadge: hasUnread,
+      showBadge: hasUnread ? "dot" : null, // ✅ dot only
+    },
+    {
+      label: "Messages",
+      icon: ChatBubbleLeftEllipsisIcon,
+      path: "/inbox",
+      showBadge: unreadMessagesCount > 0 ? unreadMessagesCount : null, // ✅ number badge
     },
     { label: "Profile", icon: UserIcon, path: "/profile" },
     { label: "Auction Wins", icon: TrophyIcon, path: "/auctionwins" },
-
   ];
 
   return (
@@ -83,12 +121,17 @@ const Sidebar = () => {
             } transition-colors duration-300`}
           >
             <Icon className="h-8 w-8" />
-            {showBadge && (
-              <span
-                className="absolute top-0 left-5 block h-3 w-3 rounded-full bg-red-600 ring-2 ring-black"
-                aria-label="Unread notifications"
-              />
-            )}
+            {showBadge &&
+              (showBadge === "dot" ? (
+                <span
+                  className="absolute top-0 left-5 block h-3 w-3 rounded-full bg-red-600 ring-2 ring-black"
+                  aria-label={`Unread ${label.toLowerCase()}`}
+                />
+              ) : (
+                <span className="absolute -top-2 left-5 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow">
+                  {showBadge}
+                </span>
+              ))}
             <span className="ml-4 text-lg">{label}</span>
           </button>
         ))}

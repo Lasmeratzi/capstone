@@ -57,9 +57,13 @@ const Notifications = () => {
 
   return (
     <div className="flex bg-white min-h-screen">
-      <Sidebar />
+      {/* Fixed Sidebar */}
+      <div className="fixed h-full">
+        <Sidebar />
+      </div>
 
-      <div className="flex-1 p-8 text-gray-800">
+      {/* Scrollable Content */}
+      <div className="flex-1 p-8 text-gray-800 ml-64"> {/* Adjust ml-64 based on your sidebar width */}
         <h1 className="text-3xl font-bold mb-8">Notifications</h1>
 
         {notifications.length === 0 ? (
@@ -91,7 +95,7 @@ const Notifications = () => {
                     onClick={() => deleteNotification(notif.id)}
                     title="Delete notification"
                     className="text-gray-500 hover:text-red-600 transition"
-                  >
+                    >
                     <TrashIcon className="h-5 w-5" />
                   </button>
                 </div>
