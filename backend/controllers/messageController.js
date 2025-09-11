@@ -82,9 +82,36 @@ const deleteMessage = (req, res) => {
         .status(404)
         .json({ message: "Message not found or not authorized to delete." });
     }
-    res.status(200).json({ message: "Message deleted successfully." });
+
+    // Optionally broadcast deletion via socket.io
+    if (io) {
+      io.emit("messageDeleted", { messageId, userId });
+    }
+
+    res.status(200).json({ message: "Message deleted (soft)." });
   });
 };
+
+const deleteConversation = (req, res) => {
+  const userId = req.user.id;
+  const { otherUserId } = req.params;
+
+  messageModel.deleteConversation(userId, otherUserId, (err, result) => {
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Conversation not found." });
+    }
+
+    // Broadcast deletion
+    if (io) {
+      io.emit("conversationDeleted", { userId, otherUserId });
+    }
+
+    res.status(200).json({ message: "Conversation deleted (hard)." });
+  });
+};
+
 
 // Get inbox based on following list
 const getFollowingInbox = (req, res) => {
@@ -132,4 +159,5 @@ module.exports = {
   markMessagesAsRead,
   deleteMessage,
   getFollowingInbox,
+  deleteConversation,
 };
