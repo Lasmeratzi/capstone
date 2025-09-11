@@ -52,16 +52,27 @@ const markMessagesAsRead = (userId, senderId, callback) => {
   db.query(sql, [senderId, userId], callback);
 };
 
-// Delete message (only if user is the sender)
+// Delete message (soft delete – only if user is the sender)
 const deleteMessage = (userId, messageId, callback) => {
   const sql = `
-    DELETE FROM messages
+    UPDATE messages
+    SET message_text = 'message deleted'
     WHERE id = ? AND sender_id = ?
   `;
   db.query(sql, [messageId, userId], callback);
 };
 
-// Get following list with latest message (for Instagram-style inbox)
+// Delete entire conversation (HARD DELETE)
+const deleteConversation = (userId, otherUserId, callback) => {
+  const sql = `
+    DELETE FROM messages
+    WHERE (sender_id = ? AND recipient_id = ?)
+       OR (sender_id = ? AND recipient_id = ?)
+  `;
+  db.query(sql, [userId, otherUserId, otherUserId, userId], callback);
+};
+
+// Get following list with latest message
 const getFollowingInbox = (userId, callback) => {
   const sql = `
     SELECT u.id AS userId, u.username, u.pfp,
@@ -89,12 +100,12 @@ const getFollowingInbox = (userId, callback) => {
   db.query(sql, [userId, userId, userId, userId, userId, userId], callback);
 };
 
-
 module.exports = {
   createMessage,
   getConversation,
   getInbox,
   markMessagesAsRead,
   deleteMessage,
-  getFollowingInbox, 
+  getFollowingInbox,
+  deleteConversation, 
 };
