@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 13, 2025 at 04:40 PM
+-- Generation Time: Sep 11, 2025 at 08:34 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -40,8 +40,8 @@ CREATE TABLE `admins` (
 --
 
 INSERT INTO `admins` (`id`, `username`, `password`, `created_at`, `role`) VALUES
-(1, 'admin', '$2b$10$OSRfiTV2a.5AWKEcqCBeV.YniEvuxI9uJ96nEgUV1dMTz6VMFj0UG', '2025-06-09 07:22:46', 'admin'),
-(2, 'superadmin', '$2b$10$f4xTeb/0R1xOLUdQ51OiOe4OqLmtPU2JSjCHgqD357bl70sF8KClW', '2025-06-09 08:52:04', 'super_admin');
+(6, 'admin', '$2b$10$YYylHcdXoSIL1VIHVA3XTu0lk.EdAT1R4v/gL3ynBU.J9h79gUhhe', '2025-09-10 07:22:09', 'admin'),
+(7, 'superadmin', '$2b$10$pdCLoSznVgA4WclA8FHdD.r831tE7LcOJIBAAdXyc0onjI9WIG1bi', '2025-09-10 07:22:09', 'super_admin');
 
 -- --------------------------------------------------------
 
@@ -127,7 +127,9 @@ INSERT INTO `auctions` (`id`, `author_id`, `title`, `description`, `starting_pri
 (34, 36, 'tetete', 'dfgdfg', 1000.00, 1400.00, '2025-06-11 15:52:00', 'ended', '2025-06-11 07:50:23', '2025-06-11 07:52:00'),
 (35, 28, 'wefw', 'sdfsf', 1000.00, 1000.00, '2025-06-11 16:30:00', 'ended', '2025-06-11 08:28:05', '2025-06-11 08:30:00'),
 (36, 36, 'Auction testt', 'description', 1000.00, 1800.00, '2025-06-11 20:10:00', 'ended', '2025-06-11 12:08:53', '2025-06-11 12:10:00'),
-(37, 38, 'qweqwe', 'qweqwe', 1400.00, 10000.00, '2025-06-19 12:00:00', 'active', '2025-06-12 04:48:37', '2025-06-13 08:14:29');
+(37, 38, 'qweqwe', 'qweqwe', 1400.00, 10000.00, '2025-06-19 12:00:00', 'ended', '2025-06-12 04:48:37', '2025-08-05 05:52:00'),
+(38, 40, 'Auction', 'Description', 2000.00, 2500.00, '2025-06-14 14:36:00', 'ended', '2025-06-14 06:34:58', '2025-06-14 06:36:00'),
+(39, 28, 'asdasd', 'efvrfvf', 1000.00, 1000.00, '2025-08-20 16:01:00', 'pending', '2025-08-20 07:59:41', '2025-08-20 07:59:41');
 
 -- --------------------------------------------------------
 
@@ -153,7 +155,8 @@ INSERT INTO `auction_bids` (`id`, `auction_id`, `bidder_id`, `bid_amount`, `crea
 (35, 34, 28, 1400.00, '2025-06-11 07:51:10'),
 (36, 36, 34, 1800.00, '2025-06-11 12:09:34'),
 (37, 37, 39, 5000.00, '2025-06-13 08:14:16'),
-(38, 37, 39, 10000.00, '2025-06-13 08:14:29');
+(38, 37, 39, 10000.00, '2025-06-13 08:14:29'),
+(39, 38, 28, 2500.00, '2025-06-14 06:35:32');
 
 -- --------------------------------------------------------
 
@@ -179,7 +182,10 @@ INSERT INTO `auction_media` (`id`, `auction_id`, `media_path`, `created_at`) VAL
 (33, 35, 'auctions/1749630485637-2nd sem SCHED.png', '2025-06-11 08:28:05'),
 (34, 36, 'auctions/1749643733660-finaldimens.gif', '2025-06-11 12:08:54'),
 (35, 37, 'auctions/1749703718038-albularyos.jpg', '2025-06-12 04:48:38'),
-(36, 37, 'auctions/1749703718048-dirtblock.png', '2025-06-12 04:48:38');
+(36, 37, 'auctions/1749703718048-dirtblock.png', '2025-06-12 04:48:38'),
+(37, 38, 'auctions/1749882898963-0ebbfd90d33893624f58f103037727af.jpg', '2025-06-14 06:34:58'),
+(38, 39, 'auctions/1755676781617-chill.jpg', '2025-08-20 07:59:41'),
+(39, 39, 'auctions/1755676781623-clem-onojeghuo-XW-Z9L930CY-unsplash.jpg', '2025-08-20 07:59:41');
 
 -- --------------------------------------------------------
 
@@ -207,7 +213,11 @@ INSERT INTO `comments` (`id`, `author_id`, `post_id`, `comment_text`, `created_a
 (20, 34, 39, 'comment pag may time', '2025-06-08 16:35:04'),
 (21, 36, 39, 'commentnew', '2025-06-12 17:01:02'),
 (22, 37, 39, 'postcomment', '2025-06-13 06:02:32'),
-(23, 39, 39, 'comment', '2025-06-13 08:07:14');
+(23, 39, 39, 'comment', '2025-06-13 08:07:14'),
+(24, 40, 39, 'cmoments', '2025-06-14 06:33:49'),
+(25, 40, 42, 'afdsfd', '2025-06-14 07:13:29'),
+(26, 28, 42, 'hi it\'s me', '2025-08-05 06:02:24'),
+(27, 28, 38, 'comment', '2025-08-20 07:57:56');
 
 -- --------------------------------------------------------
 
@@ -248,7 +258,14 @@ INSERT INTO `follows` (`id`, `follower_id`, `following_id`, `created_at`) VALUES
 (3, 28, 34, '2025-06-12 21:06:35'),
 (8, 36, 34, '2025-06-12 22:22:11'),
 (12, 37, 28, '2025-06-13 13:51:41'),
-(13, 28, 39, '2025-06-13 16:05:50');
+(13, 28, 39, '2025-06-13 16:05:50'),
+(14, 39, 34, '2025-06-14 11:53:02'),
+(15, 39, 28, '2025-06-14 11:53:07'),
+(16, 39, 38, '2025-06-14 11:53:24'),
+(17, 40, 28, '2025-06-14 14:34:14'),
+(18, 40, 34, '2025-06-14 14:41:15'),
+(19, 28, 35, '2025-08-20 15:58:27'),
+(20, 35, 40, '2025-09-09 15:34:26');
 
 -- --------------------------------------------------------
 
@@ -259,11 +276,47 @@ INSERT INTO `follows` (`id`, `follower_id`, `following_id`, `created_at`) VALUES
 CREATE TABLE `messages` (
   `id` int(11) NOT NULL,
   `sender_id` int(11) NOT NULL,
-  `receiver_id` int(11) NOT NULL,
-  `content` text NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `is_read` tinyint(1) DEFAULT 0
+  `recipient_id` int(11) NOT NULL,
+  `message_text` text NOT NULL,
+  `is_read` tinyint(1) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `messages`
+--
+
+INSERT INTO `messages` (`id`, `sender_id`, `recipient_id`, `message_text`, `is_read`, `created_at`) VALUES
+(1, 28, 34, 'afaa', 1, '2025-09-09 07:39:04'),
+(2, 34, 28, 'hey', 1, '2025-09-09 07:40:06'),
+(3, 28, 34, 'hi there', 1, '2025-09-09 07:40:36'),
+(4, 34, 28, 'kbsvjhsbvjhsbv', 1, '2025-09-09 07:41:14'),
+(5, 34, 28, 'dfdfsdf', 1, '2025-09-09 07:42:00'),
+(6, 34, 28, 'svds', 1, '2025-09-09 07:42:00'),
+(7, 28, 34, 'afsds', 1, '2025-09-09 07:42:07'),
+(8, 28, 34, 'sdfds', 1, '2025-09-09 07:42:08'),
+(9, 34, 28, 'hello', 1, '2025-09-09 07:42:27'),
+(10, 28, 39, 'hello', 0, '2025-09-09 07:43:12'),
+(11, 28, 39, 'alex123', 0, '2025-09-09 07:44:47'),
+(12, 39, 28, 'yes yes yes', 1, '2025-09-09 07:47:36'),
+(13, 34, 28, 'yo', 1, '2025-09-10 08:24:11'),
+(14, 28, 34, 'hey', 1, '2025-09-10 08:24:25'),
+(15, 34, 28, 'adadasd', 1, '2025-09-10 08:35:46'),
+(16, 34, 28, 'zxczczxczxc', 1, '2025-09-10 08:36:02'),
+(17, 28, 34, 'hey', 1, '2025-09-10 08:49:34'),
+(18, 34, 28, 'yo', 1, '2025-09-10 08:49:42'),
+(19, 28, 34, 'asd', 1, '2025-09-10 08:49:58'),
+(20, 34, 28, 'asd', 1, '2025-09-10 08:50:20'),
+(21, 34, 28, 'zxzxx', 1, '2025-09-10 08:50:32'),
+(22, 28, 34, 'nbbmnmn', 1, '2025-09-10 08:53:57'),
+(23, 28, 34, 'fgfgf', 1, '2025-09-10 08:57:08'),
+(24, 34, 28, 'vb', 1, '2025-09-10 08:57:16'),
+(25, 34, 28, '12313123', 1, '2025-09-10 08:59:49'),
+(26, 28, 34, 'zx', 1, '2025-09-10 09:00:02'),
+(27, 34, 28, 'zxczczxcz', 1, '2025-09-10 09:00:11'),
+(28, 34, 28, 'mbnmbmbnmbbnmbnmnb', 1, '2025-09-10 09:00:18'),
+(29, 28, 34, 'okay', 1, '2025-09-10 09:00:23'),
+(30, 28, 34, '123', 1, '2025-09-10 09:01:50');
 
 -- --------------------------------------------------------
 
@@ -306,14 +359,34 @@ INSERT INTO `notifications` (`id`, `user_id`, `message`, `is_read`, `created_at`
 (86, 35, 'xQcWOWers followed you', 1, '2025-06-12 14:27:04'),
 (87, 34, 'Someone liked your post: \"adadadad\"', 1, '2025-06-12 18:08:45'),
 (89, 28, 'lowkeylokilang liked your post', 1, '2025-06-12 18:58:38'),
-(90, 36, 'dadarkDDD followed you', 0, '2025-06-12 19:00:33'),
 (94, 28, 'jimjoe liked your post', 1, '2025-06-13 05:37:32'),
-(95, 36, 'dadarkDDD followed you', 0, '2025-06-13 05:38:36'),
+(95, 36, 'dadarkDDD followed you', 1, '2025-06-13 05:38:36'),
 (96, 28, 'jimjoe liked your post', 1, '2025-06-13 05:51:29'),
 (97, 28, 'jimjoe followed you', 1, '2025-06-13 05:51:41'),
 (98, 39, 'dadarkDDD followed you', 1, '2025-06-13 08:05:50'),
 (99, 28, 'silverlilly liked your post', 1, '2025-06-13 08:09:12'),
-(100, 38, 'Your auction \"qweqwe\" status has been updated to \"active\".', 1, '2025-06-13 08:14:03');
+(100, 38, 'Your auction \"qweqwe\" status has been updated to \"active\".', 1, '2025-06-13 08:14:03'),
+(101, 34, 'silverlilly followed you', 1, '2025-06-14 03:53:02'),
+(102, 28, 'silverlilly followed you', 1, '2025-06-14 03:53:07'),
+(103, 38, 'silverlilly followed you', 0, '2025-06-14 03:53:24'),
+(104, 28, 'lowkeylokilang liked your post', 1, '2025-06-14 04:52:19'),
+(105, 28, 'johndoe liked your post', 1, '2025-06-14 06:33:50'),
+(106, 28, 'johndoe followed you', 1, '2025-06-14 06:34:14'),
+(107, 40, 'Your auction \"Auction\" has been created and is pending approval.', 1, '2025-06-14 06:34:58'),
+(108, 40, 'Your auction \"Auction\" status has been updated to \"approved\".', 1, '2025-06-14 06:35:08'),
+(109, 40, 'Your auction \"Auction\" status has been updated to \"active\".', 1, '2025-06-14 06:35:11'),
+(110, 40, 'Your auction \"Auction\" has ended. Highest bidder: @dadarkDDD with ₱2500.00.', 1, '2025-06-14 06:36:00'),
+(111, 28, 'You won the auction \"Auction\" with ₱2500.00. Congratulations!', 1, '2025-06-14 06:36:00'),
+(112, 34, 'johndoe followed you', 1, '2025-06-14 06:41:15'),
+(114, 40, 'lowkeylokilang liked your post', 1, '2025-06-14 07:13:39'),
+(115, 38, 'Your auction \"qweqwe\" has ended. Highest bidder: @silverlilly with ₱10000.00.', 0, '2025-08-05 05:52:00'),
+(116, 39, 'You won the auction \"qweqwe\" with ₱10000.00. Congratulations!', 1, '2025-08-05 05:52:00'),
+(117, 40, 'dadarkDDD liked your post', 0, '2025-08-05 05:53:12'),
+(118, 28, 'slytherinz liked your post', 1, '2025-08-14 06:28:53'),
+(119, 34, 'dadarkXYZ123 liked your post', 1, '2025-08-20 07:57:46'),
+(120, 35, 'dadarkXYZ123 followed you', 1, '2025-08-20 07:58:27'),
+(121, 28, 'Your auction \"asdasd\" has been created and is pending approval.', 1, '2025-08-20 07:59:41'),
+(122, 40, 'slytherinz followed you', 0, '2025-09-09 07:34:26');
 
 -- --------------------------------------------------------
 
@@ -356,7 +429,8 @@ CREATE TABLE `portfolio_items` (
 INSERT INTO `portfolio_items` (`id`, `user_id`, `title`, `description`, `image_path`, `created_at`, `updated_at`) VALUES
 (29, 28, 'The sun', 'Ray of hopes123', '64ad2b6247d11de446b4438526048b97', '2025-06-01 16:27:19', '2025-06-11 16:38:22'),
 (30, 34, 'Portfolio', 'aaa', '42c3f05eef18dc5d33314c2e3685ff71', '2025-06-02 04:32:08', '2025-06-02 04:32:08'),
-(31, 39, 'Portfolio 1', 'First Project', 'e1f0eba9770be3be8fce3f3550ef0bce', '2025-06-13 08:12:14', '2025-06-13 08:12:14');
+(31, 39, 'Portfolio 1', 'First Project', 'e1f0eba9770be3be8fce3f3550ef0bce', '2025-06-13 08:12:14', '2025-06-13 08:12:14'),
+(32, 40, 'POrtfolio Item', 'adas', '3d07397a2964e94d733425ae9cb537be', '2025-06-14 06:32:33', '2025-06-14 06:32:33');
 
 -- --------------------------------------------------------
 
@@ -380,7 +454,8 @@ CREATE TABLE `posts` (
 
 INSERT INTO `posts` (`id`, `author_id`, `title`, `media_path`, `created_at`, `updated_at`, `post_status`) VALUES
 (38, 34, 'adadadad', '2026da0f53159f06ec83082bac9919fc', '2025-06-01 16:25:58', '2025-06-01 16:25:58', 'active'),
-(39, 28, 'potspost', 'ed47cefcb74f00dc74215c3f55595168', '2025-06-06 15:49:13', '2025-06-13 06:02:16', 'active');
+(39, 28, 'potspost', 'c3f6fcce3e45ac196d783827c92d05fb', '2025-06-06 15:49:13', '2025-06-14 04:15:11', 'active'),
+(42, 40, 'adad', '9abffd17a302b07997be47f1dbf98c11', '2025-06-14 06:37:27', '2025-06-14 06:37:27', 'active');
 
 -- --------------------------------------------------------
 
@@ -401,9 +476,14 @@ CREATE TABLE `post_likes` (
 
 INSERT INTO `post_likes` (`id`, `user_id`, `post_id`, `created_at`) VALUES
 (16, 34, 39, '2025-06-12 18:46:34'),
-(21, 36, 39, '2025-06-12 18:58:38'),
 (26, 37, 39, '2025-06-13 05:51:29'),
-(27, 39, 39, '2025-06-13 08:09:12');
+(27, 39, 39, '2025-06-13 08:09:12'),
+(28, 36, 39, '2025-06-14 04:52:19'),
+(30, 40, 39, '2025-06-14 07:03:56'),
+(31, 36, 42, '2025-06-14 07:13:39'),
+(32, 28, 42, '2025-08-05 05:53:12'),
+(33, 35, 39, '2025-08-14 06:28:53'),
+(34, 28, 38, '2025-08-20 07:57:46');
 
 -- --------------------------------------------------------
 
@@ -447,13 +527,15 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `fullname`, `bio`, `birthdate`, `pfp`, `account_status`, `commissions`, `created_at`, `updated_at`, `verified`, `twitter_link`, `instagram_link`, `facebook_link`) VALUES
-(28, 'dadarkDDD', 'asd@gmail.com', '$2b$10$ph27ZwaqpvGpgL4qvr6Lre28AUghCdmNDkfZbO/.uKxItLkXfs8YS', 'Dark dark', 'to be is what to be is what it is', '2025-06-05', '1749660963673-salutmoji.jpg', 'active', 'closed', '2025-06-01 16:06:58', '2025-06-11 22:07:55', 1, 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez'),
+(28, 'dadarkXYZ123', 'asd@gmail.com', '$2b$10$ph27ZwaqpvGpgL4qvr6Lre28AUghCdmNDkfZbO/.uKxItLkXfs8YS', 'Dark dark', 'to be testing', '2025-06-05', '1755151735583-freepik__adjust__52574.png', 'active', 'closed', '2025-06-01 16:06:58', '2025-08-14 06:09:33', 1, 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez'),
 (34, 'xQcWOWers', 'qwerty@gmail.com', '$2b$10$rRDYKbXVUL1fWJ4ACmzFGu6A./O1FfsCIWQqMmFDMq0ZzLMh9U/ze', 'Felix Nguyan', 'GAMBA streams', '2025-06-04', '1749683009262-3d-mountain-landscape-with-moonlit-sky.jpg', 'active', 'closed', '2025-06-01 16:23:36', '2025-06-11 23:11:25', 1, 'https://www.instagram.com/lasmeratzi/', 'https://www.instagram.com/lasmeratzi/', 'https://www.instagram.com/lasmeratzi/'),
 (35, 'slytherinz', 'zxc@gmail.com', '$2b$10$nQDj54OV1//a2tOqzUUF1efVMKuxzCXnU4uDYhN0i9fZz4j77a2P.', 'Severus Spane', 'zxzx', '2025-06-05', '1749738686711-suit1.png', 'active', 'closed', '2025-06-03 17:17:20', '2025-06-12 14:31:41', 0, NULL, NULL, NULL),
 (36, 'lowkeylokilang', 'xcv@gmail.com', '$2b$10$hgEKp0ebG3wvSBvQayG3ve29/u5jmQ9sk.ntoUbpgPdV0hC/cUwei', 'Loki Odinson', 'gogog', '2025-06-09', '1bb32ca017a833b2be5a727f4bfde04b', 'active', 'closed', '2025-06-08 14:30:37', '2025-06-12 07:23:31', 0, NULL, NULL, NULL),
 (37, 'jimjoe', 'poi@gmail.com', '$2b$10$DnSSnZPQ5Ya9A2ZNRdarROh4gbO7XyWKKEOK6AdBF/RLxWoWOjL7W', 'Jim Jom', NULL, '2025-06-01', 'f9fb8290101fae7e86fc2c67d3d54423', 'active', 'closed', '2025-06-11 15:13:14', '2025-06-13 06:01:37', 1, 'https://www.twitch.tv/settings/profile', 'https://www.twitch.tv/settings/profile', 'https://www.twitch.tv/settings/profile'),
 (38, 'dodngslm', 'qwe@gmail.com', '$2b$10$4gG0r/B67gB6dvSrZKhl9OpFy1g0.7V9D9jePwff.OOiZzccHCZuu', 'Dodong Dodoo', '141 ra gud', '2025-06-11', '1f2931932ed4a6ccfa0131db4629826f', 'active', 'closed', '2025-06-12 03:24:33', '2025-06-12 03:25:53', 0, NULL, NULL, NULL),
-(39, 'silverlilly', 'alex@gmail.com', '$2b$10$PIiZ1RBOHpWrHnbLKV1F..QsnyPt0IaV1XXCjfhrhZe6AS/u7TPW.', 'Alexandra Burningham', NULL, '2000-07-19', '35eb49d231f325cda954df3755435bcf', 'active', 'closed', '2025-06-13 08:01:00', '2025-06-13 08:04:21', 1, 'https://www.instagram.com/silverllily/', 'https://www.instagram.com/silverllily/', 'https://www.facebook.com/alex.ledesma.391');
+(39, 'silverlilly', 'alex@gmail.com', '$2b$10$PIiZ1RBOHpWrHnbLKV1F..QsnyPt0IaV1XXCjfhrhZe6AS/u7TPW.', 'Alexandra Burningham', NULL, '2000-07-19', '35eb49d231f325cda954df3755435bcf', 'active', 'closed', '2025-06-13 08:01:00', '2025-06-13 08:04:21', 1, 'https://www.instagram.com/silverllily/', 'https://www.instagram.com/silverllily/', 'https://www.facebook.com/alex.ledesma.391'),
+(40, 'johndoe123', 'email@gmail.com', '$2b$10$LQhCW42G2r8rNi/yiPeJ/eZAtyCAzM0TzYfVR5NCg2oIH1RMpG9km', 'John Doe', 'gfxbcjvmhv', '2025-06-11', '64844cb6f5a983635b8c95a9805843c7', 'active', 'open', '2025-06-14 06:30:56', '2025-06-14 07:18:18', 1, 'https://www.facebook.com/', 'https://www.facebook.com/', 'https://www.facebook.com/'),
+(41, 'john123', 'vbnm@gmail.com', '$2b$10$0rZ4rKwB3lQwRTSHmGoqiOUY3jVQB6xc0bvTKjtiKGsuPO8Endf2W', 'John Doe', 'sdvdcv dvd', '2025-08-29', '1755677083737-mechak6.jpg', 'active', 'closed', '2025-08-20 08:03:54', '2025-08-20 08:04:43', 0, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -478,7 +560,8 @@ CREATE TABLE `verification_requests` (
 INSERT INTO `verification_requests` (`id`, `user_id`, `twitter_link`, `instagram_link`, `facebook_link`, `status`, `request_date`) VALUES
 (5, 28, 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez', 'approved', '2025-06-11 21:31:11'),
 (6, 34, 'https://www.instagram.com/lasmeratzi/', 'https://www.instagram.com/lasmeratzi/', 'https://www.instagram.com/lasmeratzi/', 'approved', '2025-06-11 22:31:28'),
-(9, 37, 'https://www.twitch.tv/settings/profile', 'https://www.twitch.tv/settings/profile', 'https://www.twitch.tv/settings/profile', 'approved', '2025-06-13 06:01:00');
+(9, 37, 'https://www.twitch.tv/settings/profile', 'https://www.twitch.tv/settings/profile', 'https://www.twitch.tv/settings/profile', 'approved', '2025-06-13 06:01:00'),
+(11, 40, 'https://www.facebook.com/', 'https://www.facebook.com/', 'https://www.facebook.com/', 'approved', '2025-06-14 06:33:01');
 
 -- --------------------------------------------------------
 
@@ -502,7 +585,8 @@ INSERT INTO `wallets` (`id`, `user_id`, `balance`, `created_at`, `updated_at`) V
 (1, 28, 0.00, '2025-06-08 14:15:38', '2025-06-08 14:15:38'),
 (2, 35, 0.00, '2025-06-08 14:24:55', '2025-06-08 14:24:55'),
 (3, 36, 0.00, '2025-06-08 14:30:54', '2025-06-08 14:30:54'),
-(4, 34, 0.00, '2025-06-08 16:33:25', '2025-06-08 16:33:25');
+(4, 34, 0.00, '2025-06-08 16:33:25', '2025-06-08 16:33:25'),
+(5, 40, 0.00, '2025-06-14 06:48:02', '2025-06-14 06:48:02');
 
 --
 -- Indexes for dumped tables
@@ -581,7 +665,7 @@ ALTER TABLE `follows`
 ALTER TABLE `messages`
   ADD PRIMARY KEY (`id`),
   ADD KEY `sender_id` (`sender_id`),
-  ADD KEY `receiver_id` (`receiver_id`);
+  ADD KEY `recipient_id` (`recipient_id`);
 
 --
 -- Indexes for table `notifications`
@@ -656,7 +740,7 @@ ALTER TABLE `wallets`
 -- AUTO_INCREMENT for table `admins`
 --
 ALTER TABLE `admins`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `artwork_media`
@@ -674,25 +758,25 @@ ALTER TABLE `artwork_posts`
 -- AUTO_INCREMENT for table `auctions`
 --
 ALTER TABLE `auctions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `auction_bids`
 --
 ALTER TABLE `auction_bids`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `auction_media`
 --
 ALTER TABLE `auction_media`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `comments`
 --
 ALTER TABLE `comments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `escrow_releases`
@@ -704,19 +788,19 @@ ALTER TABLE `escrow_releases`
 -- AUTO_INCREMENT for table `follows`
 --
 ALTER TABLE `follows`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=101;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -728,19 +812,19 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `portfolio_items`
 --
 ALTER TABLE `portfolio_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `posts`
 --
 ALTER TABLE `posts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `post_likes`
 --
 ALTER TABLE `post_likes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT for table `tags`
@@ -752,19 +836,19 @@ ALTER TABLE `tags`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `verification_requests`
 --
 ALTER TABLE `verification_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `wallets`
 --
 ALTER TABLE `wallets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Constraints for dumped tables
@@ -826,8 +910,8 @@ ALTER TABLE `follows`
 -- Constraints for table `messages`
 --
 ALTER TABLE `messages`
-  ADD CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `messages_ibfk_2` FOREIGN KEY (`receiver_id`) REFERENCES `users` (`id`);
+  ADD CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `messages_ibfk_2` FOREIGN KEY (`recipient_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `notifications`
