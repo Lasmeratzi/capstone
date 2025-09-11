@@ -22,4 +22,6 @@ router.put("/read/:senderId", authenticateToken, messageController.markMessagesA
 // Delete a message
 router.delete("/:messageId", authenticateToken, messageController.deleteMessage);
 
+router.delete("/conversation/:otherUserId", authenticateToken, messageController.deleteConversation);
+
 module.exports = router;
