@@ -1,3 +1,4 @@
+// src/pages/profiles/PortfolioGrid.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -10,13 +11,34 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState(null);
+
+  // Auto-reply states
+  const [autoReplyText, setAutoReplyText] = useState("");
+  const [hasAutoReply, setHasAutoReply] = useState(false);
+
   const navigate = useNavigate();
 
-  const handleImageClick = (item) => {
+  const handleImageClick = async (item) => {
     setSelectedItem(item);
     setTitle(item.title);
     setDescription(item.description);
     setImage(null);
+
+    // 🔹 Fetch auto-reply for this portfolio item
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/auto-replies/${item.id}`
+      );
+      if (res.data && res.data.reply_text) {
+        setAutoReplyText(res.data.reply_text);
+        setHasAutoReply(true);
+      } else {
+        setAutoReplyText("");
+        setHasAutoReply(false);
+      }
+    } catch (error) {
+      console.error("Failed to fetch auto-reply:", error);
+    }
   };
 
   const closeModal = () => {
@@ -25,6 +47,8 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
     setTitle("");
     setDescription("");
     setImage(null);
+    setAutoReplyText("");
+    setHasAutoReply(false);
   };
 
   const handleImageChange = (e) => {
@@ -32,7 +56,9 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
   };
 
   const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this portfolio item? This action cannot be undone.");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this portfolio item? This action cannot be undone."
+    );
     if (!confirmDelete) return;
 
     const token = localStorage.getItem("token");
@@ -77,6 +103,62 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
       navigate(0);
     } catch (error) {
       console.error("Failed to edit portfolio item:", error);
+    }
+  };
+
+  // 🔹 Auto-reply handlers
+  const handleAddAutoReply = async (portfolioItemId, reply_text) => {
+    const token = localStorage.getItem("token");
+    try {
+      await axios.post(
+        "http://localhost:5000/api/auto-replies",
+        { portfolioItemId, reply_text },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setHasAutoReply(true);
+      alert("Auto-reply added!");
+    } catch (error) {
+      console.error(
+        "Failed to add auto-reply:",
+        error.response?.data || error.message
+      );
+    }
+  };
+
+  const handleUpdateAutoReply = async (portfolioItemId, reply_text) => {
+    const token = localStorage.getItem("token");
+    try {
+      await axios.patch(
+        `http://localhost:5000/api/auto-replies/${portfolioItemId}`,
+        { reply_text },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Auto-reply updated!");
+    } catch (error) {
+      console.error(
+        "Failed to update auto-reply:",
+        error.response?.data || error.message
+      );
+    }
+  };
+
+  const handleDeleteAutoReply = async (portfolioItemId) => {
+    const token = localStorage.getItem("token");
+    try {
+      await axios.delete(
+        `http://localhost:5000/api/auto-replies/${portfolioItemId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setAutoReplyText("");
+      setHasAutoReply(false);
+      alert("Auto-reply deleted!");
+    } catch (error) {
+      console.error(
+        "Failed to delete auto-reply:",
+        error.response?.data || error.message
+      );
     }
   };
 
@@ -173,25 +255,78 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                 </>
               )}
 
-              {/* ✅ Show only if the logged-in user is the item's owner */}
-              {!isEditing && Number(selectedItem.user_id) === Number(loggedInUserId) && (
-                <div className="flex justify-end space-x-4 mt-auto">
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center text-blue-500 hover:text-blue-600 transition"
-                  >
-                    <PencilSquareIcon className="h-5 w-5 mr-1" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(selectedItem.id)}
-                    className="flex items-center text-red-500 hover:text-red-600 transition"
-                  >
-                    <TrashIcon className="h-5 w-5 mr-1" />
-                    Remove
-                  </button>
-                </div>
-              )}
+              {/* ✅ Owner-only actions */}
+              {!isEditing &&
+                Number(selectedItem.user_id) === Number(loggedInUserId) && (
+                  <>
+                    {/* Edit/Delete Portfolio Item */}
+                    <div className="flex justify-end space-x-4 mt-auto mb-4">
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center text-blue-500 hover:text-blue-600 transition"
+                      >
+                        <PencilSquareIcon className="h-5 w-5 mr-1" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(selectedItem.id)}
+                        className="flex items-center text-red-500 hover:text-red-600 transition"
+                      >
+                        <TrashIcon className="h-5 w-5 mr-1" />
+                        Remove
+                      </button>
+                    </div>
+
+                    {/* 🔹 Auto-reply Section */}
+                    <div className="mt-4 border-t pt-4">
+                      <h3 className="text-lg font-semibold mb-2">
+                        Auto Reply
+                      </h3>
+                      <textarea
+                        className="w-full px-3 py-2 border rounded-lg mb-2"
+                        placeholder="Set your auto reply message"
+                        value={autoReplyText}
+                        onChange={(e) => setAutoReplyText(e.target.value)}
+                      ></textarea>
+
+                      {!hasAutoReply ? (
+                        <button
+                          onClick={() =>
+                            handleAddAutoReply(
+                              selectedItem.id,
+                              autoReplyText
+                            )
+                          }
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                        >
+                          Save Auto Reply
+                        </button>
+                      ) : (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() =>
+                              handleUpdateAutoReply(
+                                selectedItem.id,
+                                autoReplyText
+                              )
+                            }
+                            className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+                          >
+                            Update Auto Reply
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDeleteAutoReply(selectedItem.id)
+                            }
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                          >
+                            Delete Auto Reply
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
             </div>
 
             <button
