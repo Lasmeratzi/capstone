@@ -1,12 +1,12 @@
 const db = require("../config/database");
 
 // Send message
-const createMessage = (senderId, recipientId, message_text, callback) => {
+const createMessage = (senderId, recipientId, message_text, portfolioId, callback) => {
   const sql = `
-    INSERT INTO messages (sender_id, recipient_id, message_text, is_read)
-    VALUES (?, ?, ?, 0)
+    INSERT INTO messages (sender_id, recipient_id, portfolio_id, message_text, is_read)
+    VALUES (?, ?, ?, ?, 0)
   `;
-  db.query(sql, [senderId, recipientId, message_text], callback);
+  db.query(sql, [senderId, recipientId, portfolioId || null, message_text], callback);
 };
 
 // Get all messages with a specific user

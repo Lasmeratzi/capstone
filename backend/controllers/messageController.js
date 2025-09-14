@@ -1,4 +1,6 @@
 const messageModel = require("../models/messageModels");
+const autoReplyModel = require("../models/autoReplyModels");
+
 let io; // socket.io instance
 
 // Attach socket.io to controller
@@ -9,33 +11,73 @@ const initSocket = (socketIoInstance) => {
 // Send a message
 const sendMessage = (req, res) => {
   const senderId = req.user.id;
-  const { recipientId, message_text } = req.body;
+  const { recipientId, message_text, portfolioItemId } = req.body;
 
   if (!recipientId || !message_text) {
-    return res
-      .status(400)
-      .json({ message: "Recipient and message text are required." });
+    return res.status(400).json({ message: "Recipient and message text are required." });
   }
 
-  messageModel.createMessage(senderId, recipientId, message_text, (err, result) => {
-    if (err) return res.status(500).json({ message: "Database error.", error: err });
+  // Save buyer's message
+  messageModel.createMessage(
+    senderId,
+    recipientId,
+    message_text,
+    portfolioItemId || null, // ✅ include portfolioId if provided
+    (err, result) => {
+      if (err) return res.status(500).json({ message: "Database error.", error: err });
 
-    const newMessage = {
-      id: result.insertId,
-      senderId,
-      recipientId,
-      text: message_text,
-      timestamp: new Date(),
-    };
+      const newMessage = {
+        id: result.insertId,
+        senderId,
+        recipientId,
+        text: message_text,
+        portfolioId: portfolioItemId || null,
+        timestamp: new Date(),
+      };
 
-    // 🔥 Emit to both users in their rooms
-    if (io) {
-      io.to(senderId.toString()).emit("receiveMessage", newMessage);
-      io.to(recipientId.toString()).emit("receiveMessage", newMessage);
+      // Emit buyer’s message
+      if (io) {
+        io.to(senderId.toString()).emit("receiveMessage", newMessage);
+        io.to(recipientId.toString()).emit("receiveMessage", newMessage);
+      }
+
+      // ✅ Auto-reply if portfolioItemId exists
+      if (portfolioItemId) {
+        autoReplyModel.getUserAutoReplyForItem(recipientId, portfolioItemId, (err2, results) => {
+          if (!err2 && results.length > 0) {
+            const autoReply = results[0].reply_text;
+
+            // Save auto-reply message (from seller → buyer)
+            messageModel.createMessage(
+              recipientId,
+              senderId,
+              autoReply,
+              portfolioItemId, // ✅ reply linked to same portfolio
+              (err3, result2) => {
+                if (!err3) {
+                  const replyMessage = {
+                    id: result2.insertId,
+                    senderId: recipientId,
+                    recipientId: senderId,
+                    text: autoReply,
+                    portfolioId: portfolioItemId,
+                    timestamp: new Date(),
+                  };
+
+                  if (io) {
+                    io.to(senderId.toString()).emit("receiveMessage", replyMessage);
+                    io.to(recipientId.toString()).emit("receiveMessage", replyMessage);
+                  }
+                }
+              }
+            );
+          }
+        });
+      }
+
+      res.status(201).json({ message: "Message sent!", messageId: result.insertId });
     }
-
-    res.status(201).json({ message: "Message sent!", messageId: result.insertId });
-  });
+  );
 };
 
 // Get all messages with a specific user
@@ -92,6 +134,7 @@ const deleteMessage = (req, res) => {
   });
 };
 
+// Delete entire conversation
 const deleteConversation = (req, res) => {
   const userId = req.user.id;
   const { otherUserId } = req.params;
@@ -111,7 +154,6 @@ const deleteConversation = (req, res) => {
     res.status(200).json({ message: "Conversation deleted (hard)." });
   });
 };
-
 
 // Get inbox based on following list
 const getFollowingInbox = (req, res) => {
