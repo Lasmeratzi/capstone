@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 11, 2025 at 08:34 AM
+-- Generation Time: Sep 16, 2025 at 09:16 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -129,7 +129,8 @@ INSERT INTO `auctions` (`id`, `author_id`, `title`, `description`, `starting_pri
 (36, 36, 'Auction testt', 'description', 1000.00, 1800.00, '2025-06-11 20:10:00', 'ended', '2025-06-11 12:08:53', '2025-06-11 12:10:00'),
 (37, 38, 'qweqwe', 'qweqwe', 1400.00, 10000.00, '2025-06-19 12:00:00', 'ended', '2025-06-12 04:48:37', '2025-08-05 05:52:00'),
 (38, 40, 'Auction', 'Description', 2000.00, 2500.00, '2025-06-14 14:36:00', 'ended', '2025-06-14 06:34:58', '2025-06-14 06:36:00'),
-(39, 28, 'asdasd', 'efvrfvf', 1000.00, 1000.00, '2025-08-20 16:01:00', 'pending', '2025-08-20 07:59:41', '2025-08-20 07:59:41');
+(39, 28, 'asdasd', 'efvrfvf', 1000.00, 1000.00, '2025-08-20 16:01:00', 'pending', '2025-08-20 07:59:41', '2025-08-20 07:59:41'),
+(40, 28, 'asdasdasdsa', 'vbvbvbvb', 1000.00, 1000.00, '2025-09-11 15:08:00', 'ended', '2025-09-11 07:07:06', '2025-09-11 07:08:00');
 
 -- --------------------------------------------------------
 
@@ -185,7 +186,33 @@ INSERT INTO `auction_media` (`id`, `auction_id`, `media_path`, `created_at`) VAL
 (36, 37, 'auctions/1749703718048-dirtblock.png', '2025-06-12 04:48:38'),
 (37, 38, 'auctions/1749882898963-0ebbfd90d33893624f58f103037727af.jpg', '2025-06-14 06:34:58'),
 (38, 39, 'auctions/1755676781617-chill.jpg', '2025-08-20 07:59:41'),
-(39, 39, 'auctions/1755676781623-clem-onojeghuo-XW-Z9L930CY-unsplash.jpg', '2025-08-20 07:59:41');
+(39, 39, 'auctions/1755676781623-clem-onojeghuo-XW-Z9L930CY-unsplash.jpg', '2025-08-20 07:59:41'),
+(40, 40, 'auctions/1757574426852-images.jpg', '2025-09-11 07:07:06');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `auto_replies`
+--
+
+CREATE TABLE `auto_replies` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `portfolio_item_id` int(11) NOT NULL,
+  `reply_text` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `auto_replies`
+--
+
+INSERT INTO `auto_replies` (`id`, `user_id`, `portfolio_item_id`, `reply_text`, `created_at`, `updated_at`) VALUES
+(1, 28, 29, '1000$', '2025-09-14 15:53:54', '2025-09-14 15:53:54'),
+(2, 34, 34, '300$', '2025-09-16 06:41:59', '2025-09-16 06:41:59'),
+(3, 34, 35, '600', '2025-09-16 06:46:10', '2025-09-16 06:46:10'),
+(4, 28, 36, '200', '2025-09-16 06:47:57', '2025-09-16 06:47:57');
 
 -- --------------------------------------------------------
 
@@ -217,7 +244,9 @@ INSERT INTO `comments` (`id`, `author_id`, `post_id`, `comment_text`, `created_a
 (24, 40, 39, 'cmoments', '2025-06-14 06:33:49'),
 (25, 40, 42, 'afdsfd', '2025-06-14 07:13:29'),
 (26, 28, 42, 'hi it\'s me', '2025-08-05 06:02:24'),
-(27, 28, 38, 'comment', '2025-08-20 07:57:56');
+(27, 28, 38, 'comment', '2025-08-20 07:57:56'),
+(28, 28, 39, 'asdasdsa', '2025-09-11 07:01:46'),
+(29, 28, 38, 'adasd', '2025-09-16 06:49:39');
 
 -- --------------------------------------------------------
 
@@ -254,7 +283,6 @@ CREATE TABLE `follows` (
 --
 
 INSERT INTO `follows` (`id`, `follower_id`, `following_id`, `created_at`) VALUES
-(2, 34, 28, '2025-06-12 21:00:25'),
 (3, 28, 34, '2025-06-12 21:06:35'),
 (8, 36, 34, '2025-06-12 22:22:11'),
 (12, 37, 28, '2025-06-13 13:51:41'),
@@ -265,7 +293,8 @@ INSERT INTO `follows` (`id`, `follower_id`, `following_id`, `created_at`) VALUES
 (17, 40, 28, '2025-06-14 14:34:14'),
 (18, 40, 34, '2025-06-14 14:41:15'),
 (19, 28, 35, '2025-08-20 15:58:27'),
-(20, 35, 40, '2025-09-09 15:34:26');
+(20, 35, 40, '2025-09-09 15:34:26'),
+(22, 34, 28, '2025-09-15 00:10:47');
 
 -- --------------------------------------------------------
 
@@ -277,6 +306,7 @@ CREATE TABLE `messages` (
   `id` int(11) NOT NULL,
   `sender_id` int(11) NOT NULL,
   `recipient_id` int(11) NOT NULL,
+  `portfolio_id` int(11) DEFAULT NULL,
   `message_text` text NOT NULL,
   `is_read` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -286,37 +316,11 @@ CREATE TABLE `messages` (
 -- Dumping data for table `messages`
 --
 
-INSERT INTO `messages` (`id`, `sender_id`, `recipient_id`, `message_text`, `is_read`, `created_at`) VALUES
-(1, 28, 34, 'afaa', 1, '2025-09-09 07:39:04'),
-(2, 34, 28, 'hey', 1, '2025-09-09 07:40:06'),
-(3, 28, 34, 'hi there', 1, '2025-09-09 07:40:36'),
-(4, 34, 28, 'kbsvjhsbvjhsbv', 1, '2025-09-09 07:41:14'),
-(5, 34, 28, 'dfdfsdf', 1, '2025-09-09 07:42:00'),
-(6, 34, 28, 'svds', 1, '2025-09-09 07:42:00'),
-(7, 28, 34, 'afsds', 1, '2025-09-09 07:42:07'),
-(8, 28, 34, 'sdfds', 1, '2025-09-09 07:42:08'),
-(9, 34, 28, 'hello', 1, '2025-09-09 07:42:27'),
-(10, 28, 39, 'hello', 0, '2025-09-09 07:43:12'),
-(11, 28, 39, 'alex123', 0, '2025-09-09 07:44:47'),
-(12, 39, 28, 'yes yes yes', 1, '2025-09-09 07:47:36'),
-(13, 34, 28, 'yo', 1, '2025-09-10 08:24:11'),
-(14, 28, 34, 'hey', 1, '2025-09-10 08:24:25'),
-(15, 34, 28, 'adadasd', 1, '2025-09-10 08:35:46'),
-(16, 34, 28, 'zxczczxczxc', 1, '2025-09-10 08:36:02'),
-(17, 28, 34, 'hey', 1, '2025-09-10 08:49:34'),
-(18, 34, 28, 'yo', 1, '2025-09-10 08:49:42'),
-(19, 28, 34, 'asd', 1, '2025-09-10 08:49:58'),
-(20, 34, 28, 'asd', 1, '2025-09-10 08:50:20'),
-(21, 34, 28, 'zxzxx', 1, '2025-09-10 08:50:32'),
-(22, 28, 34, 'nbbmnmn', 1, '2025-09-10 08:53:57'),
-(23, 28, 34, 'fgfgf', 1, '2025-09-10 08:57:08'),
-(24, 34, 28, 'vb', 1, '2025-09-10 08:57:16'),
-(25, 34, 28, '12313123', 1, '2025-09-10 08:59:49'),
-(26, 28, 34, 'zx', 1, '2025-09-10 09:00:02'),
-(27, 34, 28, 'zxczczxcz', 1, '2025-09-10 09:00:11'),
-(28, 34, 28, 'mbnmbmbnmbbnmbnmnb', 1, '2025-09-10 09:00:18'),
-(29, 28, 34, 'okay', 1, '2025-09-10 09:00:23'),
-(30, 28, 34, '123', 1, '2025-09-10 09:01:50');
+INSERT INTO `messages` (`id`, `sender_id`, `recipient_id`, `portfolio_id`, `message_text`, `is_read`, `created_at`) VALUES
+(10, 28, 39, NULL, 'hello', 0, '2025-09-09 07:43:12'),
+(11, 28, 39, NULL, 'alex123', 0, '2025-09-09 07:44:47'),
+(12, 39, 28, NULL, 'yes yes yes', 1, '2025-09-09 07:47:36'),
+(57, 34, 28, NULL, 'sdvsv', 0, '2025-09-16 06:58:26');
 
 -- --------------------------------------------------------
 
@@ -386,7 +390,14 @@ INSERT INTO `notifications` (`id`, `user_id`, `message`, `is_read`, `created_at`
 (119, 34, 'dadarkXYZ123 liked your post', 1, '2025-08-20 07:57:46'),
 (120, 35, 'dadarkXYZ123 followed you', 1, '2025-08-20 07:58:27'),
 (121, 28, 'Your auction \"asdasd\" has been created and is pending approval.', 1, '2025-08-20 07:59:41'),
-(122, 40, 'slytherinz followed you', 0, '2025-09-09 07:34:26');
+(122, 40, 'slytherinz followed you', 0, '2025-09-09 07:34:26'),
+(123, 28, 'dadarkXYZ123 liked your post', 1, '2025-09-11 07:01:41'),
+(124, 28, 'Your auction \"asdasdasdsa\" has been created and is pending approval.', 1, '2025-09-11 07:07:06'),
+(125, 28, 'Your auction \"asdasdasdsa\" status has been updated to \"approved\".', 1, '2025-09-11 07:07:35'),
+(126, 28, 'Your auction \"asdasdasdsa\" status has been updated to \"active\".', 1, '2025-09-11 07:07:40'),
+(127, 28, 'Your auction \"asdasdasdsa\" has ended with no bids placed.', 1, '2025-09-11 07:08:00'),
+(128, 28, 'xQcWOWers followed you', 1, '2025-09-14 16:10:44'),
+(129, 28, 'xQcWOWers followed you', 1, '2025-09-14 16:10:47');
 
 -- --------------------------------------------------------
 
@@ -427,10 +438,14 @@ CREATE TABLE `portfolio_items` (
 --
 
 INSERT INTO `portfolio_items` (`id`, `user_id`, `title`, `description`, `image_path`, `created_at`, `updated_at`) VALUES
-(29, 28, 'The sun', 'Ray of hopes123', '64ad2b6247d11de446b4438526048b97', '2025-06-01 16:27:19', '2025-06-11 16:38:22'),
+(29, 28, 'crystals', 'Ray of hopes123456', '489b2fcd80c584ca129d1059b0dcdf98', '2025-06-01 16:27:19', '2025-09-14 15:41:24'),
 (30, 34, 'Portfolio', 'aaa', '42c3f05eef18dc5d33314c2e3685ff71', '2025-06-02 04:32:08', '2025-06-02 04:32:08'),
 (31, 39, 'Portfolio 1', 'First Project', 'e1f0eba9770be3be8fce3f3550ef0bce', '2025-06-13 08:12:14', '2025-06-13 08:12:14'),
-(32, 40, 'POrtfolio Item', 'adas', '3d07397a2964e94d733425ae9cb537be', '2025-06-14 06:32:33', '2025-06-14 06:32:33');
+(32, 40, 'POrtfolio Item', 'adas', '3d07397a2964e94d733425ae9cb537be', '2025-06-14 06:32:33', '2025-06-14 06:32:33'),
+(33, 28, 'test', 'zxczczxczxc', '92fb5cd1ba6b0fdfc255e2c3e171ea04', '2025-09-14 15:41:47', '2025-09-14 15:41:47'),
+(34, 34, 'Portofolo', 'qwertyasdfgh', '11ff565938d0d15aa984437fc7b53a3b', '2025-09-16 06:41:44', '2025-09-16 06:41:44'),
+(35, 34, 'TitlPORTO', 'desczczx', '666a99536ccde0545872239a14bd8631', '2025-09-16 06:46:01', '2025-09-16 06:46:01'),
+(36, 28, 'ZXC', 'asdadas', '697cef5aeb12f1148e433a7cdeb1a428', '2025-09-16 06:47:50', '2025-09-16 06:47:50');
 
 -- --------------------------------------------------------
 
@@ -455,7 +470,7 @@ CREATE TABLE `posts` (
 INSERT INTO `posts` (`id`, `author_id`, `title`, `media_path`, `created_at`, `updated_at`, `post_status`) VALUES
 (38, 34, 'adadadad', '2026da0f53159f06ec83082bac9919fc', '2025-06-01 16:25:58', '2025-06-01 16:25:58', 'active'),
 (39, 28, 'potspost', 'c3f6fcce3e45ac196d783827c92d05fb', '2025-06-06 15:49:13', '2025-06-14 04:15:11', 'active'),
-(42, 40, 'adad', '9abffd17a302b07997be47f1dbf98c11', '2025-06-14 06:37:27', '2025-06-14 06:37:27', 'active');
+(42, 40, 'adad', '9abffd17a302b07997be47f1dbf98c11', '2025-06-14 06:37:27', '2025-09-11 06:48:13', 'active');
 
 -- --------------------------------------------------------
 
@@ -483,7 +498,8 @@ INSERT INTO `post_likes` (`id`, `user_id`, `post_id`, `created_at`) VALUES
 (31, 36, 42, '2025-06-14 07:13:39'),
 (32, 28, 42, '2025-08-05 05:53:12'),
 (33, 35, 39, '2025-08-14 06:28:53'),
-(34, 28, 38, '2025-08-20 07:57:46');
+(34, 28, 38, '2025-08-20 07:57:46'),
+(35, 28, 39, '2025-09-11 07:01:41');
 
 -- --------------------------------------------------------
 
@@ -636,6 +652,14 @@ ALTER TABLE `auction_media`
   ADD KEY `auction_id` (`auction_id`);
 
 --
+-- Indexes for table `auto_replies`
+--
+ALTER TABLE `auto_replies`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_item` (`user_id`,`portfolio_item_id`),
+  ADD KEY `portfolio_item_id` (`portfolio_item_id`);
+
+--
 -- Indexes for table `comments`
 --
 ALTER TABLE `comments`
@@ -665,7 +689,8 @@ ALTER TABLE `follows`
 ALTER TABLE `messages`
   ADD PRIMARY KEY (`id`),
   ADD KEY `sender_id` (`sender_id`),
-  ADD KEY `recipient_id` (`recipient_id`);
+  ADD KEY `recipient_id` (`recipient_id`),
+  ADD KEY `messages_ibfk_3` (`portfolio_id`);
 
 --
 -- Indexes for table `notifications`
@@ -758,7 +783,7 @@ ALTER TABLE `artwork_posts`
 -- AUTO_INCREMENT for table `auctions`
 --
 ALTER TABLE `auctions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `auction_bids`
@@ -770,13 +795,19 @@ ALTER TABLE `auction_bids`
 -- AUTO_INCREMENT for table `auction_media`
 --
 ALTER TABLE `auction_media`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+
+--
+-- AUTO_INCREMENT for table `auto_replies`
+--
+ALTER TABLE `auto_replies`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `comments`
 --
 ALTER TABLE `comments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `escrow_releases`
@@ -788,19 +819,19 @@ ALTER TABLE `escrow_releases`
 -- AUTO_INCREMENT for table `follows`
 --
 ALTER TABLE `follows`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=130;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -812,7 +843,7 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `portfolio_items`
 --
 ALTER TABLE `portfolio_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `posts`
@@ -824,7 +855,7 @@ ALTER TABLE `posts`
 -- AUTO_INCREMENT for table `post_likes`
 --
 ALTER TABLE `post_likes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `tags`
@@ -886,6 +917,13 @@ ALTER TABLE `auction_media`
   ADD CONSTRAINT `auction_media_ibfk_1` FOREIGN KEY (`auction_id`) REFERENCES `auctions` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `auto_replies`
+--
+ALTER TABLE `auto_replies`
+  ADD CONSTRAINT `auto_replies_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `auto_replies_ibfk_2` FOREIGN KEY (`portfolio_item_id`) REFERENCES `portfolio_items` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `comments`
 --
 ALTER TABLE `comments`
@@ -911,7 +949,8 @@ ALTER TABLE `follows`
 --
 ALTER TABLE `messages`
   ADD CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `messages_ibfk_2` FOREIGN KEY (`recipient_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `messages_ibfk_2` FOREIGN KEY (`recipient_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `messages_ibfk_3` FOREIGN KEY (`portfolio_id`) REFERENCES `portfolio_items` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `notifications`
