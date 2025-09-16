@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
-import GlareHover from "../../components/glarehover/glarehover"; // Make sure path is correct
+import GlareHover from "../../components/glarehover/glarehover"; // Ensure the path is correct
 
 const Login = () => {
   const navigate = useNavigate();
@@ -78,7 +78,9 @@ const Login = () => {
         style={{ backgroundImage: "url('src/assets/images/lgin.jpeg')" }}
       >
         <div></div>
-        <div className="text-center text-black text-sm font-medium p-4">© 2025 Illura. All rights reserved.</div>
+        <div className="text-center text-black text-sm font-medium p-4">
+          © 2025 Illura. All rights reserved.
+        </div>
       </div>
 
       {/* Right Section */}
@@ -94,7 +96,6 @@ const Login = () => {
 
           {/* Login Form */}
           <form className="space-y-6 mt-6" onSubmit={handleLogin}>
-            {/* Email Input */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email
@@ -110,7 +111,6 @@ const Login = () => {
               />
             </div>
 
-            {/* Password Input */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
@@ -126,41 +126,37 @@ const Login = () => {
               />
             </div>
 
-            {/* Error Message */}
             {errorMessage && <p className="text-sm text-red-600 text-center">{errorMessage}</p>}
-
-            {/* Loading State */}
             {isLoading && <p className="text-sm text-gray-600 text-center">Logging in...</p>}
 
-            {/* Log In Button with Glare Effect */}
-<GlareHover
-  width="100%"
-  height="auto"
-  background="#00040d"
-  borderRadius="8px"
-  glareColor="#ffffff"
-  glareOpacity={0.7}
-  glareSize={200}
-  transitionDuration={650}
-  playOnce={true}
-  style={{ display: 'block' }}
->
-  <button
-    type="submit"
-    className="w-full px-4 py-2 text-white rounded-lg focus:ring focus:ring-blue-300"
-    style={{ 
-      backgroundColor: "transparent", 
-      border: 'none',
-      pointerEvents: isLoading ? 'none' : 'auto' // Disable pointer events when loading
-    }}
-    disabled={isLoading}
-  >
-    {isLoading ? "Logging in..." : "Log In"}
-  </button>
-</GlareHover>
+            {/* GlareHover wrapper with button inside */}
+            <GlareHover
+              width="100%"
+              height="auto"
+              background="#00040d"
+              borderRadius="8px"
+              glareColor="#ffffff"
+              glareOpacity={0.7}
+              glareSize={200}
+              transitionDuration={650}
+              playOnce={true}
+              style={{ display: 'block' }}
+            >
+              <button
+                type="submit"
+                className="w-full px-4 py-2 text-white rounded-lg focus:ring focus:ring-blue-300"
+                style={{
+                  backgroundColor: "transparent",
+                  border: 'none',
+                  pointerEvents: isLoading ? 'none' : 'auto',
+                }}
+                disabled={isLoading}
+              >
+                {isLoading ? "Logging in..." : "Log In"}
+              </button>
+            </GlareHover>
           </form>
 
-          {/* Sign Up Link */}
           <p className="text-sm text-center text-gray-600 mt-4">
             Don't have an account?{" "}
             <Link to="/signup" className="text-blue-600 hover:underline">
@@ -169,7 +165,6 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Admin Login Button */}
         <Link to="/loginadmin" className="absolute bottom-4 right-4 text-blue-600 hover:underline text-sm">
           Admin Login
         </Link>
