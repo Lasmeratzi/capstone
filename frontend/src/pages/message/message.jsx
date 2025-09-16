@@ -364,7 +364,7 @@ const Message = ({ otherUserId, refreshInbox }) => {
 
       {/* Delete message confirmation modal */}
       {confirmDelete && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-20">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-20">
           <div className="bg-white p-6 rounded-xl shadow-lg text-center max-w-sm">
             <p className="mb-4 text-gray-700">
               Are you sure you want to delete this message?
