@@ -150,7 +150,7 @@ const Sidebar = () => {
         >
           <img
             src={
-              isHovered || isActive("/chatbot")
+              isHovered && !isActive("/chatbot")
                 ? "/qwenhover.png"
                 : "/qwenwhite.png"
             }
