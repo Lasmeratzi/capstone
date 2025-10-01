@@ -141,7 +141,7 @@ const Profile = () => {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -50 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="ml-60 flex-grow px-40 py-4"
+        className="ml-50 flex-grow px-6 py-4"
       >
         {/* Updated Profile Section */}
         <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-6 mb-4">

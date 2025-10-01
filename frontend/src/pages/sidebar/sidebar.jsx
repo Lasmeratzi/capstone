@@ -92,7 +92,7 @@ const Sidebar = () => {
 
   return (
     <div
-      className="h-screen w-64 flex flex-col py-6 px-4 border-r"
+      className="h-screen w-50 flex flex-col py-6 px-4 border-r"
       style={{
         backgroundColor: "#0D1117", // modern dark base
         borderColor: "#30363D", // subtle GitHub border
