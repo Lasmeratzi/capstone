@@ -12,9 +12,10 @@ const PostLikes = ({ postId }) => {
     try {
       if (!token) return;
 
-      const response = await axios.get(`http://localhost:5000/api/posts/${postId}/likes`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        `http://localhost:5000/api/posts/${postId}/likes`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       setLikeCount(response.data.likeCount);
     } catch (error) {
@@ -26,9 +27,10 @@ const PostLikes = ({ postId }) => {
     try {
       if (!token) return;
 
-      const response = await axios.get(`http://localhost:5000/api/posts/${postId}/liked`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        `http://localhost:5000/api/posts/${postId}/liked`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       setLiked(response.data.liked);
     } catch (error) {
@@ -47,9 +49,11 @@ const PostLikes = ({ postId }) => {
         setLikeCount((prev) => prev - 1);
         setLiked(false);
       } else {
-        await axios.post(`http://localhost:5000/api/posts/${postId}/like`, null, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.post(
+          `http://localhost:5000/api/posts/${postId}/like`,
+          null,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         setLikeCount((prev) => prev + 1);
         setLiked(true);
       }
@@ -66,12 +70,25 @@ const PostLikes = ({ postId }) => {
   return (
     <button
       onClick={toggleLike}
-      className={`flex items-center gap-2 text-gray-600 hover:text-pink-600 transition ${
-        liked ? "text-pink-600" : ""
-      }`}
+      className="flex items-center gap-2 transition group"
     >
-      <Heart size={18} fill={liked ? "currentColor" : "none"} />
-      <span>{likeCount}</span>
+      <Heart
+        size={20}
+        className={`transition ${
+          liked
+            ? "text-purple-600 fill-purple-600"
+            : "text-gray-500 group-hover:text-black"
+        }`}
+        fill={liked ? "currentColor" : "none"}
+      />
+
+      <span
+        className={`transition ${
+          liked ? "text-purple-600 font-medium" : "text-gray-600 group-hover:text-black"
+        }`}
+      >
+        {likeCount}
+      </span>
     </button>
   );
 };
