@@ -232,51 +232,51 @@ const ArtPosts = () => {
     );
   }
 
-  return (
-    <div className="max-w-2xl mx-auto space-y-5">
-      {artPosts.length > 0 ? (
-        artPosts.map((post) => (
-          <div
-            key={post.id}
-            className="bg-white p-4 rounded-lg shadow-md border border-gray-200"
-          >
-            {post.post_status === "down" && (
-              <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg pointer-events-none">
-                <p className="text-white text-lg font-semibold">🚫 Post is taken down</p>
-              </div>
-            )}
-
-            <div className="flex items-center gap-3 mb-3">
-              {post.author_pfp ? (
-                <img
-                  src={`${API_BASE}/uploads/${post.author_pfp}`}
-                  alt={`${post.author}'s profile`}
-                  className="w-10 h-10 rounded-full border border-gray-300 object-cover"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-gray-600 text-xs">N/A</span>
-                </div>
-              )}
-              <div>
-                <p className="font-bold text-gray-800">{post.author}</p>
-                <p className="text-gray-600 text-sm">{post.fullname}</p>
-              </div>
+return (
+  <div className="w-full">
+    {artPosts.length > 0 ? (
+      artPosts.map((post) => (
+        <div
+          key={post.id}
+          className="bg-white p-4 rounded-lg shadow-md border border-gray-200 mb-4 break-inside-avoid"
+        >
+          {post.post_status === "down" && (
+            <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg pointer-events-none">
+              <p className="text-white text-lg font-semibold">
+                🚫 Post is taken down
+              </p>
             </div>
+          )}
 
-            <h4 className="text-base text-gray-800 mb-2">{post.title}</h4>
-            <p className="text-gray-600 mb-3">{post.description}</p>
-
-            {post.media?.length > 0 && (
-              <div className="mt-3">
-                {renderMediaGrid(post.media)}
+          <div className="flex items-center gap-3 mb-3">
+            {post.author_pfp ? (
+              <img
+                src={`${API_BASE}/uploads/${post.author_pfp}`}
+                alt={`${post.author}'s profile`}
+                className="w-10 h-10 rounded-full border border-gray-300 object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                <span className="text-gray-600 text-xs">N/A</span>
               </div>
             )}
+            <div>
+              <p className="font-bold text-gray-800">{post.author}</p>
+              <p className="text-gray-600 text-sm">{post.fullname}</p>
+            </div>
           </div>
-        ))
-      ) : (
-        <p className="text-gray-500 text-center">No artwork posts yet.</p>
-      )}
+
+          <h4 className="text-base text-gray-800 mb-2">{post.title}</h4>
+          <p className="text-gray-600 mb-3">{post.description}</p>
+
+          {post.media?.length > 0 && (
+            <div className="mt-3">{renderMediaGrid(post.media)}</div>
+          )}
+        </div>
+      ))
+    ) : (
+      <p className="text-gray-500 text-center">No artwork posts yet.</p>
+    )}
 
       {showMediaViewer && (
         <div
