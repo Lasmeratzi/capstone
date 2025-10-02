@@ -22,6 +22,18 @@ const Post = ({ post, userId, handleDelete }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
+  // Scroll lock for modals
+  useEffect(() => {
+    if (confirmDelete || isImageModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [confirmDelete, isImageModalOpen]);
+
   // Fetch comment count
   const fetchCommentCount = async () => {
     try {
@@ -62,7 +74,7 @@ const Post = ({ post, userId, handleDelete }) => {
         formData.append("media", editedMedia);
       }
 
-      const response = await axios.patch(
+      await axios.patch(
         `http://localhost:5000/api/posts/${post.id}`,
         formData,
         {
@@ -97,7 +109,7 @@ const Post = ({ post, userId, handleDelete }) => {
         </div>
       )}
 
-      {/* Post Header with Author Info & 3-Dot Menu */}
+      {/* Post Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           {post.author_pfp ? (
@@ -126,7 +138,6 @@ const Post = ({ post, userId, handleDelete }) => {
           </div>
         </div>
 
-        {/* Three-dot menu for own posts */}
         {post.author_id === userId && (
           <div className="relative">
             <button
@@ -161,7 +172,7 @@ const Post = ({ post, userId, handleDelete }) => {
         )}
       </div>
 
-      {/* Rest of the post content */}
+      {/* Post Content */}
       {!isEditing ? (
         <>
           <h4 className="text-base text-gray-800">{post.title}</h4>
@@ -175,7 +186,6 @@ const Post = ({ post, userId, handleDelete }) => {
             </div>
           )}
 
-          {/* Like and Comment buttons in one row */}
           <div className="flex items-center gap-4 mt-3 border-t border-gray-100 pt-3">
             <div className="flex items-center gap-1">
               <PostLikes postId={post.id} />
@@ -191,11 +201,10 @@ const Post = ({ post, userId, handleDelete }) => {
           
           {showComments && <Comments postId={post.id} userId={userId} />}
 
-          {/* Image Modal with Comments */}
+          {/* Image Modal */}
           {isImageModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4">
               <div className="relative bg-white rounded-lg max-w-6xl w-full h-[80vh] flex">
-                {/* Image container */}
                 <div className="flex-[2] overflow-hidden flex items-center justify-center p-4 bg-gray-100">
                   <img
                     src={`http://localhost:5000/uploads/${post.media_path}`}
@@ -203,10 +212,7 @@ const Post = ({ post, userId, handleDelete }) => {
                     className="max-h-full max-w-full object-contain"
                   />
                 </div>
-                
-                {/* Comments container */}
                 <div className="flex-1 flex flex-col border-l border-gray-200">
-                  {/* Post header */}
                   <div className="p-4 border-b border-gray-200">
                     <div className="flex items-center gap-3">
                       {post.author_pfp ? (
@@ -240,14 +246,11 @@ const Post = ({ post, userId, handleDelete }) => {
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Scrollable comments section */}
                   <div className="flex-1 overflow-y-auto">
                     <Comments postId={post.id} userId={userId} />
                   </div>
                 </div>
-                
-                {/* Close button */}
+
                 <button
                   onClick={() => setIsImageModalOpen(false)}
                   className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 transition"
@@ -277,7 +280,6 @@ const Post = ({ post, userId, handleDelete }) => {
             />
           </div>
 
-          {/* Edit Buttons */}
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setIsEditing(false)}
@@ -292,19 +294,15 @@ const Post = ({ post, userId, handleDelete }) => {
               }`}
               disabled={isLoading}
             >
-              {isLoading ? (
-                <Loader className="animate-spin w-5 h-5 inline" />
-              ) : (
-                "Confirm"
-              )}
+              {isLoading ? <Loader className="animate-spin w-5 h-5 inline" /> : "Confirm"}
             </button>
           </div>
         </div>
       )}
 
-      {/* Confirmation Modal for Deleting */}
+      {/* Delete Confirmation */}
       {confirmDelete && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
             <p className="text-lg font-semibold text-gray-800 mb-4">
               Are you sure you want to delete this post?
