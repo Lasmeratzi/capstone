@@ -9,6 +9,7 @@ import Post from "../home/post";
 import ArtPosts from "../home/artpost";
 import Auctions from "../home/auctions";
 import RSideHome from "../home/rsidehome";
+import CreateModal from "../../components/modals/createmodal"; // ✅ new import
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -16,13 +17,17 @@ const Home = () => {
   const [artPosts, setArtPosts] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // modal states
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isMakePostOpen, setIsMakePostOpen] = useState(false);
   const [isMakeArtOpen, setIsMakeArtOpen] = useState(false);
   const [isMakeAuctionOpen, setIsMakeAuctionOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("artworks"); // Default to artworks
 
+  const [activeTab, setActiveTab] = useState("artworks");
   const navigate = useNavigate();
 
+  // fetch profile + posts
   useEffect(() => {
     const fetchProfileAndPosts = async () => {
       try {
@@ -74,9 +79,7 @@ const Home = () => {
     fetchProfileAndPosts();
   }, [navigate]);
 
-  const toggleMakePostModal = () => setIsMakePostOpen(!isMakePostOpen);
-  const toggleMakeArtModal = () => setIsMakeArtOpen(!isMakeArtOpen);
-
+  // delete post
   const handleDelete = async (postId) => {
     try {
       const token = localStorage.getItem("token");
@@ -101,7 +104,7 @@ const Home = () => {
     <div className="flex">
       {/* Sidebar */}
       <div className="fixed h-screen w-50 bg-white border-r shadow-md">
-        <Sidebar />
+        <Sidebar onOpenCreate={() => setIsCreateOpen(true)} /> {/* ✅ pass handler */}
       </div>
 
       {/* Main Content */}
@@ -135,7 +138,7 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Tabs - Folder Style */}
+        {/* Tabs */}
         <div className="relative mb-6 mt-[-4px]">
           <div className="flex space-x-1">
             {["artworks", "posts", "auctions"].map((tab) => (
@@ -163,45 +166,15 @@ const Home = () => {
               </button>
             ))}
           </div>
-
           <div className="h-[2px] bg-gray-300 w-full absolute top-full left-0 z-0" />
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-4 mt-0 mb-3 pt-0 pb-2">
-          {activeTab === "posts" && (
-            <button
-              onClick={toggleMakePostModal}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
-            >
-              Create Post
-            </button>
-          )}
-          {activeTab === "artworks" && (
-            <button
-              onClick={toggleMakeArtModal}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg shadow hover:bg-green-600"
-            >
-              Share Artwork
-            </button>
-          )}
-          {activeTab === "auctions" && (
-            <button
-              onClick={() => setIsMakeAuctionOpen(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg shadow hover:bg-purple-700"
-            >
-              Start Auction
-            </button>
-          )}
-        </div>
-
-        {/* Content Area */}
+        {/* Content */}
         {activeTab === "artworks" && (
-  <div className="columns-1 md:columns-2 gap-4">
-    <ArtPosts />
-  </div>
-)}
-
+          <div className="columns-1 md:columns-2 gap-4">
+            <ArtPosts />
+          </div>
+        )}
 
         {activeTab === "posts" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -210,7 +183,6 @@ const Home = () => {
                 {errorMessage}
               </p>
             )}
-
             {posts.length > 0 ? (
               posts.map((post) => (
                 <Post
@@ -238,9 +210,30 @@ const Home = () => {
       {/* Right Sidebar */}
       <RSideHome user={user} accounts={accounts} />
 
-      {/* Modals */}
-      {isMakePostOpen && <MakePost onClose={toggleMakePostModal} />}
-      {isMakeArtOpen && <MakeArt onClose={toggleMakeArtModal} />}
+      {/* ✅ Create Modal */}
+      {isCreateOpen && (
+        <CreateModal
+          onClose={() => setIsCreateOpen(false)}
+          onSelect={(type) => {
+            setIsCreateOpen(false); // close create modal first
+            if (type === "post") {
+              setIsMakePostOpen(true);
+            } else if (type === "art") {
+              setIsMakeArtOpen(true);
+            } else if (type === "auction") {
+              setIsMakeAuctionOpen(true);
+            }
+          }}
+        />
+      )}
+
+      {/* ✅ Modals for Post, Art, Auction */}
+      {isMakePostOpen && (
+        <MakePost onClose={() => setIsMakePostOpen(false)} />
+      )}
+      {isMakeArtOpen && (
+        <MakeArt onClose={() => setIsMakeArtOpen(false)} />
+      )}
       {isMakeAuctionOpen && (
         <MakeAuction onClose={() => setIsMakeAuctionOpen(false)} />
       )}

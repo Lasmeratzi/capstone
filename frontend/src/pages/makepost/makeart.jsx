@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom"; // ✅ Import
 
 export default function MakeArt({ onClose }) {
+  const navigate = useNavigate(); // ✅ Hook
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState([]);
@@ -10,7 +12,6 @@ export default function MakeArt({ onClose }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Clean up object URLs when component unmounts
   useEffect(() => {
     return () => {
       filePreviews.forEach(preview => {
@@ -35,12 +36,9 @@ export default function MakeArt({ onClose }) {
   const removeFile = (index) => {
     const newFiles = [...files];
     const newPreviews = [...filePreviews];
-    
     URL.revokeObjectURL(newPreviews[index].preview);
-    
     newFiles.splice(index, 1);
     newPreviews.splice(index, 1);
-    
     setFiles(newFiles);
     setFilePreviews(newPreviews);
   };
@@ -80,6 +78,11 @@ export default function MakeArt({ onClose }) {
       setDescription("");
       setFiles([]);
       setFilePreviews([]);
+
+      onClose(); // Close modal
+
+      navigate("/home"); // ✅ Go to Home
+      window.location.reload(); // ✅ Refresh so new post appears
 
     } catch (error) {
       console.error("Error uploading artwork:", error);
