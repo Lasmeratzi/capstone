@@ -10,9 +10,10 @@ import {
   ArrowRightOnRectangleIcon,
   TrophyIcon,
   ChatBubbleLeftEllipsisIcon,
+  PencilSquareIcon, // ✏️ new create icon
 } from "@heroicons/react/24/solid";
 
-const Sidebar = () => {
+const Sidebar = ({ onOpenCreate }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
@@ -94,8 +95,8 @@ const Sidebar = () => {
     <div
       className="h-screen w-50 flex flex-col py-6 px-4 border-r"
       style={{
-        backgroundColor: "#0D1117", // modern dark base
-        borderColor: "#30363D", // subtle GitHub border
+        backgroundColor: "#0D1117",
+        borderColor: "#30363D",
       }}
     >
       {/* Logo */}
@@ -112,28 +113,40 @@ const Sidebar = () => {
 
       {/* Navigation */}
       <nav className="flex flex-col space-y-1 flex-grow">
-        {navItems.map(({ label, icon: Icon, path, showBadge }) => (
-          <button
-            key={label}
-            onClick={() => navigate(path)}
-            className={`relative flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200
-              ${
-                isActive(path)
-                  ? "bg-[#5E66FF] text-white shadow-md"
-                  : "text-gray-300 hover:bg-[#161B22] hover:text-[#5E66FF]"
-              }`}
-          >
-            <Icon className="h-5 w-5" />
-            {showBadge &&
-              (showBadge === "dot" ? (
-                <span className="absolute top-1 left-5 block h-2 w-2 rounded-full bg-red-500" />
-              ) : (
-                <span className="absolute -top-2 left-5 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow-sm">
-                  {showBadge}
-                </span>
-              ))}
-            <span className="ml-3">{label}</span>
-          </button>
+        {navItems.map(({ label, icon: Icon, path, showBadge }, index) => (
+          <React.Fragment key={label}>
+            <button
+              onClick={() => navigate(path)}
+              className={`relative flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200
+                ${
+                  isActive(path)
+                    ? "bg-[#5E66FF] text-white shadow-md"
+                    : "text-gray-300 hover:bg-[#161B22] hover:text-[#5E66FF]"
+                }`}
+            >
+              <Icon className="h-5 w-5" />
+              {showBadge &&
+                (showBadge === "dot" ? (
+                  <span className="absolute top-1 left-5 block h-2 w-2 rounded-full bg-red-500" />
+                ) : (
+                  <span className="absolute -top-2 left-5 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                    {showBadge}
+                  </span>
+                ))}
+              <span className="ml-3">{label}</span>
+            </button>
+
+            {/* ✅ Insert Create right under Home */}
+            {index === 0 && (
+              <button
+                onClick={onOpenCreate}
+                className="flex items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-[#161B22] hover:text-[#5E66FF] transition-colors duration-200"
+              >
+                <PencilSquareIcon className="h-5 w-5" />
+                <span className="ml-3">Create</span>
+              </button>
+            )}
+          </React.Fragment>
         ))}
 
         {/* Chatbot */}

@@ -28,4 +28,8 @@ router.get("/artwork-media/:postId", authenticateToken, artmediaController.getAr
 
 router.delete("/artwork-media/:postId", authenticateToken, artmediaController.deleteArtworkMediaByPostId);
 
+// Delete a single artwork media
+router.delete("/artwork-media/file/:mediaId", authenticateToken, artmediaController.deleteSingleArtworkMedia);
+
+
 module.exports = router;
