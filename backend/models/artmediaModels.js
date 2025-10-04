@@ -29,8 +29,17 @@ const deleteArtworkMediaByPostId = (postId, callback) => {
   db.query(sql, [postId], callback);
 };
 
+const deleteArtworkMediaById = (mediaId, callback) => {
+  const sql = `
+    DELETE FROM artwork_media
+    WHERE id = ?
+  `;
+  db.query(sql, [mediaId], callback);
+};
+
 module.exports = {
   addArtworkMedia,
   getArtworkMediaByPostId,
   deleteArtworkMediaByPostId,
+  deleteArtworkMediaById,
 };

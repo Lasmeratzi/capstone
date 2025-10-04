@@ -51,8 +51,18 @@ const deleteArtworkMediaByPostId = (req, res) => {
   });
 };
 
+const deleteSingleArtworkMedia = (req, res) => {
+  const { mediaId } = req.params;
+
+  artmediaModels.deleteArtworkMediaById(mediaId, (err) => {
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    res.status(200).json({ message: "Artwork media deleted successfully!" });
+  });
+};
+
 module.exports = {
   addArtworkMedia,
   getArtworkMediaByPostId,
   deleteArtworkMediaByPostId,
+  deleteSingleArtworkMedia,
 };
