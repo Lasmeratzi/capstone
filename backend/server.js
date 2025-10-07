@@ -1,7 +1,7 @@
 const express = require("express");
 const path = require("path");
-const http = require("http"); // 👈 needed for socket.io
-const { Server } = require("socket.io"); // 👈 socket.io
+const http = require("http");
+const { Server } = require("socket.io");
 require("dotenv").config();
 
 const signupRoutes = require("./routes/signupRoutes");
@@ -24,10 +24,12 @@ const notificationsRoutes = require("./routes/notificationsRoutes");
 const verifyrequestRoutes = require("./routes/verifyrequestRoutes");
 const followRoutes = require("./routes/followRoutes");
 const postlikesRoutes = require("./routes/postlikesRoutes");
+const artworkpostlikesRoutes = require("./routes/artworkpostlikesRoutes"); // ✅ New route
+const artworkcommentsRoutes = require("./routes/artworkcommentsRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const autoReplyRoutes = require("./routes/autoReplyRoutes");
 
-// 👉 Import the auction cron job
+// Auction cron job
 const checkAndEndAuctions = require("./jobs/auctionJobs");
 
 const app = express();
@@ -49,9 +51,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// 👉 Serve uploads with CORS
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// Routes
 app.use("/api", signupRoutes);
 app.use("/api", loginRoutes);
 app.use("/api", logoutRoutes);
@@ -72,6 +74,8 @@ app.use("/api/notifications", notificationsRoutes);
 app.use("/api", verifyrequestRoutes);
 app.use("/api/follow", followRoutes);
 app.use("/api", postlikesRoutes);
+app.use("/api/artwork-post-likes", artworkpostlikesRoutes); // ✅ Register new route
+app.use("/api/artwork-comments", artworkcommentsRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/auto-replies", autoReplyRoutes);
 
@@ -81,33 +85,26 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-// 👉 Replace app.listen with HTTP + Socket.IO
+// Socket.IO setup
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // frontend
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
     credentials: true
   }
 });
 
-// 👉 Socket.IO logic
 io.on("connection", (socket) => {
   console.log("🔌 New client connected:", socket.id);
 
-  // Join personal room (userId from frontend)
   socket.on("join", (userId) => {
     socket.join(userId);
     console.log(`👤 User ${userId} joined room`);
   });
 
-  // Handle sending messages
   socket.on("sendMessage", (data) => {
     const { senderId, recipientId, text } = data;
-
-    // TODO: Save to DB here if needed
-
-    // Emit to recipient’s room
     io.to(recipientId).emit("receiveMessage", {
       senderId,
       text,
@@ -120,7 +117,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// 👉 Start the auction cron job before starting the server
 checkAndEndAuctions();
 
 server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
