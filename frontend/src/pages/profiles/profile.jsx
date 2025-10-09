@@ -37,6 +37,51 @@ const VerifiedBadge = () => (
   </div>
 );
 
+// Protected Image Component with anti-download features
+const ProtectedWatermarkImage = ({ src, alt, className, onError }) => {
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDragStart = (e) => {
+    e.preventDefault();
+  };
+
+  const handleSelectStart = (e) => {
+    e.preventDefault();
+  };
+
+  return (
+    <div className="relative inline-block">
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        onError={onError}
+        onContextMenu={handleContextMenu}
+        onDragStart={handleDragStart}
+        onSelect={handleSelectStart}
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none',
+        }}
+      />
+      {/* Invisible overlay to block interactions */}
+      <div 
+        className="absolute inset-0 cursor-not-allowed"
+        style={{
+          pointerEvents: 'auto'
+        }}
+        onContextMenu={handleContextMenu}
+        onDragStart={handleDragStart}
+      />
+    </div>
+  );
+};
+
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [commissions, setCommissions] = useState("closed");
@@ -51,19 +96,33 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Watermark state
-  const [watermark, setWatermark] = useState(null); // server filename (watermark_path)
-  const [watermarkFile, setWatermarkFile] = useState(null); // File selected by user
-  const [previewUrl, setPreviewUrl] = useState(null); // local preview url for selected file
+  const [watermark, setWatermark] = useState(null);
+  const [watermarkFile, setWatermarkFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     fetchProfile();
     fetchPortfolio();
-    // cleanup when component unmounts
+    
+    // Add global event listeners to prevent right-click and drag
+    const preventDefault = (e) => {
+      if (e.target.closest('.watermark-protected')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    document.addEventListener('contextmenu', preventDefault);
+    document.addEventListener('dragstart', preventDefault);
+    
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
+      document.removeEventListener('contextmenu', preventDefault);
+      document.removeEventListener('dragstart', preventDefault);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -76,7 +135,6 @@ const Profile = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userData = userResponse.data;
-      // server returns watermark_path in profileController
       const wm = userData.watermark_path ?? userData.watermark ?? null;
       setUser(userData);
       setCommissions(userData.commissions);
@@ -142,7 +200,6 @@ const Profile = () => {
       await axios.patch(`${BASE_URL}/api/profile`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // refresh profile after update
       await fetchProfile();
       setIsEditing(false);
     } catch (error) {
@@ -159,13 +216,10 @@ const Profile = () => {
     }
   };
 
-  // Watermark file selection (for preview before upload)
+  // Watermark file selection
   const handleWatermarkSelect = (file) => {
     if (!file) return;
-    // Only allow PNG (but server may accept other types)
-    // You can validate file.type === 'image/png' if you want strict enforcement
     setWatermarkFile(file);
-    // create preview URL (revoke previous)
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
@@ -184,15 +238,12 @@ const Profile = () => {
       const resp = await axios.post(`${BASE_URL}/api/profile/watermark`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // server returns watermark_path
       const serverFilename = resp.data?.watermark_path ?? resp.data?.watermark ?? null;
       if (serverFilename) {
         setWatermark(serverFilename);
       } else {
-        // fallback: re-fetch profile to get DB value
         await fetchProfile();
       }
-      // cleanup preview and selected file
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
@@ -205,7 +256,7 @@ const Profile = () => {
     }
   };
 
-  // Cancel selected file (before upload)
+  // Cancel selected file
   const handleCancelSelection = () => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -214,7 +265,7 @@ const Profile = () => {
     setWatermarkFile(null);
   };
 
-  // Delete watermark
+  // Delete watermark with confirmation
   const handleDeleteWatermark = async () => {
     if (!watermark) return;
     setIsDeleting(true);
@@ -224,14 +275,13 @@ const Profile = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setWatermark(null);
-      // cleanup preview if any
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
       }
       setWatermarkFile(null);
-      // refresh profile
       await fetchProfile();
+      setShowDeleteConfirm(false);
     } catch (error) {
       console.error("Failed to delete watermark:", error);
     } finally {
@@ -239,11 +289,12 @@ const Profile = () => {
     }
   };
 
-  // helper to render watermark image URL (encode filename)
+  // Watermark URL with cache busting
   const watermarkUrl = (filename) => {
     if (!filename) return null;
-    // encodeURIComponent to safely include spaces/special chars
-    return `${BASE_URL}/uploads/watermarks/${encodeURIComponent(filename)}`;
+    // Add timestamp to prevent caching and make URL unique
+    const timestamp = new Date().getTime();
+    return `${BASE_URL}/uploads/watermarks/${encodeURIComponent(filename)}?t=${timestamp}`;
   };
 
   if (!user) {
@@ -268,7 +319,7 @@ const Profile = () => {
         className="ml-50 flex-grow px-6 py-4"
       >
         {/* Profile Header */}
-        <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-6 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-6 mb-4">
           {/* Profile Picture + Commissions */}
           <div className="w-32 flex flex-col items-center mx-auto sm:mx-0">
             <div className="relative group">
@@ -322,102 +373,6 @@ const Profile = () => {
                   </>
                 )}
               </button>
-            </div>
-
-            {/* Watermark Management (Add / Replace / Delete) */}
-            <div className="mt-6 w-full text-center">
-              <h3 className="text-xs font-semibold text-gray-600 uppercase mb-2">
-                Watermark
-              </h3>
-
-              {/* If user selected a file but not uploaded yet, show local preview */}
-              {previewUrl ? (
-                <div className="flex flex-col items-center space-y-2">
-                  <img
-                    src={previewUrl}
-                    alt="Watermark Preview (local)"
-                    className="w-20 h-20 object-contain border rounded-md shadow-sm bg-white"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleWatermarkUpload}
-                      disabled={isUploading}
-                      className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
-                    >
-                      <CloudArrowUpIcon className="w-4 h-4" />
-                      {isUploading ? "Uploading..." : "Upload"}
-                    </button>
-                    <button
-                      onClick={handleCancelSelection}
-                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : watermark ? (
-                // If a watermark exists on server, show it and provide Replace/Delete controls
-                <div className="flex flex-col items-center space-y-2">
-                  <img
-                    src={watermarkUrl(watermark)}
-                    alt="Watermark Preview"
-                    crossOrigin="anonymous"
-                    onError={() => setImageLoadError(true)}
-                    className={`w-20 h-20 object-contain border rounded-md shadow-sm bg-white ${
-                      imageLoadError ? "hidden" : ""
-                    }`}
-                  />
-                  {imageLoadError && (
-                    <div className="text-xs text-red-500">Preview unavailable</div>
-                  )}
-                  <div className="flex gap-2">
-                    <label className="cursor-pointer text-xs text-blue-600 hover:underline flex items-center gap-1">
-                      <input
-                        type="file"
-                        accept="image/png"
-                        className="hidden"
-                        onChange={(e) => handleWatermarkSelect(e.target.files[0])}
-                      />
-                      <CloudArrowUpIcon className="w-4 h-4" />
-                      Replace
-                    </label>
-
-                    <button
-                      onClick={handleDeleteWatermark}
-                      disabled={isDeleting}
-                      className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                      {isDeleting ? "Deleting..." : "Delete"}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                // No watermark on server & no local selection yet
-                <div className="flex flex-col items-center space-y-2">
-                  <label className="cursor-pointer text-blue-600 hover:underline text-xs">
-                    <input
-                      type="file"
-                      accept="image/png"
-                      className="hidden"
-                      onChange={(e) => handleWatermarkSelect(e.target.files[0])}
-                    />
-                    {watermarkFile ? watermarkFile.name : "Choose PNG File"}
-                  </label>
-                  <button
-                    onClick={handleWatermarkUpload}
-                    disabled={!watermarkFile || isUploading}
-                    className={`flex items-center gap-1 text-xs ${
-                      isUploading
-                        ? "text-gray-400 cursor-not-allowed"
-                        : "text-green-600 hover:text-green-700"
-                    }`}
-                  >
-                    <CloudArrowUpIcon className="w-4 h-4" />
-                    {isUploading ? "Uploading..." : "Upload"}
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 
@@ -509,8 +464,132 @@ const Profile = () => {
               </div>
             )}
           </div>
+
+          {/* Watermark Management - Protected Section */}
+          <div className="w-40 flex flex-col items-center watermark-protected">
+            <h3 className="text-xs font-semibold text-gray-600 uppercase mb-2">
+              Watermark
+            </h3>
+
+            {previewUrl ? (
+              <div className="flex flex-col items-center space-y-2">
+                <ProtectedWatermarkImage
+                  src={previewUrl}
+                  alt="Watermark Preview (local)"
+                  className="w-20 h-20 object-contain border rounded-md shadow-sm bg-white"
+                  onError={() => setImageLoadError(true)}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleWatermarkUpload}
+                    disabled={isUploading}
+                    className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
+                  >
+                    <CloudArrowUpIcon className="w-4 h-4" />
+                    {isUploading ? "Uploading..." : "Upload"}
+                  </button>
+                  <button
+                    onClick={handleCancelSelection}
+                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : watermark ? (
+              <div className="flex flex-col items-center space-y-2">
+                <ProtectedWatermarkImage
+                  src={watermarkUrl(watermark)}
+                  alt="Watermark Preview"
+                  className={`w-20 h-20 object-contain border rounded-md shadow-sm bg-white ${
+                    imageLoadError ? "hidden" : ""
+                  }`}
+                  onError={() => setImageLoadError(true)}
+                />
+                {imageLoadError && (
+                  <div className="text-xs text-red-500">Preview unavailable</div>
+                )}
+                <div className="flex gap-2">
+                  <label className="cursor-pointer text-xs text-blue-600 hover:underline flex items-center gap-1">
+                    <input
+                      type="file"
+                      accept="image/png"
+                      className="hidden"
+                      onChange={(e) => handleWatermarkSelect(e.target.files[0])}
+                    />
+                    <CloudArrowUpIcon className="w-4 h-4" />
+                    Replace
+                  </label>
+
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={isDeleting}
+                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center space-y-2">
+                <label className="cursor-pointer text-blue-600 hover:underline text-xs">
+                  <input
+                    type="file"
+                    accept="image/png"
+                    className="hidden"
+                    onChange={(e) => handleWatermarkSelect(e.target.files[0])}
+                  />
+                  {watermarkFile ? watermarkFile.name : "Choose PNG File"}
+                </label>
+                <button
+                  onClick={handleWatermarkUpload}
+                  disabled={!watermarkFile || isUploading}
+                  className={`flex items-center gap-1 text-xs ${
+                    isUploading
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-green-600 hover:text-green-700"
+                  }`}
+                >
+                  <CloudArrowUpIcon className="w-4 h-4" />
+                  {isUploading ? "Uploading..." : "Upload"}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm mx-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Delete Watermark?</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Are you sure you want to delete your watermark? This action cannot be undone.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteWatermark}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-md transition-colors flex items-center gap-2"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rest of the component remains the same */}
+        {/* ... (Edit Buttons, Portfolio/Verify Buttons, Tabs, etc.) ... */}
+        
         {/* Edit Buttons */}
         {isEditing && (
           <div className="flex justify-start space-x-3 mb-4">
