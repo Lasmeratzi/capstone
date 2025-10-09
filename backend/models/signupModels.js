@@ -3,8 +3,8 @@ const db = require("../config/database");
 // Create a new user
 const createUser = (userData, callback) => {
   const sql = `
-    INSERT INTO users (fullname, username, email, password, bio, birthdate, pfp)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO users (fullname, username, email, password, bio, birthdate, pfp, watermark_path)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const params = [
     userData.fullname,
@@ -14,6 +14,7 @@ const createUser = (userData, callback) => {
     userData.bio,
     userData.birthdate,
     userData.pfp,
+    userData.watermark_path || null,
   ];
   db.query(sql, params, callback);
 };
@@ -21,7 +22,7 @@ const createUser = (userData, callback) => {
 // Get all users
 const getAllUsers = (callback) => {
   const sql = `
-    SELECT id, fullname, username, email, bio, birthdate, pfp, account_status, commissions, created_at, updated_at
+    SELECT id, fullname, username, email, bio, birthdate, pfp, watermark_path, account_status, commissions, created_at, updated_at
     FROM users
   `;
   db.query(sql, callback);
@@ -29,7 +30,7 @@ const getAllUsers = (callback) => {
 
 const getUserById = (id, callback) => {
   const sql = `
-    SELECT id, fullname, username, bio, birthdate, pfp, account_status, commissions, 
+    SELECT id, fullname, username, bio, birthdate, pfp, watermark_path, account_status, commissions, 
            verification_request_status, twitter_link, instagram_link, facebook_link
     FROM users
     WHERE id = ?
@@ -40,7 +41,7 @@ const getUserById = (id, callback) => {
 const searchUsers = (query, callback) => {
   const sql = `
     SELECT 
-      u.id, u.fullname, u.username, u.bio, u.birthdate, u.pfp, u.account_status, u.commissions,
+      u.id, u.fullname, u.username, u.bio, u.birthdate, u.pfp, u.watermark_path, u.account_status, u.commissions,
       vr.status AS verification_request_status
     FROM users u
     LEFT JOIN verification_requests vr ON u.id = vr.user_id
@@ -49,7 +50,6 @@ const searchUsers = (query, callback) => {
   `;
   db.query(sql, [`%${query}%`, `%${query}%`], callback);
 };
-
 
 // Search for a user by email
 const searchUserByEmail = (email, callback) => {
@@ -76,19 +76,20 @@ const updateUser = (id, userData, callback) => {
     updates.push("pfp = ?");
     values.push(userData.pfp);
   }
+  if (userData.watermark_path !== undefined) {
+    updates.push("watermark_path = ?");
+    values.push(userData.watermark_path);
+  }
 
   if (updates.length === 0) {
-    return callback(null, { affectedRows: 0 }); // nothing to update
+    return callback(null, { affectedRows: 0 });
   }
 
   values.push(id);
 
   const sql = `UPDATE users SET ${updates.join(", ")} WHERE id = ?`;
-
   db.query(sql, values, callback);
 };
-
-
 
 // Update account status (active, on hold, banned)
 const updateAccountStatus = (id, newAccountStatus, callback) => {
@@ -99,7 +100,6 @@ const updateAccountStatus = (id, newAccountStatus, callback) => {
   `;
   db.query(sql, [newAccountStatus, id], callback);
 };
-
 
 // Update commissions field (open or closed)
 const updateCommissions = (id, commissions, callback) => {
@@ -123,7 +123,7 @@ const deleteUserById = (id, callback) => {
 const getUserWithVerificationStatusById = (id, callback) => {
   const sql = `
     SELECT 
-      u.id, u.fullname, u.username, u.bio, u.birthdate, u.pfp, u.account_status, u.commissions,
+      u.id, u.fullname, u.username, u.bio, u.birthdate, u.pfp, u.watermark_path, u.account_status, u.commissions,
       u.twitter_link, u.instagram_link, u.facebook_link,
       vr.status AS verification_request_status
     FROM users u
@@ -134,8 +134,6 @@ const getUserWithVerificationStatusById = (id, callback) => {
   `;
   db.query(sql, [id], callback);
 };
-
-
 
 module.exports = {
   createUser,
