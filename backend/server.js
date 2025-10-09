@@ -51,7 +51,22 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// ✅ Serve uploads with CORS-safe headers
+// ✅ Serve all uploaded files (including watermarks) with open CORS
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders: (res, filePath) => {
+      // Allow frontend (Vite dev server) to access
+      res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+      res.setHeader("Cache-Control", "public, max-age=0");
+    },
+  })
+);
+
+
 
 // Routes
 app.use("/api", signupRoutes);
