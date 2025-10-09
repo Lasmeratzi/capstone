@@ -129,39 +129,47 @@ const deleteWatermark = (req, res) => {
       return res.status(500).json({ message: "Database error.", error: err });
     }
 
+    // Add more detailed logging
+    console.log("getUserById results:", results);
+    
     if (!results || results.length === 0) {
+      console.error("❌ User not found for ID:", userId);
       return res.status(404).json({ message: "User not found." });
     }
 
-    const watermarkPath = results[0].watermark_path;
+    const user = results[0];
+    const watermarkPath = user.watermark_path;
+
+    console.log("Watermark path from DB:", watermarkPath);
 
     if (!watermarkPath) {
       return res.status(400).json({ message: "No watermark to delete." });
     }
 
     const filePath = path.resolve(__dirname, `../uploads/watermarks/${watermarkPath}`);
+    console.log("Attempting to delete file at:", filePath);
 
-    fs.access(filePath, fs.constants.F_OK, (accessErr) => {
-      if (accessErr) {
-        console.warn("⚠️ Watermark file not found:", filePath);
+    // Delete file first, then update DB
+    fs.unlink(filePath, (unlinkErr) => {
+      if (unlinkErr) {
+        console.error("⚠️ Error deleting watermark file (continuing anyway):", unlinkErr);
       } else {
-        fs.unlink(filePath, (unlinkErr) => {
-          if (unlinkErr) console.error("❌ Error deleting watermark file:", unlinkErr);
-        });
+        console.log("✅ Watermark file deleted successfully");
       }
 
+      // Update DB regardless of file deletion result
       signupModels.updateUser(userId, { watermark_path: null }, (updateErr) => {
         if (updateErr) {
           console.error("❌ DB error updating watermark_path:", updateErr);
           return res.status(500).json({ message: "Database error.", error: updateErr });
         }
 
+        console.log("✅ Watermark deleted from database");
         return res.status(200).json({ message: "Watermark deleted successfully." });
       });
     });
   });
 };
-
 
 
 module.exports = {
