@@ -12,22 +12,39 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// GET: Fetch logged-in user's profile
+// Setup multer storage for watermark uploads (PNG only)
+const watermarkStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "./uploads/watermarks/"),
+  filename: (req, file, cb) => {
+    const safeName = file.originalname.replace(/\s+/g, "_").replace(/[^\w.-]/g, "");
+    cb(null, Date.now() + "-" + safeName);
+  },
+});
+
+const watermarkUpload = multer({ storage: watermarkStorage });
+
+// ✅ GET: Fetch logged-in user's profile
 router.get("/profile", authenticateToken, profileController.getUserProfile);
 
-// PATCH: Update profile (username, bio, pfp)
+// ✅ PATCH: Update profile (username, bio, pfp)
 router.patch("/profile", authenticateToken, upload.single("pfp"), (req, res) => {
   if (req.file) req.body.pfp = req.file.filename;
   profileController.updateProfile(req, res);
 });
 
+// ✅ POST: Upload or replace watermark
+router.post("/profile/watermark", authenticateToken, watermarkUpload.single("watermark"), profileController.uploadWatermark);
 
-// GET: Fetch another user's profile by ID
+// ✅ DELETE: Remove watermark
+router.delete("/profile/watermark", authenticateToken, profileController.deleteWatermark);
+
+// ✅ GET: Fetch another user's profile by ID
 router.get("/profile/:id", authenticateToken, profileController.getUserProfileById);
 
-router.get("/search", authenticateToken, profileController.searchUsers); // Search profiles by username
+// ✅ GET: Search profiles by username
+router.get("/search", authenticateToken, profileController.searchUsers);
 
-// PATCH: Toggle commissions (optional, if needed)
+// ✅ PATCH: Toggle commissions
 router.patch("/profile/commissions", authenticateToken, profileController.toggleCommissions);
 
 module.exports = router;
