@@ -30,8 +30,8 @@ const getAllUsers = (callback) => {
 
 const getUserById = (id, callback) => {
   const sql = `
-    SELECT id, fullname, username, bio, birthdate, pfp, watermark_path, account_status, commissions, 
-           verification_request_status, twitter_link, instagram_link, facebook_link
+    SELECT id, fullname, username, bio, birthdate, pfp, watermark_path, account_status, commissions,
+           twitter_link, instagram_link, facebook_link
     FROM users
     WHERE id = ?
   `;
