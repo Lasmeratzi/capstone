@@ -24,10 +24,11 @@ const notificationsRoutes = require("./routes/notificationsRoutes");
 const verifyrequestRoutes = require("./routes/verifyrequestRoutes");
 const followRoutes = require("./routes/followRoutes");
 const postlikesRoutes = require("./routes/postlikesRoutes");
-const artworkpostlikesRoutes = require("./routes/artworkpostlikesRoutes"); // ✅ New route
+const artworkpostlikesRoutes = require("./routes/artworkpostlikesRoutes");
 const artworkcommentsRoutes = require("./routes/artworkcommentsRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const autoReplyRoutes = require("./routes/autoReplyRoutes");
+const tagsRoutes = require("./routes/tagsRoutes"); // ✅ NEW
 
 // Auction cron job
 const checkAndEndAuctions = require("./jobs/auctionJobs");
@@ -66,8 +67,6 @@ app.use(
   })
 );
 
-
-
 // Routes
 app.use("/api", signupRoutes);
 app.use("/api", loginRoutes);
@@ -89,10 +88,11 @@ app.use("/api/notifications", notificationsRoutes);
 app.use("/api", verifyrequestRoutes);
 app.use("/api/follow", followRoutes);
 app.use("/api", postlikesRoutes);
-app.use("/api/artwork-post-likes", artworkpostlikesRoutes); // ✅ Register new route
+app.use("/api/artwork-post-likes", artworkpostlikesRoutes);
 app.use("/api/artwork-comments", artworkcommentsRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/auto-replies", autoReplyRoutes);
+app.use("/api", tagsRoutes); // ✅ NEW
 
 app.get("/", (req, res) => {
   res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, Artwork, Auction, and Media APIs.");
