@@ -7,6 +7,7 @@ import {
   ChevronRight,
   MoreVertical,
   MessageCircle,
+  Tag,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ArtPostModal from "../../components/modals/artpostmodal";
@@ -22,22 +23,94 @@ const getMediaUrl = (media_path) => {
   return `${API_BASE}/uploads/artwork/${cleanPath}`;
 };
 
+// Protected Media Component - prevents right-click, drag, and selection
+const ProtectedMedia = ({ file, onClick, className = "" }) => {
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragStart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleSelectStart = (e) => {
+    e.preventDefault();
+  };
+
+  const mediaUrl = getMediaUrl(file.media_path);
+  const isVideo = file.media_path.endsWith(".mp4");
+
+  return (
+    <div
+      className={`relative ${className}`}
+      onClick={onClick}
+      onContextMenu={handleContextMenu}
+      onDragStart={handleDragStart}
+      onSelectStart={handleSelectStart}
+      style={{
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none',
+        msUserSelect: 'none',
+      }}
+    >
+      {isVideo ? (
+        <div className="w-full h-full bg-black flex items-center justify-center relative">
+          <video
+            src={mediaUrl}
+            className="w-full h-full object-cover pointer-events-none"
+            muted
+            preload="metadata"
+            playsInline
+            onContextMenu={handleContextMenu}
+            onDragStart={handleDragStart}
+          />
+        </div>
+      ) : (
+        <img
+          src={mediaUrl}
+          alt="Artwork media"
+          className="w-full h-full object-cover pointer-events-none"
+          loading="lazy"
+          onContextMenu={handleContextMenu}
+          onDragStart={handleDragStart}
+          onSelectStart={handleSelectStart}
+          draggable={false}
+        />
+      )}
+      {/* Invisible overlay to ensure clicks work but prevent other interactions */}
+      <div 
+        className="absolute inset-0 cursor-pointer"
+        style={{ pointerEvents: 'auto' }}
+        onClick={onClick}
+        onContextMenu={handleContextMenu}
+        onDragStart={handleDragStart}
+      />
+    </div>
+  );
+};
+
 const ArtPosts = () => {
   const [artPosts, setArtPosts] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Store tags for each post
+  const [postTags, setPostTags] = useState({});
+
   // media viewer modal state (per-post)
   const [modalState, setModalState] = useState({
     isOpen: false,
-    postIndex: null, // index in artPosts
-    mediaIndex: 0, // index within that post's media array
+    postIndex: null,
+    mediaIndex: 0,
   });
 
   // ArtPostModal (edit/delete modal) state
   const [artPostModal, setArtPostModal] = useState({
     isOpen: false,
-    type: "", // "edit" | "delete" etc.
+    type: "",
     post: null,
   });
 
@@ -48,13 +121,26 @@ const ArtPosts = () => {
   const [showCommentsMap, setShowCommentsMap] = useState({});
   const [commentCounts, setCommentCounts] = useState({});
 
-  // per-post delete confirmation (so delete doesn't fire immediately)
+  // per-post delete confirmation
   const [confirmDeleteFor, setConfirmDeleteFor] = useState(null);
 
   const userId = localStorage.getItem("id");
   const token = localStorage.getItem("token");
 
-  // fetch posts + their media
+  // Fetch tags for a specific post
+  const fetchTagsForPost = async (postId) => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/tags/post/${postId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPostTags((prev) => ({ ...prev, [postId]: response.data }));
+    } catch (err) {
+      console.error(`Error fetching tags for post ${postId}:`, err);
+      setPostTags((prev) => ({ ...prev, [postId]: [] }));
+    }
+  };
+
+  // fetch posts + their media + tags
   const fetchArtPostsWithMedia = async () => {
     setLoading(true);
     setErrorMessage("");
@@ -86,8 +172,11 @@ const ArtPosts = () => {
 
       setArtPosts(postsWithMedia);
 
-      // fetch comment counts for each post
-      postsWithMedia.forEach((p) => fetchCommentCount(p.id));
+      // fetch comment counts and tags for each post
+      postsWithMedia.forEach((p) => {
+        fetchCommentCount(p.id);
+        fetchTagsForPost(p.id);
+      });
     } catch (err) {
       console.error("Failed to fetch artwork posts or media:", err);
       setErrorMessage("Failed to load artwork posts. Please try again.");
@@ -113,6 +202,13 @@ const ArtPosts = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Handle tag click - filter posts by tag (future feature)
+  const handleTagClick = (tagName) => {
+    console.log(`Filter by tag: ${tagName}`);
+    // TODO: Implement filtering by tag
+    // You can add this feature later to show only posts with this tag
+  };
+
   // Delete (actual API call)
   const handleDeleteConfirmed = async (postId) => {
     try {
@@ -121,7 +217,8 @@ const ArtPosts = () => {
       });
       setArtPosts((prev) => prev.filter((p) => p.id !== postId));
       setConfirmDeleteFor(null);
-      // clear any comment toggles/counts associated
+      
+      // clear comment toggles/counts and tags
       setShowCommentsMap((prev) => {
         const copy = { ...prev };
         delete copy[postId];
@@ -132,16 +229,20 @@ const ArtPosts = () => {
         delete copy[postId];
         return copy;
       });
+      setPostTags((prev) => {
+        const copy = { ...prev };
+        delete copy[postId];
+        return copy;
+      });
     } catch (err) {
       console.error("Failed to delete post:", err);
       alert("Failed to delete post.");
     }
   };
 
-  // Edit (actual API call) - updatedData should be simple object or FormData handled externally by art modal
+  // Edit (actual API call)
   const handleEdit = async (postId, updatedData) => {
     try {
-      // updatedData might be plain object or FormData
       const headers = { Authorization: `Bearer ${token}` };
       let body = updatedData;
       if (updatedData instanceof FormData) {
@@ -151,14 +252,11 @@ const ArtPosts = () => {
         headers,
       });
 
-      // optimistically update local state (if updatedData is plain fields)
       setArtPosts((prev) =>
         prev.map((p) => (p.id === postId ? { ...p, ...Object.fromEntries(updatedData instanceof FormData ? [] : Object.entries(updatedData)) } : p))
       );
 
-      // close the art post modal if open
       setArtPostModal({ isOpen: false, type: "", post: null });
-      // re-fetch posts to be safe (optional)
       fetchArtPostsWithMedia();
     } catch (err) {
       console.error("Failed to edit post:", err);
@@ -166,17 +264,16 @@ const ArtPosts = () => {
     }
   };
 
-  // Toggle inline comments for a given artwork post
+  // Toggle inline comments
   const toggleComments = (postId) => {
     setShowCommentsMap((prev) => ({
       ...prev,
       [postId]: !prev[postId],
     }));
-    // refresh count (in case it changed)
     fetchCommentCount(postId);
   };
 
-  // Media viewer modal: open for postIndex & specific mediaIndex
+  // Media viewer modal
   const openModal = (postIndex, mediaIndex = 0) => {
     setModalState({
       isOpen: true,
@@ -193,7 +290,6 @@ const ArtPosts = () => {
     });
   };
 
-  // navigate media inside modal (keeps author/sidebar tied to modalState.postIndex)
   const navigateMedia = (direction) => {
     if (modalState.postIndex === null) return;
     const mediaLength = artPosts[modalState.postIndex]?.media?.length || 0;
@@ -210,12 +306,12 @@ const ArtPosts = () => {
   const renderMediaGrid = (media, postIndex) => {
     const count = media.length;
     if (count === 1)
-      return <MediaItem file={media[0]} onClick={() => openModal(postIndex, 0)} />;
+      return <ProtectedMedia file={media[0]} onClick={() => openModal(postIndex, 0)} className="w-full h-full" />;
     if (count === 2)
       return (
         <div className="grid grid-cols-2 gap-1">
           {media.map((file, index) => (
-            <MediaItem key={file.id} file={file} onClick={() => openModal(postIndex, index)} />
+            <ProtectedMedia key={file.id} file={file} onClick={() => openModal(postIndex, index)} className="w-full h-full aspect-square" />
           ))}
         </div>
       );
@@ -223,13 +319,13 @@ const ArtPosts = () => {
       return (
         <div className="grid grid-cols-2 gap-1">
           <div className="row-span-2 aspect-square">
-            <MediaItem file={media[0]} onClick={() => openModal(postIndex, 0)} />
+            <ProtectedMedia file={media[0]} onClick={() => openModal(postIndex, 0)} className="w-full h-full" />
           </div>
           <div className="aspect-square">
-            <MediaItem file={media[1]} onClick={() => openModal(postIndex, 1)} />
+            <ProtectedMedia file={media[1]} onClick={() => openModal(postIndex, 1)} className="w-full h-full" />
           </div>
           <div className="aspect-square">
-            <MediaItem file={media[2]} onClick={() => openModal(postIndex, 2)} />
+            <ProtectedMedia file={media[2]} onClick={() => openModal(postIndex, 2)} className="w-full h-full" />
           </div>
         </div>
       );
@@ -237,21 +333,17 @@ const ArtPosts = () => {
       return (
         <div className="grid grid-cols-2 gap-1">
           {media.map((file, index) => (
-            <MediaItem key={file.id} file={file} onClick={() => openModal(postIndex, index)} />
+            <ProtectedMedia key={file.id} file={file} onClick={() => openModal(postIndex, index)} className="w-full h-full aspect-square" />
           ))}
         </div>
       );
     return (
       <div className="grid grid-cols-2 gap-1">
         {media.slice(0, 4).map((file, index) => (
-          <div
-            key={file.id}
-            className={`aspect-square relative ${index === 3 ? "cursor-pointer" : ""}`}
-            onClick={() => openModal(postIndex, index)}
-          >
-            <MediaItem file={file} />
+          <div key={file.id} className={`aspect-square relative`}>
+            <ProtectedMedia file={file} onClick={() => openModal(postIndex, index)} className="w-full h-full" />
             {index === 3 && (
-              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center text-white font-bold text-xl">
+              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center text-white font-bold text-xl pointer-events-none">
                 +{media.length - 4}
               </div>
             )}
@@ -260,18 +352,6 @@ const ArtPosts = () => {
       </div>
     );
   };
-
-  const MediaItem = ({ file, onClick }) => (
-    <div className="w-full h-full" onClick={onClick}>
-      {file.media_path.endsWith(".mp4") ? (
-        <div className="w-full h-full bg-black flex items-center justify-center relative">
-          <video src={getMediaUrl(file.media_path)} className="w-full h-full object-cover" muted preload="metadata" playsInline />
-        </div>
-      ) : (
-        <img src={getMediaUrl(file.media_path)} alt="Artwork media" className="w-full h-full object-cover" loading="lazy" />
-      )}
-    </div>
-  );
 
   if (loading)
     return <div className="text-center p-6 text-gray-600">Loading artwork posts...</div>;
@@ -335,7 +415,6 @@ const ArtPosts = () => {
                       <button
                         className="w-full px-4 py-2 hover:bg-gray-100 text-left text-red-600"
                         onClick={() => {
-                          // set confirmation target (shows confirmation inline)
                           setConfirmDeleteFor(post.id);
                           setDropdownOpen(null);
                         }}
@@ -351,6 +430,22 @@ const ArtPosts = () => {
             <h4 className="text-base font-semibold text-gray-800 mb-2">{post.title}</h4>
             <p className="text-gray-600 mb-3">{post.description}</p>
 
+            {/* Display Tags */}
+            {postTags[post.id] && postTags[post.id].length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {postTags[post.id].map((tag) => (
+                  <button
+                    key={tag.id}
+                    onClick={() => handleTagClick(tag.name)}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
+                  >
+                    <Tag size={12} />
+                    #{tag.name}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {post.media?.length > 0 && <div className="mt-3">{renderMediaGrid(post.media, postIndex)}</div>}
 
             {/* Likes & Comments inline row */}
@@ -364,7 +459,6 @@ const ArtPosts = () => {
                 <span className="text-sm">{commentCounts[post.id] ?? 0}</span>
               </button>
 
-              {/* If the user pressed delete, show a small inline confirmation */}
               {confirmDeleteFor === post.id && (
                 <div className="ml-auto flex items-center gap-2">
                   <button
@@ -383,7 +477,7 @@ const ArtPosts = () => {
               )}
             </div>
 
-            {/* Comments Section (inline, shown to the right of likes button visually because layout is row above) */}
+            {/* Comments Section */}
             {showCommentsMap[post.id] && (
               <div className="mt-2">
                 <ArtworkComments artworkPostId={post.id} userId={userId} />
@@ -395,13 +489,12 @@ const ArtPosts = () => {
         <p className="text-gray-500 text-center">No artwork posts yet.</p>
       )}
 
-      {/* Media Viewer Modal (per-post) */}
+      {/* Media Viewer Modal with tags in sidebar */}
       {modalState.isOpen && modalState.postIndex !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4">
           <div className="relative max-w-6xl w-full max-h-[90vh] flex">
             {/* Image area */}
             <div className="flex-[2] relative flex items-center justify-center bg-black">
-              {/* Next / Prev placed over the image area (so they don't overlap sidebar) */}
               {artPosts[modalState.postIndex]?.media?.length > 1 && (
                 <>
                   <button
@@ -427,29 +520,55 @@ const ArtPosts = () => {
                 </>
               )}
 
-              {/* Display the selected media */}
-              {artPosts[modalState.postIndex].media[modalState.mediaIndex].media_path.endsWith(".mp4") ? (
-                <video
-                  src={getMediaUrl(artPosts[modalState.postIndex].media[modalState.mediaIndex].media_path)}
-                  controls
-                  autoPlay
-                  className="max-h-[80vh] w-full object-contain"
-                />
-              ) : (
-                <img
-                  src={getMediaUrl(artPosts[modalState.postIndex].media[modalState.mediaIndex].media_path)}
-                  alt="Artwork media"
-                  className="max-h-[80vh] w-auto max-w-full object-contain"
-                />
-              )}
+              {(() => {
+                const currentMedia = artPosts[modalState.postIndex].media[modalState.mediaIndex];
+                const mediaUrl = getMediaUrl(currentMedia.media_path);
+                const isVideo = currentMedia.media_path.endsWith(".mp4");
 
-              {/* position indicator */}
+                const handleContextMenu = (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                };
+
+                const handleDragStart = (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                };
+
+                return isVideo ? (
+                  <video
+                    src={mediaUrl}
+                    controls
+                    autoPlay
+                    className="max-h-[80vh] w-full object-contain"
+                    onContextMenu={handleContextMenu}
+                    onDragStart={handleDragStart}
+                    controlsList="nodownload"
+                  />
+                ) : (
+                  <img
+                    src={mediaUrl}
+                    alt="Artwork media"
+                    className="max-h-[80vh] w-auto max-w-full object-contain"
+                    onContextMenu={handleContextMenu}
+                    onDragStart={handleDragStart}
+                    draggable={false}
+                    style={{
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                      MozUserSelect: 'none',
+                      msUserSelect: 'none',
+                    }}
+                  />
+                );
+              })()}
+
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white z-20">
                 {modalState.mediaIndex + 1} of {artPosts[modalState.postIndex].media.length}
               </div>
             </div>
 
-            {/* Sidebar: author, title, likes & comments for the current modal postIndex (stays fixed while navigating mediaIndex) */}
+            {/* Sidebar with tags */}
             <div className="flex-1 flex flex-col border-l border-gray-200 bg-white">
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center gap-3">
@@ -477,6 +596,21 @@ const ArtPosts = () => {
 
                 <p className="mt-3 text-gray-800">{artPosts[modalState.postIndex].title}</p>
 
+                {/* Tags in modal */}
+                {postTags[artPosts[modalState.postIndex].id] && postTags[artPosts[modalState.postIndex].id].length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {postTags[artPosts[modalState.postIndex].id].map((tag) => (
+                      <span
+                        key={tag.id}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
+                      >
+                        <Tag size={12} />
+                        #{tag.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {/* Likes & Comments */}
                 <div className="flex items-center gap-4 mt-3">
                   <ArtworkLikes artworkPostId={artPosts[modalState.postIndex].id} />
@@ -500,19 +634,17 @@ const ArtPosts = () => {
         </div>
       )}
 
-      {/* ArtPostModal for edit/delete (keeps your existing modal component) */}
+      {/* ArtPostModal for edit/delete */}
       {artPostModal.isOpen && (
         <ArtPostModal
           type={artPostModal.type}
           post={artPostModal.post}
           onClose={() => setArtPostModal({ isOpen: false, type: "", post: null })}
           onDelete={(postId) => {
-            // show inline confirmation (so user must confirm)
             setConfirmDeleteFor(postId);
             setArtPostModal({ isOpen: false, type: "", post: null });
           }}
           onEdit={(postId, updatedData) => {
-            // delegate to handleEdit (ArtPostModal should pass updatedData)
             handleEdit(postId, updatedData);
           }}
         />
