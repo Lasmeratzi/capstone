@@ -292,7 +292,7 @@ const Post = ({ post, userId, handleDelete }) => {
 
       {/* Image Modal */}
       {isImageModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="relative bg-white rounded-lg max-w-6xl w-full h-[80vh] flex">
             <div className="flex-[2] overflow-hidden flex items-center justify-center p-4 bg-gray-100">
               <img
