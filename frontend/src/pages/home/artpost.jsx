@@ -491,7 +491,7 @@ const ArtPosts = () => {
 
       {/* Media Viewer Modal with tags in sidebar */}
       {modalState.isOpen && modalState.postIndex !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="relative max-w-6xl w-full max-h-[90vh] flex">
             {/* Image area */}
             <div className="flex-[2] relative flex items-center justify-center bg-black">
