@@ -258,154 +258,156 @@ const OwnArt = ({ userId }) => {
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Main content */}
-      <div className="flex-1 space-y-4">
-        {loading && (
-          <div className="text-center py-8 text-gray-500">Loading artwork...</div>
-        )}
+<div className="flex-1">
+  <div className="max-w-2xl mx-auto space-y-4">
+    {loading && (
+      <div className="text-center py-8 text-gray-500">Loading artwork...</div>
+    )}
 
-        {errorMessage && (
-          <p className="text-red-500 text-center">{errorMessage}</p>
-        )}
+    {errorMessage && (
+      <p className="text-red-500 text-center">{errorMessage}</p>
+    )}
 
-        {!loading && filteredPosts.length === 0 ? (
-          <p className="text-gray-500 text-center text-sm">No artwork posts found</p>
-        ) : (
-          filteredPosts.map((post) => (
-            <div key={post.id} className="relative bg-white p-4 rounded-lg shadow-md border border-gray-200 mb-4 break-inside-avoid">
-              {post.post_status === "down" && (
-                <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg pointer-events-none">
-                  <p className="text-white text-lg font-semibold">🚫 Post is taken down</p>
-                </div>
+    {!loading && filteredPosts.length === 0 ? (
+      <p className="text-gray-500 text-center text-sm">No artwork posts found</p>
+    ) : (
+      filteredPosts.map((post) => (
+        <div key={post.id} className="relative bg-white p-4 rounded-lg shadow-md border border-gray-200 mb-4">
+          {post.post_status === "down" && (
+            <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg pointer-events-none">
+              <p className="text-white text-lg font-semibold">🚫 Post is taken down</p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 mb-3">
+            {post.author_pfp ? (
+              <img src={`${API_BASE}/uploads/${post.author_pfp}`} alt={`${post.author}'s profile`} className="w-10 h-10 rounded-full border border-gray-300 object-cover" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                <span className="text-gray-600 text-xs">N/A</span>
+              </div>
+            )}
+            <div>
+              <p className="font-bold text-gray-800">{post.author}</p>
+              <p className="text-gray-600 text-sm">{post.fullname}</p>
+              {post.created_at && (
+                <p className="text-xs text-gray-500">
+                  Posted {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                </p>
               )}
+            </div>
 
-              <div className="flex items-center gap-3 mb-3">
-                {post.author_pfp ? (
-                  <img src={`${API_BASE}/uploads/${post.author_pfp}`} alt={`${post.author}'s profile`} className="w-10 h-10 rounded-full border border-gray-300 object-cover" />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                    <span className="text-gray-600 text-xs">N/A</span>
-                  </div>
-                )}
-                <div>
-                  <p className="font-bold text-gray-800">{post.author}</p>
-                  <p className="text-gray-600 text-sm">{post.fullname}</p>
-                  {post.created_at && (
-                    <p className="text-xs text-gray-500">
-                      Posted {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                    </p>
-                  )}
-                </div>
+            {/* Edit/Delete Dropdown - Always visible since these are user's own posts */}
+            <div className="ml-auto relative">
+              <button className="p-2 rounded-full hover:bg-gray-100" onClick={() => setDropdownOpen(dropdownOpen === post.id ? null : post.id)}>
+                <MoreVertical className="w-5 h-5 text-gray-600" />
+              </button>
 
-                {/* Edit/Delete Dropdown - Always visible since these are user's own posts */}
-                <div className="ml-auto relative">
-                  <button className="p-2 rounded-full hover:bg-gray-100" onClick={() => setDropdownOpen(dropdownOpen === post.id ? null : post.id)}>
-                    <MoreVertical className="w-5 h-5 text-gray-600" />
+              {dropdownOpen === post.id && (
+                <div className="absolute right-0 mt-2 w-36 bg-white shadow-lg rounded border border-gray-200 z-50">
+                  <button
+                    className="w-full px-4 py-2 hover:bg-gray-100 text-left"
+                    onClick={() => {
+                      setArtPostModal({ isOpen: true, type: "edit", post });
+                      setDropdownOpen(null);
+                    }}
+                  >
+                    Edit
                   </button>
-
-                  {dropdownOpen === post.id && (
-                    <div className="absolute right-0 mt-2 w-36 bg-white shadow-lg rounded border border-gray-200 z-50">
-                      <button
-                        className="w-full px-4 py-2 hover:bg-gray-100 text-left"
-                        onClick={() => {
-                          setArtPostModal({ isOpen: true, type: "edit", post });
-                          setDropdownOpen(null);
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="w-full px-4 py-2 hover:bg-gray-100 text-left text-red-600"
-                        onClick={() => {
-                          setConfirmDeleteFor(post.id);
-                          setDropdownOpen(null);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <h4 className="text-base font-semibold text-gray-800 mb-2">{post.title}</h4>
-              <p className="text-gray-600 mb-3">{post.description}</p>
-
-              {/* Display Tags */}
-              {postTags[post.id] && postTags[post.id].length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {postTags[post.id].map((tag) => (
-                    <button
-                      key={tag.id}
-                      onClick={() => handleTagClick(tag.name)}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
-                    >
-                      <Tag size={12} />
-                      #{tag.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {post.media?.length > 0 && (
-                <div className={`grid gap-2 rounded-lg overflow-hidden ${
-                  post.media.length === 1 ? "grid-cols-1" : "grid-cols-2"
-                }`}>
-                  {post.media.map((file, index) => (
-                    <div 
-                      key={file.id}
-                      className="relative aspect-square cursor-pointer"
-                      onClick={() => openModal(post, index)}
-                    >
-                      <img
-                        src={`${API_BASE}/uploads/artwork/${file.media_path}`}
-                        alt="Artwork"
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Likes & Comments inline row */}
-              <div className="flex items-center gap-4 mt-3">
-                <div className="flex items-center gap-1">
-                  <ArtworkLikes artworkPostId={post.id} />
-                </div>
-
-                <button onClick={() => toggleComments(post.id)} className="flex items-center gap-1 text-gray-600 hover:text-gray-900">
-                  <MessageCircle size={18} />
-                  <span className="text-sm">{commentCounts[post.id] ?? 0}</span>
-                </button>
-
-                {confirmDeleteFor === post.id && (
-                  <div className="ml-auto flex items-center gap-2">
-                    <button
-                      onClick={() => setConfirmDeleteFor(null)}
-                      className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleDeleteConfirmed(post.id)}
-                      className="px-3 py-1 rounded text-sm bg-red-500 text-white hover:bg-red-600"
-                    >
-                      Confirm Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Comments Section */}
-              {showCommentsMap[post.id] && (
-                <div className="mt-2">
-                  <ArtworkComments artworkPostId={post.id} userId={userId} />
+                  <button
+                    className="w-full px-4 py-2 hover:bg-gray-100 text-left text-red-600"
+                    onClick={() => {
+                      setConfirmDeleteFor(post.id);
+                      setDropdownOpen(null);
+                    }}
+                  >
+                    Delete
+                  </button>
                 </div>
               )}
             </div>
-          ))
-        )}
-      </div>
+          </div>
+
+          <h4 className="text-base font-semibold text-gray-800 mb-2">{post.title}</h4>
+          <p className="text-gray-600 mb-3">{post.description}</p>
+
+          {/* Display Tags */}
+          {postTags[post.id] && postTags[post.id].length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {postTags[post.id].map((tag) => (
+                <button
+                  key={tag.id}
+                  onClick={() => handleTagClick(tag.name)}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
+                >
+                  <Tag size={12} />
+                  #{tag.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {post.media?.length > 0 && (
+            <div className={`grid gap-2 rounded-lg overflow-hidden ${
+              post.media.length === 1 ? "grid-cols-1" : "grid-cols-2"
+            }`}>
+              {post.media.map((file, index) => (
+                <div 
+                  key={file.id}
+                  className="relative aspect-square cursor-pointer"
+                  onClick={() => openModal(post, index)}
+                >
+                  <img
+                    src={`${API_BASE}/uploads/artwork/${file.media_path}`}
+                    alt="Artwork"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Likes & Comments inline row */}
+          <div className="flex items-center gap-4 mt-3">
+            <div className="flex items-center gap-1">
+              <ArtworkLikes artworkPostId={post.id} />
+            </div>
+
+            <button onClick={() => toggleComments(post.id)} className="flex items-center gap-1 text-gray-600 hover:text-gray-900">
+              <MessageCircle size={18} />
+              <span className="text-sm">{commentCounts[post.id] ?? 0}</span>
+            </button>
+
+            {confirmDeleteFor === post.id && (
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  onClick={() => setConfirmDeleteFor(null)}
+                  className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteConfirmed(post.id)}
+                  className="px-3 py-1 rounded text-sm bg-red-500 text-white hover:bg-red-600"
+                >
+                  Confirm Delete
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Comments Section */}
+          {showCommentsMap[post.id] && (
+            <div className="mt-2">
+              <ArtworkComments artworkPostId={post.id} userId={userId} />
+            </div>
+          )}
+        </div>
+      ))
+    )}
+  </div>
+</div>
 
       {/* Filter sidebar */}
       <div className="lg:w-64 space-y-4">
