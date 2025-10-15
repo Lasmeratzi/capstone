@@ -80,6 +80,10 @@ const updateUser = (id, userData, callback) => {
     updates.push("watermark_path = ?");
     values.push(userData.watermark_path);
   }
+  if (userData.location_id !== undefined) {
+    updates.push("location_id = ?");
+    values.push(userData.location_id);
+  }
 
   if (updates.length === 0) {
     return callback(null, { affectedRows: 0 });
@@ -90,6 +94,7 @@ const updateUser = (id, userData, callback) => {
   const sql = `UPDATE users SET ${updates.join(", ")} WHERE id = ?`;
   db.query(sql, values, callback);
 };
+
 
 // Update account status (active, on hold, banned)
 const updateAccountStatus = (id, newAccountStatus, callback) => {
@@ -123,17 +128,32 @@ const deleteUserById = (id, callback) => {
 const getUserWithVerificationStatusById = (id, callback) => {
   const sql = `
     SELECT 
-      u.id, u.fullname, u.username, u.bio, u.birthdate, u.pfp, u.watermark_path, u.account_status, u.commissions,
-      u.twitter_link, u.instagram_link, u.facebook_link,
+      u.id,
+      u.fullname,
+      u.username,
+      u.bio,
+      u.birthdate,
+      u.pfp,
+      u.watermark_path,
+      u.account_status,
+      u.commissions,
+      u.twitter_link,
+      u.instagram_link,
+      u.facebook_link,
+      u.location_id,
+      l.name AS location_name,
+      l.province AS location_province,
       vr.status AS verification_request_status
     FROM users u
     LEFT JOIN verification_requests vr ON u.id = vr.user_id
+    LEFT JOIN locations l ON u.location_id = l.id
     WHERE u.id = ?
     ORDER BY vr.request_date DESC
     LIMIT 1
   `;
   db.query(sql, [id], callback);
 };
+
 
 module.exports = {
   createUser,
