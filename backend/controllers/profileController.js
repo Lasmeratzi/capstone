@@ -26,6 +26,9 @@ const getUserProfile = (req, res) => {
       twitter_link: user.twitter_link,
       instagram_link: user.instagram_link,
       facebook_link: user.facebook_link,
+      location_id: user.location_id,
+      location_name: user.location_name,
+      location_province: user.location_province,
     });
   });
 };
@@ -54,6 +57,9 @@ const getUserProfileById = (req, res) => {
       twitter_link: user.twitter_link,
       instagram_link: user.instagram_link,
       facebook_link: user.facebook_link,
+      location_id: user.location_id,
+      location_name: user.location_name,
+      location_province: user.location_province,
     });
   });
 };
@@ -89,17 +95,29 @@ const searchUsers = (req, res) => {
 // Update profile
 const updateProfile = (req, res) => {
   const userId = req.user.id;
-  const { username, bio, pfp } = req.body;
+  const { username, bio, pfp, location_id } = req.body;
 
-  if (!username && !bio && !pfp) {
+  if (!username && !bio && !pfp && !location_id) {
     return res.status(400).json({ message: "At least one field is required for update." });
   }
 
-  signupModels.updateUser(userId, { username, bio, pfp }, (err) => {
-    if (err) return res.status(500).json({ message: "Database error.", error: err });
+  // Validate location_id if provided (must be an integer)
+  if (location_id && isNaN(parseInt(location_id))) {
+    return res.status(400).json({ message: "Invalid location_id." });
+  }
 
-    res.status(200).json({ message: "Profile updated successfully!" });
-  });
+  signupModels.updateUser(
+    userId,
+    { username, bio, pfp, location_id },
+    (err) => {
+      if (err) {
+        console.error("Database error updating profile:", err);
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+
+      res.status(200).json({ message: "Profile updated successfully!" });
+    }
+  );
 };
 
 // ✅ Upload or replace watermark

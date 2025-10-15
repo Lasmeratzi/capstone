@@ -29,6 +29,7 @@ const artworkcommentsRoutes = require("./routes/artworkcommentsRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const autoReplyRoutes = require("./routes/autoReplyRoutes");
 const tagsRoutes = require("./routes/tagsRoutes"); // ✅ NEW
+const locationRoutes = require("./routes/locationRoutes");
 
 // Auction cron job
 const checkAndEndAuctions = require("./jobs/auctionJobs");
@@ -93,6 +94,7 @@ app.use("/api/artwork-comments", artworkcommentsRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/auto-replies", autoReplyRoutes);
 app.use("/api", tagsRoutes); // ✅ NEW
+app.use("/api/locations", locationRoutes); // ✅ NEW
 
 app.get("/", (req, res) => {
   res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, Artwork, Auction, and Media APIs.");
