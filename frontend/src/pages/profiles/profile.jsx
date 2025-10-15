@@ -21,6 +21,9 @@ import {
   ShieldCheckIcon,
   TrashIcon,
   CloudArrowUpIcon,
+  MapPinIcon,
+  ChevronDownIcon, // ← Add this
+  ExclamationCircleIcon, // ← Add this
 } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import Wallet from "../wallet/wallet";
@@ -94,6 +97,12 @@ const Profile = () => {
   const [editBio, setEditBio] = useState("");
   const [editPfp, setEditPfp] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [locations, setLocations] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [locationError, setLocationError] = useState(null);
+
+
+
 
   // Watermark state
   const [watermark, setWatermark] = useState(null);
@@ -107,6 +116,8 @@ const Profile = () => {
   useEffect(() => {
     fetchProfile();
     fetchPortfolio();
+    fetchLocations();
+
     
     // Add global event listeners to prevent right-click and drag
     const preventDefault = (e) => {
@@ -129,21 +140,23 @@ const Profile = () => {
 
   // Fetch profile (logged-in user)
   const fetchProfile = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const userResponse = await axios.get(`${BASE_URL}/api/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const userData = userResponse.data;
-      const wm = userData.watermark_path ?? userData.watermark ?? null;
-      setUser(userData);
-      setCommissions(userData.commissions);
-      setWatermark(wm);
-      setImageLoadError(false);
-    } catch (error) {
-      console.error("Failed to fetch profile:", error);
-    }
-  };
+  try {
+    const token = localStorage.getItem("token");
+    const userResponse = await axios.get(`${BASE_URL}/api/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const userData = userResponse.data;
+    const wm = userData.watermark_path ?? userData.watermark ?? null;
+    setUser(userData);
+    setSelectedLocation(userData.location_id || null); // ← add this
+    setCommissions(userData.commissions);
+    setWatermark(wm);
+    setImageLoadError(false);
+  } catch (error) {
+    console.error("Failed to fetch profile:", error);
+  }
+};
+
 
   const fetchPortfolio = async () => {
     try {
@@ -156,6 +169,22 @@ const Profile = () => {
       console.error("Failed to fetch portfolio items:", error);
     }
   };
+
+const fetchLocations = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.get(`${BASE_URL}/api/locations`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setLocations(res.data); // Should be [{id, barangay, province}, ...]
+    setLocationError(null);
+  } catch (error) {
+    console.error("Failed to fetch locations:", error);
+    setLocationError("Failed to load locations");
+  }
+};
+
+
 
   const toggleCommissions = async () => {
     const token = localStorage.getItem("token");
@@ -194,6 +223,7 @@ const Profile = () => {
     const formData = new FormData();
     formData.append("username", editUsername);
     formData.append("bio", editBio);
+    if (selectedLocation) formData.append("location_id", selectedLocation);
     if (editPfp) formData.append("pfp", editPfp);
 
     try {
@@ -434,6 +464,70 @@ const Profile = () => {
                 {user.bio ? `"${user.bio}"` : "No bio provided."}
               </p>
             )}
+            
+            {/* Location Field */}
+{isEditing ? (
+  <div className="mt-2">
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      <MapPinIcon className="w-4 h-4 inline mr-1" />
+      Location
+    </label>
+    <div className="relative">
+      <select
+        value={selectedLocation?.toString() || ""}
+        onChange={(e) => setSelectedLocation(e.target.value ? Number(e.target.value) : null)}
+        className="w-full max-w-xs text-sm border border-gray-300 rounded-lg px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 transition-all duration-200 appearance-none bg-white cursor-pointer hover:border-gray-400"
+      >
+        <option value="">Select your location...</option>
+        {/* Group by province */}
+        {Object.entries(
+          locations.reduce((acc, loc) => {
+            if (!acc[loc.province]) acc[loc.province] = [];
+            acc[loc.province].push(loc);
+            return acc;
+          }, {})
+        ).map(([province, provinceLocations]) => (
+          <optgroup key={province} label={province}>
+            {provinceLocations.map((loc) => (
+              <option key={loc.id} value={loc.id}>
+                {loc.name}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+        <ChevronDownIcon className="h-4 w-4" />
+      </div>
+    </div>
+    {locationError && (
+      <p className="mt-1 text-xs text-red-600 flex items-center">
+        <ExclamationCircleIcon className="w-3 h-3 mr-1" />
+        {locationError}
+      </p>
+    )}
+  </div>
+) : (
+  <p className="text-sm text-gray-600 flex items-center gap-1">
+    <MapPinIcon className="w-4 h-4 text-gray-500" />
+    {locations.length && user.location_id
+      ? (() => {
+          const loc = locations.find(
+            (l) => l.id === Number(user.location_id)
+          );
+          return loc ? (
+            <span className="font-medium text-gray-700">
+              {loc.name}, <span className="text-gray-500">{loc.province}</span>
+            </span>
+          ) : "No Location";
+        })()
+      : (
+        <span className="text-gray-400 italic">No location set</span>
+      )
+    }
+  </p>
+)}
+
 
             <div className="text-xs mt-1">
               {user.verification_request_status === "pending" && (
