@@ -28,8 +28,9 @@ const artworkpostlikesRoutes = require("./routes/artworkpostlikesRoutes");
 const artworkcommentsRoutes = require("./routes/artworkcommentsRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const autoReplyRoutes = require("./routes/autoReplyRoutes");
-const tagsRoutes = require("./routes/tagsRoutes"); // ✅ NEW
+const tagsRoutes = require("./routes/tagsRoutes"); 
 const locationRoutes = require("./routes/locationRoutes");
+const searchRoutes = require("./routes/searchRoutes"); // NEW
 
 // Auction cron job
 const checkAndEndAuctions = require("./jobs/auctionJobs");
@@ -93,8 +94,9 @@ app.use("/api/artwork-post-likes", artworkpostlikesRoutes);
 app.use("/api/artwork-comments", artworkcommentsRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/auto-replies", autoReplyRoutes);
-app.use("/api", tagsRoutes); // ✅ NEW
-app.use("/api/locations", locationRoutes); // ✅ NEW
+app.use("/api", tagsRoutes); 
+app.use("/api/locations", locationRoutes); 
+app.use("/api", searchRoutes); 
 
 app.get("/", (req, res) => {
   res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, Artwork, Auction, and Media APIs.");
