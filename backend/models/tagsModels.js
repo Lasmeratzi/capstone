@@ -28,7 +28,7 @@ const linkTagToPost = (postId, tagId, callback) => {
   db.query(sql, [postId, tagId], callback);
 };
 
-// Get all tags for a specific post
+// Get all tags for a specific post - CORRECTED
 const getTagsByPostId = (postId, callback) => {
   const sql = `
     SELECT t.id, t.name 
@@ -72,17 +72,35 @@ const getPopularTags = (limit, callback) => {
   db.query(sql, [limit || 20], callback);
 };
 
-// Get all posts with a specific tag
+// Get all posts with a specific tag - CORRECTED
 const getPostsByTag = (tagName, callback) => {
   const sql = `
-    SELECT ap.* 
+    SELECT 
+      ap.*,
+      u.username as author,
+      u.fullname,
+      u.pfp as author_pfp,
+      u.id as author_id
     FROM artwork_posts ap
     INNER JOIN artwork_tags at ON ap.id = at.post_id
     INNER JOIN tags t ON at.tag_id = t.id
-    WHERE t.name = ?
+    INNER JOIN users u ON ap.author_id = u.id
+    WHERE t.name = ? 
+      AND u.account_status = 'active'
     ORDER BY ap.created_at DESC
   `;
-  db.query(sql, [tagName.toLowerCase()], callback);
+  
+  console.log(`Executing getPostsByTag for: ${tagName}`);
+  db.query(sql, [tagName.toLowerCase()], (err, results) => {
+    if (err) {
+      console.error('Database error in getPostsByTag:', err);
+      console.error('SQL:', sql);
+      console.error('Parameters:', [tagName.toLowerCase()]);
+    } else {
+      console.log(`Found ${results.length} posts for tag: ${tagName}`);
+    }
+    callback(err, results);
+  });
 };
 
 // Delete unused tags (cleanup function - optional)
