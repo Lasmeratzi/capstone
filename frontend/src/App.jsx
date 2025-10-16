@@ -27,6 +27,7 @@ import Terms from "./pages/terms/terms";
 import About from "./pages/about/about";
 import Inbox from "./pages/message/inbox";
 import Message from "./pages/message/message";
+import TagPostsPage from "./pages/search/TagsPostsPage";
 
 function App() {
   return (
@@ -97,6 +98,14 @@ function App() {
           element={
             <ProtectedRoute>
               <SearchProfile /> 
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tags/:tagName"
+          element={
+            <ProtectedRoute>
+              <TagPostsPage />
             </ProtectedRoute>
           }
         />

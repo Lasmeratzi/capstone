@@ -51,7 +51,8 @@ const getTagsForPost = (req, res) => {
 
   tagsModels.getTagsByPostId(postId, (err, results) => {
     if (err) {
-      return res.status(500).json({ message: "Database error.", error: err });
+      console.error(`Error fetching tags for post ${postId}:`, err);
+      return res.status(500).json({ message: "Database error.", error: err.message });
     }
     res.status(200).json(results);
   });
@@ -67,7 +68,8 @@ const searchTags = (req, res) => {
 
   tagsModels.searchTags(query, (err, results) => {
     if (err) {
-      return res.status(500).json({ message: "Database error.", error: err });
+      console.error(`Error searching tags for query ${query}:`, err);
+      return res.status(500).json({ message: "Database error.", error: err.message });
     }
     res.status(200).json(results);
   });
@@ -79,13 +81,14 @@ const getPopularTags = (req, res) => {
 
   tagsModels.getPopularTags(limit, (err, results) => {
     if (err) {
-      return res.status(500).json({ message: "Database error.", error: err });
+      console.error('Error fetching popular tags:', err);
+      return res.status(500).json({ message: "Database error.", error: err.message });
     }
     res.status(200).json(results);
   });
 };
 
-// Get all posts with a specific tag
+// Get all posts with a specific tag - UPDATED WITH BETTER ERROR HANDLING
 const getPostsByTag = (req, res) => {
   const { tagName } = req.params;
 
@@ -93,10 +96,19 @@ const getPostsByTag = (req, res) => {
     return res.status(400).json({ message: "Tag name is required." });
   }
 
+  console.log(`[Controller] Fetching posts for tag: ${tagName}`);
+
   tagsModels.getPostsByTag(tagName, (err, results) => {
     if (err) {
-      return res.status(500).json({ message: "Database error.", error: err });
+      console.error(`[Controller] Database error for tag ${tagName}:`, err);
+      return res.status(500).json({ 
+        message: "Database error.", 
+        error: err.message,
+        sqlMessage: err.sqlMessage 
+      });
     }
+
+    console.log(`[Controller] Successfully found ${results.length} posts for tag: ${tagName}`);
     res.status(200).json(results);
   });
 };
@@ -135,7 +147,8 @@ const removeTagsFromPost = (req, res) => {
 
   tagsModels.removeTagsFromPost(postId, (err) => {
     if (err) {
-      return res.status(500).json({ message: "Database error.", error: err });
+      console.error(`Error removing tags from post ${postId}:`, err);
+      return res.status(500).json({ message: "Database error.", error: err.message });
     }
     res.status(200).json({ message: "Tags removed successfully!" });
   });
@@ -145,7 +158,8 @@ const removeTagsFromPost = (req, res) => {
 const cleanupUnusedTags = (req, res) => {
   tagsModels.deleteUnusedTags((err, result) => {
     if (err) {
-      return res.status(500).json({ message: "Database error.", error: err });
+      console.error('Error cleaning up unused tags:', err);
+      return res.status(500).json({ message: "Database error.", error: err.message });
     }
     res.status(200).json({ 
       message: "Unused tags cleaned up successfully!", 
