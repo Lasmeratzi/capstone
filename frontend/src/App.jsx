@@ -28,6 +28,8 @@ import About from "./pages/about/about";
 import Inbox from "./pages/message/inbox";
 import Message from "./pages/message/message";
 import TagPostsPage from "./pages/search/TagsPostsPage";
+import ArtworkPostPage from "./pages/search/ArtWorkPostPage";
+import LocationPostsPage from "./pages/search/LocationPostsPage";
 
 function App() {
   return (
@@ -109,6 +111,23 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+  path="/artwork/:postId"
+  element={
+    <ProtectedRoute>
+      <ArtworkPostPage />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/location/:locationId"
+  element={
+    <ProtectedRoute>
+      <LocationPostsPage />
+    </ProtectedRoute>
+  }
+/>
 
         {/* ✅ Messaging Routes */}
         <Route

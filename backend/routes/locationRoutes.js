@@ -1,16 +1,24 @@
 const express = require("express");
 const router = express.Router();
-const locationModels = require("../models/locationModels");
+const { authenticateToken } = require("../middleware/authMiddleware");
+const locationsController = require("../controllers/locationController");
 
 // ✅ GET all locations
-router.get("/", (req, res) => {
-  locationModels.getAllLocations((err, results) => {
-    if (err) {
-      console.error("❌ Database error:", err);
-      return res.status(500).json({ message: "Database error", error: err });
-    }
-    res.status(200).json(results);
-  });
-});
+router.get("/", authenticateToken, locationsController.getAllLocations);
+
+// ✅ GET all locations with artist counts
+router.get("/with-counts", authenticateToken, locationsController.getLocationsWithCounts);
+
+// ✅ SEARCH locations
+router.get("/search", authenticateToken, locationsController.searchLocations);
+
+// ✅ GET posts by location ID
+router.get("/:locationId/posts", authenticateToken, locationsController.getPostsByLocation);
+
+// ✅ GET location by ID
+router.get("/:locationId", authenticateToken, locationsController.getLocationById);
+
+// ✅ GET artist count for location
+router.get("/:locationId/artist-count", authenticateToken, locationsController.getLocationArtistCount);
 
 module.exports = router;

@@ -1,18 +1,18 @@
-// src/pages/tags/TagPostsPage.jsx
+// src/pages/locations/LocationPostsPage.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import {
   ArrowLeft,
-  Hash,
+  MapPin,
   MessageCircle,
   MoreVertical,
   Tag as TagIcon,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import ArtworkLikes from "../../pages/likes/artworklikes";
-import ArtworkComments from "../../pages/comments/artworkcomments";
-import Sidebar from "../../pages/sidebar/sidebar";
+import ArtworkLikes from "../likes/artworklikes";
+import ArtworkComments from "../comments/artworkcomments";
+import Sidebar from "../sidebar/sidebar";
 
 const API_BASE = "http://localhost:5000";
 
@@ -77,10 +77,11 @@ const ProtectedMedia = ({ file, onClick, className = "" }) => {
   );
 };
 
-const TagPostsPage = () => {
-  const { tagName } = useParams();
+const LocationPostsPage = () => {
+  const { locationId } = useParams();
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
+  const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [commentCounts, setCommentCounts] = useState({});
@@ -91,26 +92,26 @@ const TagPostsPage = () => {
   const userId = localStorage.getItem("id");
 
   useEffect(() => {
-    fetchPostsByTag();
-  }, [tagName]);
+    fetchPostsByLocation();
+  }, [locationId]);
 
-  const fetchPostsByTag = async () => {
+  const fetchPostsByLocation = async () => {
     setLoading(true);
     setError("");
     
     try {
       const response = await axios.get(
-        `${API_BASE}/api/tags/${encodeURIComponent(tagName)}/posts`,
+        `${API_BASE}/api/locations/${locationId}/posts`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      console.log("Posts response:", response.data); // Debug log
+      console.log("Location posts response:", response.data);
 
-      // Fetch media for each post
+      // Fetch media and tags for each post
       const postsWithMedia = await Promise.all(
-        response.data.map(async (post) => {
+        response.data.posts.map(async (post) => {
           try {
             const mediaResponse = await axios.get(
               `${API_BASE}/api/artwork-media/${post.id}`,
@@ -119,7 +120,6 @@ const TagPostsPage = () => {
               }
             );
             
-            // Also fetch tags for each post
             const tagsResponse = await axios.get(
               `${API_BASE}/api/tags/post/${post.id}`,
               {
@@ -140,6 +140,7 @@ const TagPostsPage = () => {
       );
 
       setPosts(postsWithMedia);
+      setLocation(response.data.location);
 
       // Store tags separately for easy access
       const tagsMap = {};
@@ -153,8 +154,8 @@ const TagPostsPage = () => {
         fetchCommentCount(post.id);
       });
     } catch (err) {
-      console.error("Error fetching posts by tag:", err);
-      setError("Failed to load posts for this tag. Please try again.");
+      console.error("Error fetching posts by location:", err);
+      setError("Failed to load posts for this location. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -243,7 +244,7 @@ const TagPostsPage = () => {
         <div className="ml-60 flex-grow py-6 px-8 md:px-20 lg:px-40">
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Loading posts with #{tagName}...</span>
+            <span className="ml-3 text-gray-600">Loading posts from location...</span>
           </div>
         </div>
       </div>
@@ -251,38 +252,40 @@ const TagPostsPage = () => {
   }
 
   return (
-    <div className="flex">
-      <div className="fixed h-screen w-60">
-        <Sidebar />
-      </div>
+  <div className="flex">
+    <div className="fixed h-screen w-60">
+      <Sidebar />
+    </div>
 
-      <div className="ml-60 flex-grow py-6 px-8 md:px-20 lg:px-40">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-full">
-              <Hash size={24} className="text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">#{tagName}</h1>
-              <p className="text-gray-600">
-                {posts.length} {posts.length === 1 ? 'post' : 'posts'}
-              </p>
-            </div>
+    <div className="ml-60 flex-grow py-6 px-8 md:px-20 lg:px-40">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-red-100 rounded-full">
+            <MapPin size={24} className="text-red-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">
+              {location ? `${location.name}, ${location.province}` : 'Location'}
+            </h1>
+            <p className="text-gray-600">
+              {posts.length} {posts.length === 1 ? 'post' : 'posts'}
+            </p>
           </div>
         </div>
+      </div>
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <p className="text-red-700">{error}</p>
             <button
-              onClick={fetchPostsByTag}
+              onClick={fetchPostsByLocation}
               className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
             >
               Try Again
@@ -292,7 +295,7 @@ const TagPostsPage = () => {
 
         {/* Posts Grid */}
         {posts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="max-w-2xl mx-auto space-y-4">
             {posts.map((post) => (
               <div key={post.id} className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
                 {/* Post Header */}
@@ -385,11 +388,13 @@ const TagPostsPage = () => {
         ) : (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">
-              <TagIcon size={48} className="mx-auto" />
+              <MapPin size={48} className="mx-auto" />
             </div>
             <h3 className="text-lg font-semibold text-gray-700 mb-2">No posts found</h3>
             <p className="text-gray-500">
-              No artwork posts are tagged with <span className="font-semibold">#{tagName}</span> yet.
+              No artwork posts from <span className="font-semibold">
+                {location ? `${location.city}, ${location.province}` : 'this location'}
+              </span> yet.
             </p>
           </div>
         )}
@@ -398,4 +403,4 @@ const TagPostsPage = () => {
   );
 };
 
-export default TagPostsPage;
+export default LocationPostsPage;

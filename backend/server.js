@@ -98,6 +98,7 @@ app.use("/api", tagsRoutes);
 app.use("/api/locations", locationRoutes); 
 app.use("/api", searchRoutes); 
 
+
 app.get("/", (req, res) => {
   res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, Artwork, Auction, and Media APIs.");
 });

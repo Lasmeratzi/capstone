@@ -110,12 +110,10 @@ const SearchProfile = () => {
   };
 
   // Handle location click
-  const handleLocationClick = (location) => {
-    // You can implement location-based filtering here
-    console.log("Location clicked:", location);
-    // Example: navigate to a location page or filter by location
-    // navigate(`/location/${location.id}`);
-  };
+  // In SearchProfile.jsx - update the handleLocationClick function
+const handleLocationClick = (location) => {
+  navigate(`/location/${location.id}`);
+};
 
   // Filter out current user from results
   const filteredUsers = results.users.filter((user) => user.id !== loggedInUserId);
@@ -313,22 +311,22 @@ const SearchProfile = () => {
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {results.locations.map((loc) => (
-                        <div
-                          key={loc.id}
-                          className="bg-white shadow rounded-lg p-4 border border-gray-200 hover:shadow-md transition-all duration-300 hover:border-red-200 cursor-pointer"
-                          onClick={() => handleLocationClick(loc)}
-                        >
-                          <div className="flex items-center mb-2">
-                            <FaMapMarkerAlt className="w-4 h-4 text-red-500 mr-2" />
-                            <p className="font-semibold text-gray-800">
-                              {loc.city}, {loc.province}
-                            </p>
-                          </div>
-                          <p className="text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded inline-block">
-                            {loc.artist_count} artist{loc.artist_count !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                      ))}
+  <Link
+    key={loc.id}
+    to={`/location/${loc.id}`}
+    className="bg-white shadow rounded-lg p-4 border border-gray-200 hover:shadow-md transition-all duration-300 hover:border-red-200 cursor-pointer block"
+  >
+    <div className="flex items-center mb-2">
+      <FaMapMarkerAlt className="w-4 h-4 text-red-500 mr-2" />
+      <p className="font-semibold text-gray-800">
+        {loc.city}, {loc.province}
+      </p>
+    </div>
+    <p className="text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded inline-block">
+      {loc.artist_count} artist{loc.artist_count !== 1 ? 's' : ''}
+    </p>
+  </Link>
+))}
                     </div>
                   </div>
                 )}
