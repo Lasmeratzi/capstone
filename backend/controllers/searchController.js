@@ -17,7 +17,8 @@ const universalSearch = (req, res) => {
         tags: 0,
         locations: 0,
         total: 0
-      }
+      },
+      message: "Search query is required"
     });
   }
 
@@ -48,19 +49,25 @@ const universalSearch = (req, res) => {
       return res.status(500).json({ message: "Database error.", error: err });
     }
 
+    const users = results.users || [];
+    const tags = results.tags || [];
+    const locations = results.locations || [];
+    const totalCount = users.length + tags.length + locations.length;
+
     res.status(200).json({
       query: trimmedQuery,
       results: {
-        users: results.users || [],
-        tags: results.tags || [],
-        locations: results.locations || []
+        users: users,
+        tags: tags,
+        locations: locations
       },
       counts: {
-        users: results.users?.length || 0,
-        tags: results.tags?.length || 0,
-        locations: results.locations?.length || 0,
-        total: (results.users?.length || 0) + (results.tags?.length || 0) + (results.locations?.length || 0)
-      }
+        users: users.length,
+        tags: tags.length,
+        locations: locations.length,
+        total: totalCount
+      },
+      ...(totalCount === 0 && { message: "No results found" })
     });
   });
 };
@@ -70,7 +77,11 @@ const quickSearch = (req, res) => {
   const { query } = req.query;
 
   if (!query || query.trim().length < 1) {
-    return res.status(200).json([]);
+    return res.status(200).json({
+      results: [],
+      count: 0,
+      message: "Type at least 1 character to search"
+    });
   }
 
   const trimmedQuery = query.trim();
@@ -81,25 +92,45 @@ const quickSearch = (req, res) => {
       return res.status(500).json({ message: "Database error.", error: err });
     }
 
-    res.status(200).json(results || []);
+    const searchResults = results || [];
+
+    res.status(200).json({
+      query: trimmedQuery,
+      results: searchResults,
+      count: searchResults.length,
+      ...(searchResults.length === 0 && { message: "No suggestions found" })
+    });
   });
 };
 
-// Search only users (for backward compatibility)
+// Search only users
 const searchUsersOnly = (req, res) => {
   const { query } = req.query;
 
   if (!query || query.trim().length === 0) {
-    return res.status(400).json({ message: "Search query is required." });
+    return res.status(400).json({ 
+      message: "Search query is required.",
+      results: [],
+      count: 0
+    });
   }
 
-  searchModels.searchUsers(query.trim(), (err, results) => {
+  const trimmedQuery = query.trim();
+
+  searchModels.searchUsers(trimmedQuery, (err, results) => {
     if (err) {
       console.error("User search error:", err);
       return res.status(500).json({ message: "Database error.", error: err });
     }
 
-    res.status(200).json(results);
+    const users = results || [];
+
+    res.status(200).json({
+      query: trimmedQuery,
+      results: users,
+      count: users.length,
+      ...(users.length === 0 && { message: "No users found" })
+    });
   });
 };
 
@@ -108,16 +139,29 @@ const searchTagsOnly = (req, res) => {
   const { query } = req.query;
 
   if (!query || query.trim().length === 0) {
-    return res.status(400).json({ message: "Search query is required." });
+    return res.status(400).json({ 
+      message: "Search query is required.",
+      results: [],
+      count: 0
+    });
   }
 
-  searchModels.searchTags(query.trim(), (err, results) => {
+  const trimmedQuery = query.trim();
+
+  searchModels.searchTags(trimmedQuery, (err, results) => {
     if (err) {
       console.error("Tag search error:", err);
       return res.status(500).json({ message: "Database error.", error: err });
     }
 
-    res.status(200).json(results);
+    const tags = results || [];
+
+    res.status(200).json({
+      query: trimmedQuery,
+      results: tags,
+      count: tags.length,
+      ...(tags.length === 0 && { message: "No tags found" })
+    });
   });
 };
 
@@ -126,16 +170,29 @@ const searchLocationsOnly = (req, res) => {
   const { query } = req.query;
 
   if (!query || query.trim().length === 0) {
-    return res.status(400).json({ message: "Search query is required." });
+    return res.status(400).json({ 
+      message: "Search query is required.",
+      results: [],
+      count: 0
+    });
   }
 
-  searchModels.searchLocations(query.trim(), (err, results) => {
+  const trimmedQuery = query.trim();
+
+  searchModels.searchLocations(trimmedQuery, (err, results) => {
     if (err) {
       console.error("Location search error:", err);
       return res.status(500).json({ message: "Database error.", error: err });
     }
 
-    res.status(200).json(results);
+    const locations = results || [];
+
+    res.status(200).json({
+      query: trimmedQuery,
+      results: locations,
+      count: locations.length,
+      ...(locations.length === 0 && { message: "No locations found" })
+    });
   });
 };
 

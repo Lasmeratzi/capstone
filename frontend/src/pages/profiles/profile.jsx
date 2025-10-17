@@ -139,16 +139,25 @@ const Profile = () => {
   }, []);
 
   // Fetch profile (logged-in user)
-  const fetchProfile = async () => {
+const fetchProfile = async () => {
   try {
     const token = localStorage.getItem("token");
     const userResponse = await axios.get(`${BASE_URL}/api/profile`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    
+    console.log("Full user response:", userResponse.data);
+    console.log("Location data:", {
+      location_id: userResponse.data.location_id,
+      location_name: userResponse.data.location_name, 
+      location_province: userResponse.data.location_province
+    });
+    
     const userData = userResponse.data;
     const wm = userData.watermark_path ?? userData.watermark ?? null;
+    
     setUser(userData);
-    setSelectedLocation(userData.location_id || null); // ← add this
+    setSelectedLocation(userData.location_id || null);
     setCommissions(userData.commissions);
     setWatermark(wm);
     setImageLoadError(false);
@@ -156,7 +165,6 @@ const Profile = () => {
     console.error("Failed to fetch profile:", error);
   }
 };
-
 
   const fetchPortfolio = async () => {
     try {
@@ -176,7 +184,10 @@ const fetchLocations = async () => {
     const res = await axios.get(`${BASE_URL}/api/locations`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setLocations(res.data); // Should be [{id, barangay, province}, ...]
+    console.log("Locations response:", res.data);
+    // Handle both response formats
+    const locationsData = Array.isArray(res.data) ? res.data : res.data.locations || [];
+    setLocations(locationsData);
     setLocationError(null);
   } catch (error) {
     console.error("Failed to fetch locations:", error);
@@ -465,7 +476,7 @@ const fetchLocations = async () => {
               </p>
             )}
             
-            {/* Location Field */}
+          {/* Location Field - SIMPLIFIED VERSION */}
 {isEditing ? (
   <div className="mt-2">
     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -479,52 +490,34 @@ const fetchLocations = async () => {
         className="w-full max-w-xs text-sm border border-gray-300 rounded-lg px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 transition-all duration-200 appearance-none bg-white cursor-pointer hover:border-gray-400"
       >
         <option value="">Select your location...</option>
-        {/* Group by province */}
-        {Object.entries(
-          locations.reduce((acc, loc) => {
-            if (!acc[loc.province]) acc[loc.province] = [];
-            acc[loc.province].push(loc);
-            return acc;
-          }, {})
-        ).map(([province, provinceLocations]) => (
-          <optgroup key={province} label={province}>
-            {provinceLocations.map((loc) => (
-              <option key={loc.id} value={loc.id}>
-                {loc.name}
-              </option>
-            ))}
-          </optgroup>
+        {locations.map((loc) => (
+          <option key={loc.id} value={loc.id}>
+            {loc.name}, {loc.province}
+          </option>
         ))}
       </select>
       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
         <ChevronDownIcon className="h-4 w-4" />
       </div>
     </div>
-    {locationError && (
-      <p className="mt-1 text-xs text-red-600 flex items-center">
-        <ExclamationCircleIcon className="w-3 h-3 mr-1" />
-        {locationError}
-      </p>
-    )}
   </div>
 ) : (
   <p className="text-sm text-gray-600 flex items-center gap-1">
     <MapPinIcon className="w-4 h-4 text-gray-500" />
-    {locations.length && user.location_id
-      ? (() => {
-          const loc = locations.find(
-            (l) => l.id === Number(user.location_id)
-          );
+    {user.location_id ? (
+      <span>
+        {(() => {
+          const loc = locations.find(l => l.id === Number(user.location_id));
           return loc ? (
             <span className="font-medium text-gray-700">
               {loc.name}, <span className="text-gray-500">{loc.province}</span>
             </span>
-          ) : "No Location";
-        })()
-      : (
-        <span className="text-gray-400 italic">No location set</span>
-      )
-    }
+          ) : "Location not found";
+        })()}
+      </span>
+    ) : (
+      <span className="text-gray-400 italic">No location set</span>
+    )}
   </p>
 )}
 
