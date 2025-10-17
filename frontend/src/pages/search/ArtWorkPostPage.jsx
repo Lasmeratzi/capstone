@@ -76,6 +76,13 @@ const ProtectedMedia = ({ file, onClick, className = "" }) => {
           draggable={false}
         />
       )}
+      <div 
+        className="absolute inset-0 cursor-pointer"
+        style={{ pointerEvents: 'auto' }}
+        onClick={onClick}
+        onContextMenu={handleContextMenu}
+        onDragStart={handleDragStart}
+      />
     </div>
   );
 };
@@ -87,28 +94,23 @@ const ArtworkPostPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Store tags for the post
   const [postTags, setPostTags] = useState([]);
   
-  // Media viewer modal state
   const [modalState, setModalState] = useState({
     isOpen: false,
     mediaIndex: 0,
   });
 
-  // ArtPostModal (edit/delete modal) state
   const [artPostModal, setArtPostModal] = useState({
     isOpen: false,
     type: "",
     post: null,
   });
 
-  // Dropdown open state
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  // Comments state
   const [showComments, setShowComments] = useState(true);
   const [commentCount, setCommentCount] = useState(0);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const userId = localStorage.getItem("id");
   const token = localStorage.getItem("token");
@@ -122,7 +124,6 @@ const ArtworkPostPage = () => {
     setError("");
     
     try {
-      // Fetch post details
       const postResponse = await axios.get(
         `${API_BASE}/api/artwork-posts/${postId}`,
         {
@@ -130,7 +131,6 @@ const ArtworkPostPage = () => {
         }
       );
 
-      // Fetch media for the post
       const mediaResponse = await axios.get(
         `${API_BASE}/api/artwork-media/${postId}`,
         {
@@ -138,7 +138,6 @@ const ArtworkPostPage = () => {
         }
       );
 
-      // Fetch tags for the post
       const tagsResponse = await axios.get(
         `${API_BASE}/api/tags/post/${postId}`,
         {
@@ -146,7 +145,6 @@ const ArtworkPostPage = () => {
         }
       );
 
-      // Fetch comment count
       const commentCountResponse = await axios.get(
         `${API_BASE}/api/artwork-comments/count/${postId}`,
         {
@@ -169,7 +167,6 @@ const ArtworkPostPage = () => {
     }
   };
 
-  // Media viewer modal functions
   const openModal = (mediaIndex = 0) => {
     setModalState({
       isOpen: true,
@@ -196,7 +193,56 @@ const ArtworkPostPage = () => {
     setModalState((prev) => ({ ...prev, mediaIndex: newIndex }));
   };
 
-  // Render media grid (same as your artpost.jsx)
+  const handleDeleteConfirmed = async () => {
+    try {
+      await axios.delete(`${API_BASE}/api/artwork-posts/${postId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      navigate(-1);
+    } catch (err) {
+      console.error("Failed to delete post:", err);
+      alert("Failed to delete post.");
+    }
+  };
+
+  const handleEdit = async (postId, updatedData) => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      let body = updatedData;
+      if (updatedData instanceof FormData) {
+        headers["Content-Type"] = "multipart/form-data";
+      }
+      await axios.patch(`${API_BASE}/api/artwork-posts/${postId}`, body, {
+        headers,
+      });
+
+      setArtPostModal({ isOpen: false, type: "", post: null });
+      fetchPostData();
+    } catch (err) {
+      console.error("Failed to edit post:", err);
+      alert("Failed to edit post.");
+    }
+  };
+
+  const toggleComments = () => {
+    setShowComments(!showComments);
+    if (!showComments) {
+      fetchCommentCount();
+    }
+  };
+
+  const fetchCommentCount = async () => {
+    try {
+      const res = await axios.get(
+        `${API_BASE}/api/artwork-comments/count/${postId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCommentCount(res.data.count ?? 0);
+    } catch (err) {
+      console.error("Error fetching comment count:", err);
+    }
+  };
+
   const renderMediaGrid = (media) => {
     const count = media.length;
     if (count === 1)
@@ -293,6 +339,12 @@ const ArtworkPostPage = () => {
         <div className="ml-60 flex-grow py-6 px-8 md:px-20 lg:px-40">
           <div className="text-center py-12">
             <p className="text-gray-500">Post not found.</p>
+            <button
+              onClick={() => navigate(-1)}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              Go Back
+            </button>
           </div>
         </div>
       </div>
@@ -300,54 +352,65 @@ const ArtworkPostPage = () => {
   }
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen bg-gray-50">
       <div className="fixed h-screen w-60">
         <Sidebar />
       </div>
 
-      <div className="ml-60 flex-grow py-6 px-8 md:px-20 lg:px-40">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+      <div className="ml-60 flex-grow py-6 px-4 md:px-8 lg:px-16">
+        <div className="flex items-center gap-4 mb-4">
           <button
             onClick={() => navigate(-1)}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-2xl font-bold text-gray-800">Artwork Post</h1>
+          <h1 className="text-xl font-bold text-gray-800">Artwork Post</h1>
         </div>
 
-        {/* Post Content */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-          {/* Post Header */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              {post.author_pfp ? (
-                <img
-                  src={`${API_BASE}/uploads/${post.author_pfp}`}
-                  alt={`${post.author}'s profile`}
-                  className="w-12 h-12 rounded-full border border-gray-300 object-cover"
-                  onError={(e) => {
-                    e.target.src = "/default-avatar.png";
-                  }}
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-gray-600 text-xs">N/A</span>
-                </div>
-              )}
-              <div className="flex-1">
-                <p className="font-bold text-gray-800 text-lg">{post.author}</p>
-                <p className="text-gray-600">{post.fullname}</p>
+        <div className="max-w-2xl mx-auto space-y-4">
+          <div className="relative bg-white p-4 rounded-lg shadow-md border border-gray-200">
+            {post.post_status === "down" && (
+              <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg pointer-events-none">
+                <p className="text-white text-lg font-semibold">🚫 Post is taken down</p>
+              </div>
+            )}
+
+            {/* Post Header */}
+            <div className="flex items-center gap-3 mb-3">
+              <Link to={`/visitprofile/${post.author_id}`}>
+                {post.author_pfp ? (
+                  <img
+                    src={`${API_BASE}/uploads/${post.author_pfp}`}
+                    alt={`${post.author}'s profile`}
+                    className="w-10 h-10 rounded-full border border-gray-300 object-cover hover:border-blue-500 transition-colors"
+                    onError={(e) => {
+                      e.target.src = "/default-avatar.png";
+                    }}
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                    <span className="text-gray-600 text-xs">N/A</span>
+                  </div>
+                )}
+              </Link>
+              <div>
+                <Link
+                  to={`/visitprofile/${post.author_id}`}
+                  className="font-bold text-gray-800 hover:text-blue-600 transition-colors"
+                >
+                  {post.author}
+                </Link>
+                <p className="text-gray-600 text-sm">{post.fullname}</p>
                 {post.created_at && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs text-gray-500">
                     Posted {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
                   </p>
                 )}
               </div>
 
               {String(post.author_id) === String(userId) && (
-                <div className="relative">
+                <div className="ml-auto relative">
                   <button
                     className="p-2 rounded-full hover:bg-gray-100"
                     onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -369,7 +432,7 @@ const ArtworkPostPage = () => {
                       <button
                         className="w-full px-4 py-2 hover:bg-gray-100 text-left text-red-600"
                         onClick={() => {
-                          setArtPostModal({ isOpen: true, type: "delete", post });
+                          setConfirmDelete(true);
                           setDropdownOpen(false);
                         }}
                       >
@@ -381,62 +444,74 @@ const ArtworkPostPage = () => {
               )}
             </div>
 
-            <h2 className="text-xl font-semibold text-gray-800 mt-4">{post.title}</h2>
-            <p className="text-gray-600 mt-2">{post.description}</p>
+            <h2 className="text-base font-semibold text-gray-800 mb-2">{post.title}</h2>
+            <p className="text-gray-600 mb-3">{post.description}</p>
 
-            {/* Display Tags */}
             {postTags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
+              <div className="flex flex-wrap gap-2 mb-3">
                 {postTags.map((tag) => (
                   <Link
                     key={tag.id}
                     to={`/tags/${tag.name}`}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors"
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
                   >
-                    <Tag size={14} />
+                    <Tag size={12} />
                     #{tag.name}
                   </Link>
                 ))}
               </div>
             )}
 
-            {/* Likes & Comments */}
-            <div className="flex items-center gap-6 mt-4">
+            {/* MEDIA SECTION */}
+            {post.media?.length > 0 && (
+              <div className="mb-3">
+                {renderMediaGrid(post.media)}
+              </div>
+            )}
+
+            {/* LIKES & COMMENTS SECTION */}
+            <div className="flex items-center gap-4 mt-3">
               <ArtworkLikes artworkPostId={post.id} />
               <button
-                onClick={() => setShowComments(!showComments)}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                onClick={toggleComments}
+                className="flex items-center gap-1 text-gray-600 hover:text-gray-900"
               >
-                <MessageCircle size={20} />
-                <span className="font-medium">{commentCount}</span>
-                <span>Comments</span>
+                <MessageCircle size={18} />
+                <span className="text-sm">{commentCount}</span>
               </button>
-            </div>
-          </div>
 
-          {/* Media */}
-          {post.media?.length > 0 && (
-            <div className="p-6">
-              {renderMediaGrid(post.media)}
+              {confirmDelete && (
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteConfirmed}
+                    className="px-3 py-1 rounded text-sm bg-red-500 text-white hover:bg-red-600"
+                  >
+                    Confirm Delete
+                  </button>
+                </div>
+              )}
             </div>
-          )}
 
-          {/* Comments Section */}
-          {showComments && (
-            <div className="border-t border-gray-200">
-              <div className="p-6">
+            {/* COMMENTS SECTION */}
+            {showComments && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
                 <ArtworkComments artworkPostId={post.id} userId={userId} />
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Media Viewer Modal */}
+      {/* MODAL CODE REMAINS THE SAME */}
       {modalState.isOpen && post.media && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="relative max-w-6xl w-full max-h-[90vh] flex">
-            {/* Image area */}
             <div className="flex-[2] relative flex items-center justify-center bg-black">
               {post.media.length > 1 && (
                 <>
@@ -506,8 +581,63 @@ const ArtworkPostPage = () => {
                 );
               })()}
 
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white z-20">
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white z-20 bg-black bg-opacity-50 px-3 py-1 rounded-full">
                 {modalState.mediaIndex + 1} of {post.media.length}
+              </div>
+            </div>
+
+            <div className="flex-1 flex flex-col border-l border-gray-200 bg-white max-h-[90vh]">
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  {post.author_pfp ? (
+                    <img
+                      src={`${API_BASE}/uploads/${post.author_pfp}`}
+                      alt={`${post.author}'s profile`}
+                      className="w-10 h-10 rounded-full border border-gray-300 object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                      <span className="text-gray-600 text-xs">N/A</span>
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-bold text-gray-800">{post.author}</p>
+                    <p className="text-gray-600 text-sm">{post.fullname}</p>
+                    {post.created_at && (
+                      <p className="text-xs text-gray-500">
+                        Posted {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <p className="mt-3 text-gray-800 font-semibold">{post.title}</p>
+
+                {postTags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {postTags.map((tag) => (
+                      <span
+                        key={tag.id}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
+                      >
+                        <Tag size={12} />
+                        #{tag.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-4 mt-3">
+                  <ArtworkLikes artworkPostId={post.id} />
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <MessageCircle size={18} />
+                    <span className="text-sm">{commentCount}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4">
+                <ArtworkComments artworkPostId={post.id} userId={userId} />
               </div>
             </div>
 
@@ -518,19 +648,17 @@ const ArtworkPostPage = () => {
         </div>
       )}
 
-      {/* ArtPostModal for edit/delete */}
       {artPostModal.isOpen && (
         <ArtPostModal
           type={artPostModal.type}
           post={artPostModal.post}
           onClose={() => setArtPostModal({ isOpen: false, type: "", post: null })}
           onDelete={(postId) => {
-            // Handle delete and navigate back
-            navigate(-1);
+            setConfirmDelete(true);
+            setArtPostModal({ isOpen: false, type: "", post: null });
           }}
           onEdit={(postId, updatedData) => {
-            // Handle edit and refresh data
-            fetchPostData();
+            handleEdit(postId, updatedData);
           }}
         />
       )}
