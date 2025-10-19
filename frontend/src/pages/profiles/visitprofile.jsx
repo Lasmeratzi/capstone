@@ -12,7 +12,7 @@ import { FaInstagram, FaFacebook } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { FaPaintBrush, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import FollowButton from "../follow/followbutton";
-import FollowStats from "../follow/followstats"; // import at the top
+import FollowStats from "../follow/followstats";
 
 const VerifiedBadge = () => (
   <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500">
@@ -28,9 +28,9 @@ const VisitProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("posts");
-  const [refreshStats, setRefreshStats] = useState(false); // 👈 new state
+  const [refreshStats, setRefreshStats] = useState(false);
 
-  const handleRefreshStats = () => setRefreshStats(prev => !prev); // 👈 toggle handler
+  const handleRefreshStats = () => setRefreshStats(prev => !prev);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -86,10 +86,10 @@ const VisitProfile = () => {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -50 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="ml-60 flex-grow px-40 py-4"
+        className="ml-50 flex-grow px-6 py-4" // Changed from px-40 to px-6
       >
         {/* Profile Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-6 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-4 mb-4"> {/* Changed gap-6 to gap-4 */}
           {/* Profile Picture + Commissions */}
           <div className="w-32 flex flex-col items-center mx-auto sm:mx-0">
             <div className="relative">
@@ -99,7 +99,7 @@ const VisitProfile = () => {
                 className="w-32 h-32 rounded-full object-cover shadow-lg border-2 border-gray-300"
               />
             </div>
-            <div className="mt-3 flex flex-col items-center">
+            <div className="mt-2 flex flex-col items-center"> {/* Changed mt-3 to mt-2 */}
               <div className="flex items-center text-gray-600 font-medium text-xs uppercase tracking-wider mb-1">
                 <FaPaintBrush className="mr-1.5 text-gray-400" size={12} />
                 <span>Commissions</span>
@@ -127,19 +127,19 @@ const VisitProfile = () => {
           </div>
 
           {/* Profile Details */}
-          <div className="flex flex-col space-y-2">
-          <div className="flex items-center flex-wrap gap-2">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{user.username}</h2>
-            {user.isVerified && (
-              <span title="Verified" className="text-blue-500">
-                <VerifiedBadge />
-              </span>
-            )}
-            <FollowButton targetUserId={user.id} /> {/* Moved here */}
-            {/* Follow Stats - Placed right below the username row */}
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-              <FollowStats targetUserId={user.id} />
-            </div>
+          <div className="flex flex-col space-y-1"> {/* Changed space-y-2 to space-y-1 */}
+            <div className="flex items-center flex-wrap gap-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{user.username}</h2>
+              {user.isVerified && (
+                <span title="Verified" className="text-blue-500">
+                  <VerifiedBadge />
+                </span>
+              )}
+              <FollowButton targetUserId={user.id} />
+              {/* Follow Stats - Placed right below the username row */}
+              <div className="flex items-center gap-4 text-sm text-gray-600 mb-1"> {/* Changed mb-2 to mb-1 */}
+                <FollowStats targetUserId={user.id} />
+              </div>
             </div>
             <div className="text-xl text-gray-600">{user.fullname}</div>
 
@@ -186,7 +186,7 @@ const VisitProfile = () => {
         <div className="border-b border-gray-200 mb-4"></div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-300 mb-6 text-sm">
+        <div className="flex border-b border-gray-300 mb-4 text-sm"> {/* Changed mb-6 to mb-4 */}
           {[
             { key: "posts", icon: NewspaperIcon, label: "Posts" },
             { key: "visitart", icon: PhotoIcon, label: "Art" },
