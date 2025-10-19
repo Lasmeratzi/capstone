@@ -274,53 +274,84 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.3, type: "spring", damping: 25 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col lg:flex-row relative border border-gray-100"
+            className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col lg:flex-row relative border border-gray-100"
           >
-            {/* Image Section */}
-            <div className="lg:w-1/2 flex items-center justify-center p-8 bg-gradient-to-br from-gray-50 to-gray-100">
-              <div className="relative w-full h-full max-h-[70vh] flex items-center justify-center">
+            {/* Image Section - Larger */}
+            <div className="lg:w-3/5 flex items-center justify-center p-10 bg-gradient-to-br from-gray-50 to-gray-100">
+              <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center">
                 <img
                   src={`http://localhost:5000/uploads/${selectedItem.image_path}`}
                   alt={selectedItem.title}
-                  className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+                  className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
                 />
               </div>
             </div>
 
             {/* Content Section */}
-            <div className="lg:w-1/2 flex flex-col p-8 overflow-y-auto">
-              {/* Close Button */}
-              <button
-                onClick={closeModal}
-                className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200 z-10"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
+            <div className="lg:w-2/5 flex flex-col p-8 overflow-y-auto">
+              {/* Header with Close Button and Portfolio Management */}
+              <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-200">
+                {/* Author Information */}
+                {authorInfo && (
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      {authorInfo.pfp ? (
+                        <img
+                          src={`http://localhost:5000/uploads/${authorInfo.pfp}`}
+                          alt={authorInfo.fullname}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                        />
+                      ) : (
+                        <UserCircleIcon className="w-12 h-12 text-gray-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                        {authorInfo.fullname}
+                      </h3>
+                      <p className="text-sm text-gray-500 truncate">
+                        @{authorInfo.username}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-              {/* Author Information */}
-              {authorInfo && (
-                <div className="flex items-center space-x-4 mb-6 pb-6 border-b border-gray-200">
-                  <div className="flex-shrink-0">
-                    {authorInfo.pfp ? (
-                      <img
-                        src={`http://localhost:5000/uploads/${authorInfo.pfp}`}
-                        alt={authorInfo.fullname}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 shadow-sm"
-                      />
-                    ) : (
-                      <UserCircleIcon className="w-12 h-12 text-gray-400" />
-                    )}
+                {/* Portfolio Management Buttons */}
+                {isOwner && !isEditing && (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center px-3 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-gray-400"
+                    >
+                      <PencilSquareIcon className="h-4 w-4 mr-2" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(selectedItem.id)}
+                      className="flex items-center px-3 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-red-300"
+                    >
+                      <TrashIcon className="h-4 w-4 mr-2" />
+                      Delete
+                    </button>
+                    <button
+                      onClick={closeModal}
+                      className="flex items-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300"
+                    >
+                      <XMarkIcon className="h-5 w-5" />
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate">
-                      {authorInfo.fullname}
-                    </h3>
-                    <p className="text-sm text-gray-500 truncate">
-                      @{authorInfo.username}
-                    </p>
-                  </div>
-                </div>
-              )}
+                )}
+
+                {/* Close Button Only (when no management buttons) */}
+                {(!isOwner || isEditing) && (
+                  <button
+                    onClick={closeModal}
+                    className="flex items-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
 
               {isEditing ? (
                 <div className="space-y-6">
@@ -330,7 +361,7 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                     </label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="Enter portfolio item title"
@@ -342,7 +373,7 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                       Description
                     </label>
                     <textarea
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200"
                       rows="4"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
@@ -354,7 +385,7 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Update Image
                     </label>
-                    <div className="flex items-center space-x-4 p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 transition-colors duration-200">
+                    <div className="flex items-center space-x-4 p-4 border border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors duration-200">
                       <div className="text-center">
                         <input
                           type="file"
@@ -370,14 +401,16 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                   <div className="flex space-x-3 pt-4">
                     <button
                       onClick={handleEditSubmit}
-                      className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                      className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium text-sm border border-green-700 shadow-sm"
                     >
+                      <CheckIcon className="h-4 w-4 mr-2" />
                       Save Changes
                     </button>
                     <button
                       onClick={() => setIsEditing(false)}
-                      className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-300"
+                      className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm"
                     >
+                      <XMarkIcon className="h-4 w-4 mr-2" />
                       Cancel
                     </button>
                   </div>
@@ -398,82 +431,51 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
 
                   {/* Owner-only actions */}
                   {isOwner && (
-                    <div className="space-y-8 mt-8 pt-8 border-t border-gray-200">
-                      {/* Portfolio Item Actions */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                          <PencilSquareIcon className="h-5 w-5 mr-2 text-blue-600" />
-                          Portfolio Management
-                        </h3>
-                        <div className="flex space-x-3">
-                          <button
-                            onClick={() => setIsEditing(true)}
-                            className="flex-1 flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
-                          >
-                            <PencilSquareIcon className="h-4 w-4 mr-2" />
-                            Edit Portfolio
-                          </button>
-                          <button
-                            onClick={() => handleDelete(selectedItem.id)}
-                            className="flex items-center px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
-                          >
-                            <TrashIcon className="h-4 w-4 mr-2" />
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-
+                    <div className="mt-8 pt-8 border-t border-gray-200">
                       {/* Auto-reply Section */}
-                      <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-6 border border-blue-100">
-                        <div className="flex items-center justify-between mb-6">
-                          <div className="flex items-center space-x-3">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                              <ChatBubbleLeftRightIcon className="h-6 w-6 text-blue-600" />
-                            </div>
-                            <div>
-                              <h3 className="text-xl font-semibold text-gray-900">
-                                Auto Reply
-                              </h3>
-                              <p className="text-sm text-gray-500">
-                                Automated response for inquiries
-                              </p>
-                            </div>
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-2">
+                            <ChatBubbleLeftRightIcon className="h-4 w-4 text-gray-600" />
+                            <h3 className="text-sm font-semibold text-gray-800">
+                              Auto Reply
+                            </h3>
                           </div>
                           {hasAutoReply && !isEditingAutoReply && (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                              ✓ Active
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                              Active
                             </span>
                           )}
                         </div>
 
                         {isEditingAutoReply ? (
-                          <div className="space-y-4">
+                          <div className="space-y-3">
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
                                 Auto Reply Message
                               </label>
                               <textarea
-                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200 bg-white"
-                                rows="4"
-                                placeholder="Enter your automated response message for inquiries about this portfolio item..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200 bg-white text-sm"
+                                rows="3"
+                                placeholder="Enter your automated response message..."
                                 value={autoReplyText}
                                 onChange={(e) => setAutoReplyText(e.target.value)}
                                 disabled={autoReplyLoading}
                               />
                             </div>
-                            <div className="flex space-x-3">
+                            <div className="flex justify-end space-x-2">
                               <button
                                 onClick={handleSaveAutoReply}
                                 disabled={autoReplyLoading}
-                                className="flex-1 flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg hover:shadow-xl"
+                                className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm border border-green-700 shadow-sm"
                               >
                                 <CheckIcon className="h-4 w-4 mr-2" />
-                                {autoReplyLoading ? "Saving..." : "Save Auto Reply"}
+                                {autoReplyLoading ? "Saving..." : "Save"}
                               </button>
                               <button
                                 onClick={cancelEditingAutoReply}
                                 disabled={autoReplyLoading}
-                                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 disabled:opacity-50 font-medium border border-gray-300"
+                                className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 disabled:opacity-50 font-medium text-sm border border-gray-300 shadow-sm"
                               >
                                 <XMarkIcon className="h-4 w-4 mr-2" />
                                 Cancel
@@ -481,26 +483,26 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                             </div>
                           </div>
                         ) : (
-                          <div className="space-y-4">
+                          <div className="flex items-center justify-between">
                             {hasAutoReply ? (
                               <>
-                                {/* Auto-reply message in rounded rectangle */}
-                                <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm">
-                                  <p className="text-gray-700 leading-relaxed text-center">
+                                {/* Auto-reply message with shorter width */}
+                                <div className="flex-1 bg-white rounded-lg border border-gray-300 p-3 mr-4">
+                                  <p className="text-gray-700 text-sm leading-relaxed">
                                     {autoReplyText}
                                   </p>
                                 </div>
-                                <div className="flex space-x-3">
+                                <div className="flex space-x-2">
                                   <button
                                     onClick={startEditingAutoReply}
-                                    className="flex-1 flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                                    className="flex items-center px-3 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-gray-400"
                                   >
                                     <PencilSquareIcon className="h-4 w-4 mr-2" />
-                                    Edit Auto Reply
+                                    Edit
                                   </button>
                                   <button
                                     onClick={handleDeleteAutoReply}
-                                    className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                                    className="flex items-center px-3 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-red-300"
                                   >
                                     <TrashIcon className="h-4 w-4 mr-2" />
                                     Delete
@@ -509,19 +511,18 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                               </>
                             ) : (
                               <>
-                                <div className="text-center py-6">
-                                  <ChatBubbleLeftRightIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                                  <p className="text-gray-500 mb-6 text-lg">
-                                    Set up an automatic reply message that will be sent when users inquire about this portfolio item.
+                                <div className="flex-1">
+                                  <p className="text-gray-500 text-sm">
+                                    Set an automatic reply for inquiries about this item
                                   </p>
-                                  <button
-                                    onClick={startEditingAutoReply}
-                                    className="inline-flex items-center px-8 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-lg"
-                                  >
-                                    <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2" />
-                                    Set Up Auto Reply
-                                  </button>
                                 </div>
+                                <button
+                                  onClick={startEditingAutoReply}
+                                  className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium text-sm border border-blue-700 shadow-sm"
+                                >
+                                  <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
+                                  Add Auto Reply
+                                </button>
                               </>
                             )}
                           </div>
