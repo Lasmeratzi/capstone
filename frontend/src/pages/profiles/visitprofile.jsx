@@ -6,7 +6,7 @@ import VisitPortfolio from "./visitportfolio";
 import VisitPost from "./visitpost";
 import VisitArt from "./visitart";
 import VisitAuct from "./visitauct";
-import { CakeIcon, NewspaperIcon, PhotoIcon, Squares2X2Icon, TagIcon } from "@heroicons/react/24/outline";
+import { CakeIcon, NewspaperIcon, PhotoIcon, Squares2X2Icon, TagIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { FaInstagram, FaFacebook } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
@@ -29,6 +29,7 @@ const VisitProfile = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("posts");
   const [refreshStats, setRefreshStats] = useState(false);
+  const [locations, setLocations] = useState([]);
 
   const handleRefreshStats = () => setRefreshStats(prev => !prev);
 
@@ -48,8 +49,34 @@ const VisitProfile = () => {
       }
     };
 
+    const fetchLocations = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`http://localhost:5000/api/locations`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const locationsData = Array.isArray(res.data) ? res.data : res.data.locations || [];
+        setLocations(locationsData);
+      } catch (error) {
+        console.error("Failed to fetch locations:", error);
+      }
+    };
+
     fetchUserProfile();
+    fetchLocations();
   }, [id]);
+
+  // Get user's location display text
+  const getUserLocation = () => {
+    if (!user || !user.location_id) return null;
+    
+    const location = locations.find(loc => loc.id === Number(user.location_id));
+    if (!location) return null;
+    
+    return `${location.name}, ${location.province}`;
+  };
+
+  const userLocation = getUserLocation();
 
   if (loading) {
     return (
@@ -86,10 +113,10 @@ const VisitProfile = () => {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -50 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="ml-50 flex-grow px-6 py-4" // Changed from px-40 to px-6
+        className="ml-50 flex-grow px-6 py-4"
       >
         {/* Profile Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-4 mb-4"> {/* Changed gap-6 to gap-4 */}
+        <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-4 mb-4">
           {/* Profile Picture + Commissions */}
           <div className="w-32 flex flex-col items-center mx-auto sm:mx-0">
             <div className="relative">
@@ -99,7 +126,7 @@ const VisitProfile = () => {
                 className="w-32 h-32 rounded-full object-cover shadow-lg border-2 border-gray-300"
               />
             </div>
-            <div className="mt-2 flex flex-col items-center"> {/* Changed mt-3 to mt-2 */}
+            <div className="mt-2 flex flex-col items-center">
               <div className="flex items-center text-gray-600 font-medium text-xs uppercase tracking-wider mb-1">
                 <FaPaintBrush className="mr-1.5 text-gray-400" size={12} />
                 <span>Commissions</span>
@@ -127,7 +154,7 @@ const VisitProfile = () => {
           </div>
 
           {/* Profile Details */}
-          <div className="flex flex-col space-y-1"> {/* Changed space-y-2 to space-y-1 */}
+          <div className="flex flex-col space-y-1">
             <div className="flex items-center flex-wrap gap-2">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{user.username}</h2>
               {user.isVerified && (
@@ -137,7 +164,7 @@ const VisitProfile = () => {
               )}
               <FollowButton targetUserId={user.id} />
               {/* Follow Stats - Placed right below the username row */}
-              <div className="flex items-center gap-4 text-sm text-gray-600 mb-1"> {/* Changed mb-2 to mb-1 */}
+              <div className="flex items-center gap-4 text-sm text-gray-600 mb-1">
                 <FollowStats targetUserId={user.id} />
               </div>
             </div>
@@ -151,6 +178,16 @@ const VisitProfile = () => {
             <p className="text-sm text-gray-700 italic max-w-xl overflow-hidden text-ellipsis">
               {user.bio ? `"${user.bio}"` : "No bio provided."}
             </p>
+
+            {/* Location Display - Moved below bio */}
+            {userLocation && (
+              <div className="flex items-center text-sm text-gray-600">
+                <MapPinIcon className="w-4 h-4 mr-2 text-gray-500" />
+                <span className="font-medium text-gray-700">
+                  {userLocation.split(', ')[0]}, <span className="text-gray-500">{userLocation.split(', ')[1]}</span>
+                </span>
+              </div>
+            )}
 
             <div className="text-xs mt-1">
               {user.verification_request_status === "pending" && (
@@ -186,7 +223,7 @@ const VisitProfile = () => {
         <div className="border-b border-gray-200 mb-4"></div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-300 mb-4 text-sm"> {/* Changed mb-6 to mb-4 */}
+        <div className="flex border-b border-gray-300 mb-4 text-sm">
           {[
             { key: "posts", icon: NewspaperIcon, label: "Posts" },
             { key: "visitart", icon: PhotoIcon, label: "Art" },
