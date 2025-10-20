@@ -3,8 +3,8 @@ const db = require("../config/database");
 // Create a new user
 const createUser = (userData, callback) => {
   const sql = `
-    INSERT INTO users (fullname, username, email, password, bio, birthdate, pfp, watermark_path)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO users (fullname, username, email, password, bio, birthdate, pfp, watermark_path, cover_photo)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const params = [
     userData.fullname,
@@ -15,6 +15,7 @@ const createUser = (userData, callback) => {
     userData.birthdate,
     userData.pfp,
     userData.watermark_path || null,
+    userData.cover_photo || null, // Add this line
   ];
   db.query(sql, params, callback);
 };
@@ -30,7 +31,7 @@ const getAllUsers = (callback) => {
 
 const getUserById = (id, callback) => {
   const sql = `
-    SELECT id, fullname, username, bio, birthdate, pfp, watermark_path, account_status, commissions,
+    SELECT id, fullname, username, bio, birthdate, pfp, watermark_path, cover_photo, account_status, commissions,
            twitter_link, instagram_link, facebook_link
     FROM users
     WHERE id = ?
@@ -84,6 +85,10 @@ const updateUser = (id, userData, callback) => {
     updates.push("location_id = ?");
     values.push(userData.location_id);
   }
+  if (userData.cover_photo !== undefined) {
+    updates.push("cover_photo = ?");
+    values.push(userData.cover_photo);
+  }
 
   if (updates.length === 0) {
     return callback(null, { affectedRows: 0 });
@@ -135,6 +140,7 @@ const getUserWithVerificationStatusById = (id, callback) => {
       u.birthdate,
       u.pfp,
       u.watermark_path,
+      u.cover_photo, 
       u.account_status,
       u.commissions,
       u.twitter_link,
