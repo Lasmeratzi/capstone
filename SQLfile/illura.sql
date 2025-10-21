@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 17, 2025 at 11:42 AM
+-- Generation Time: Oct 21, 2025 at 08:19 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -68,7 +68,11 @@ INSERT INTO `artwork_comments` (`id`, `author_id`, `artwork_post_id`, `comment_t
 (4, 28, 46, 'test', '2025-10-16 09:28:26'),
 (5, 28, 46, 'aaa', '2025-10-16 16:43:56'),
 (6, 28, 46, 'qweqw', '2025-10-16 16:57:00'),
-(7, 34, 45, 'testcommentoct17', '2025-10-17 09:40:43');
+(7, 34, 45, 'testcommentoct17', '2025-10-17 09:40:43'),
+(8, 35, 46, 'test comment', '2025-10-19 14:49:26'),
+(9, 28, 46, 'testcommentagain', '2025-10-20 13:13:28'),
+(10, 34, 29, 'commentering', '2025-10-20 18:58:28'),
+(11, 28, 48, 'abcdefg', '2025-10-21 03:34:47');
 
 -- --------------------------------------------------------
 
@@ -103,7 +107,8 @@ INSERT INTO `artwork_media` (`id`, `post_id`, `media_path`) VALUES
 (86, 46, 'watermarked-1760196546536-2nd sem SCHED.png'),
 (87, 46, 'watermarked-1760196546537-2ndYEAR1stsemsched.jpg'),
 (89, 45, 'watermarked-1760367384562-31258025_7573866.jpg'),
-(90, 45, 'watermarked-1760367384572-codioful-formerly-gradienta-rKv4HduvzIE-unsplash.jpg');
+(90, 45, 'watermarked-1760367384572-codioful-formerly-gradienta-rKv4HduvzIE-unsplash.jpg'),
+(91, 48, 'watermarked-1761015800640-k.jpg');
 
 -- --------------------------------------------------------
 
@@ -129,8 +134,9 @@ INSERT INTO `artwork_posts` (`id`, `author_id`, `title`, `description`, `created
 (29, 38, 'dfdg', 'dfgf', '2025-06-12 04:27:45'),
 (37, 34, 'ffasdasdasd', '4444', '2025-10-04 06:18:07'),
 (39, 28, 'oct7test44444', 'fghfghfg', '2025-10-07 10:08:35'),
-(45, 28, 'zxczxczxc', 'yyyyyyy', '2025-10-11 14:45:30'),
-(46, 34, 'test', 'test333', '2025-10-11 15:29:06');
+(45, 28, 'zxczxczxc', 'yyyyyyyfgfgfg', '2025-10-11 14:45:30'),
+(46, 34, 'test', 'test333', '2025-10-11 15:29:06'),
+(48, 39, 'Magic Kuromi', 'Magical blackpink kuromi', '2025-10-21 03:03:20');
 
 -- --------------------------------------------------------
 
@@ -154,7 +160,10 @@ INSERT INTO `artwork_post_likes` (`id`, `artwork_post_id`, `user_id`, `created_a
 (3, 29, 28, '2025-10-07 10:23:20'),
 (4, 37, 35, '2025-10-07 15:47:27'),
 (6, 46, 28, '2025-10-16 09:28:21'),
-(7, 45, 34, '2025-10-17 09:40:37');
+(7, 45, 34, '2025-10-17 09:40:37'),
+(8, 46, 35, '2025-10-19 14:49:14'),
+(9, 29, 34, '2025-10-20 18:58:17'),
+(10, 48, 28, '2025-10-21 03:34:39');
 
 -- --------------------------------------------------------
 
@@ -177,8 +186,10 @@ INSERT INTO `artwork_tags` (`id`, `post_id`, `tag_id`, `created_at`) VALUES
 (7, 46, 1, '2025-10-13 15:14:55'),
 (8, 46, 2, '2025-10-13 15:14:55'),
 (9, 46, 3, '2025-10-13 15:14:55'),
-(17, 45, 3, '2025-10-16 17:00:26'),
-(18, 45, 1, '2025-10-16 17:00:26');
+(19, 45, 3, '2025-10-20 13:00:04'),
+(20, 45, 1, '2025-10-20 13:00:04'),
+(21, 48, 4, '2025-10-21 03:03:20'),
+(22, 48, 5, '2025-10-21 03:03:20');
 
 -- --------------------------------------------------------
 
@@ -294,7 +305,7 @@ CREATE TABLE `auto_replies` (
 --
 
 INSERT INTO `auto_replies` (`id`, `user_id`, `portfolio_item_id`, `reply_text`, `created_at`, `updated_at`) VALUES
-(1, 28, 29, '1000$', '2025-09-14 15:53:54', '2025-09-14 15:53:54'),
+(1, 28, 29, '1200$', '2025-09-14 15:53:54', '2025-10-19 15:16:41'),
 (2, 34, 34, '300$', '2025-09-16 06:41:59', '2025-09-16 06:41:59'),
 (3, 34, 35, '600', '2025-09-16 06:46:10', '2025-09-16 06:46:10'),
 (4, 28, 36, '200', '2025-09-16 06:47:57', '2025-09-16 06:47:57'),
@@ -335,7 +346,8 @@ INSERT INTO `comments` (`id`, `author_id`, `post_id`, `comment_text`, `created_a
 (29, 28, 38, 'adasd', '2025-09-16 06:49:39'),
 (30, 28, 39, 'xcvcbcx', '2025-09-18 09:57:20'),
 (34, 28, 42, 'asd', '2025-09-20 03:44:14'),
-(35, 28, 42, '213', '2025-10-07 09:51:22');
+(35, 28, 42, '213', '2025-10-07 09:51:22'),
+(36, 35, 44, 'commentlang', '2025-10-19 14:50:48');
 
 -- --------------------------------------------------------
 
@@ -372,7 +384,6 @@ CREATE TABLE `follows` (
 --
 
 INSERT INTO `follows` (`id`, `follower_id`, `following_id`, `created_at`) VALUES
-(3, 28, 34, '2025-06-12 21:06:35'),
 (8, 36, 34, '2025-06-12 22:22:11'),
 (12, 37, 28, '2025-06-13 13:51:41'),
 (13, 28, 39, '2025-06-13 16:05:50'),
@@ -384,7 +395,9 @@ INSERT INTO `follows` (`id`, `follower_id`, `following_id`, `created_at`) VALUES
 (19, 28, 35, '2025-08-20 15:58:27'),
 (20, 35, 40, '2025-09-09 15:34:26'),
 (22, 34, 28, '2025-09-15 00:10:47'),
-(23, 28, 40, '2025-09-18 18:05:11');
+(23, 28, 40, '2025-09-18 18:05:11'),
+(24, 35, 28, '2025-10-19 23:17:06'),
+(26, 28, 34, '2025-10-21 00:47:57');
 
 -- --------------------------------------------------------
 
@@ -493,7 +506,9 @@ INSERT INTO `messages` (`id`, `sender_id`, `recipient_id`, `portfolio_id`, `mess
 (61, 40, 28, 32, '400', 1, '2025-09-18 10:04:56'),
 (62, 28, 40, 32, 'Hi, I’m interested in this portfolio item!', 1, '2025-09-18 10:05:15'),
 (63, 40, 28, 32, '400', 1, '2025-09-18 10:05:15'),
-(64, 34, 28, NULL, 'test lang bai', 1, '2025-10-17 09:41:50');
+(64, 34, 28, NULL, 'test lang bai', 1, '2025-10-17 09:41:50'),
+(65, 35, 28, 29, 'Hi, I’m interested in this portfolio item!', 1, '2025-10-19 15:17:27'),
+(66, 28, 35, 29, '1200$', 1, '2025-10-19 15:17:27');
 
 -- --------------------------------------------------------
 
@@ -588,7 +603,14 @@ INSERT INTO `notifications` (`id`, `user_id`, `message`, `is_read`, `created_at`
 (144, 34, 'slytherinz liked your artwork', 1, '2025-10-07 15:47:27'),
 (145, 28, 'dadarkXYZ123 liked your artwork', 1, '2025-10-13 15:05:59'),
 (146, 34, 'dadarkXYZ123 liked your artwork', 1, '2025-10-16 09:28:21'),
-(147, 28, 'xQcWOWers liked your artwork', 1, '2025-10-17 09:40:37');
+(147, 28, 'xQcWOWers liked your artwork', 1, '2025-10-17 09:40:37'),
+(148, 34, 'slytherinz liked your artwork', 1, '2025-10-19 14:49:14'),
+(149, 28, 'slytherinz liked your post', 1, '2025-10-19 14:50:44'),
+(150, 28, 'slytherinz followed you', 1, '2025-10-19 15:17:07'),
+(151, 34, 'dadarkXYZ123456 followed you', 1, '2025-10-20 16:47:50'),
+(152, 34, 'dadarkXYZ123456 followed you', 1, '2025-10-20 16:47:57'),
+(153, 38, 'xQcWOWers liked your artwork', 0, '2025-10-20 18:58:17'),
+(154, 39, 'dadarkXYZ123456 liked your artwork', 1, '2025-10-21 03:34:40');
 
 -- --------------------------------------------------------
 
@@ -636,7 +658,8 @@ INSERT INTO `portfolio_items` (`id`, `user_id`, `title`, `description`, `image_p
 (33, 28, 'test', 'zxczczxczxc', '92fb5cd1ba6b0fdfc255e2c3e171ea04', '2025-09-14 15:41:47', '2025-09-14 15:41:47'),
 (34, 34, 'Portofolo', 'qwertyasdfgh', '11ff565938d0d15aa984437fc7b53a3b', '2025-09-16 06:41:44', '2025-09-16 06:41:44'),
 (35, 34, 'TitlPORTO', 'desczczx', '666a99536ccde0545872239a14bd8631', '2025-09-16 06:46:01', '2025-09-16 06:46:01'),
-(36, 28, 'ZXC', 'asdadas', '697cef5aeb12f1148e433a7cdeb1a428', '2025-09-16 06:47:50', '2025-09-16 06:47:50');
+(36, 28, 'ZXC', 'asdadas', '697cef5aeb12f1148e433a7cdeb1a428', '2025-09-16 06:47:50', '2025-09-16 06:47:50'),
+(37, 35, 'portfoliotestoct19', 'descriptiondescription', '3ca959e091b9f4bb6c939af294ac9e05', '2025-10-19 14:51:53', '2025-10-19 14:51:53');
 
 -- --------------------------------------------------------
 
@@ -662,7 +685,7 @@ INSERT INTO `posts` (`id`, `author_id`, `title`, `media_path`, `created_at`, `up
 (38, 34, 'sept30edited', '2026da0f53159f06ec83082bac9919fc', '2025-06-01 16:25:58', '2025-09-30 09:59:00', 'active'),
 (39, 28, 'potspost', 'c3f6fcce3e45ac196d783827c92d05fb', '2025-06-06 15:49:13', '2025-06-14 04:15:11', 'active'),
 (42, 40, 'adad', '9abffd17a302b07997be47f1dbf98c11', '2025-06-14 06:37:27', '2025-10-04 04:28:15', 'active'),
-(44, 28, 'zxczc', '1c93457283d10699d83fa1ea3005cd76', '2025-10-04 05:07:38', '2025-10-13 15:31:03', 'active');
+(44, 28, 'zxczc1231313', '1c93457283d10699d83fa1ea3005cd76', '2025-10-04 05:07:38', '2025-10-20 12:59:54', 'active');
 
 -- --------------------------------------------------------
 
@@ -692,7 +715,8 @@ INSERT INTO `post_likes` (`id`, `user_id`, `post_id`, `created_at`) VALUES
 (35, 28, 39, '2025-09-11 07:01:41'),
 (36, 34, 42, '2025-09-18 10:03:34'),
 (37, 28, 42, '2025-09-20 03:42:03'),
-(41, 28, 38, '2025-10-01 14:40:42');
+(41, 28, 38, '2025-10-01 14:40:42'),
+(42, 35, 44, '2025-10-19 14:50:44');
 
 -- --------------------------------------------------------
 
@@ -713,7 +737,9 @@ CREATE TABLE `tags` (
 INSERT INTO `tags` (`id`, `name`, `created_at`) VALUES
 (1, 'digital', '2025-10-11 15:29:06'),
 (2, 'traditional', '2025-10-11 15:29:06'),
-(3, 'artwork', '2025-10-13 15:14:55');
+(3, 'artwork', '2025-10-13 15:14:55'),
+(4, 'kuromi', '2025-10-21 03:03:20'),
+(5, 'blackpink', '2025-10-21 03:03:20');
 
 -- --------------------------------------------------------
 
@@ -732,6 +758,7 @@ CREATE TABLE `users` (
   `birthdate` date DEFAULT NULL,
   `pfp` varchar(255) DEFAULT NULL,
   `watermark_path` varchar(255) DEFAULT NULL,
+  `cover_photo` varchar(255) DEFAULT NULL,
   `account_status` enum('active','on hold','banned') DEFAULT 'active',
   `commissions` enum('open','closed') DEFAULT 'closed',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -746,16 +773,16 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `email`, `password`, `fullname`, `location_id`, `bio`, `birthdate`, `pfp`, `watermark_path`, `account_status`, `commissions`, `created_at`, `updated_at`, `verified`, `twitter_link`, `instagram_link`, `facebook_link`) VALUES
-(28, 'dadarkXYZ123', 'asd@gmail.com', '$2b$10$ph27ZwaqpvGpgL4qvr6Lre28AUghCdmNDkfZbO/.uKxItLkXfs8YS', 'Dark dark', 40, 'to be testing', '2025-06-05', '1759384976806-mechak6.jpg', '1760030865405-Qwen.png', 'active', 'closed', '2025-06-01 16:06:58', '2025-10-17 09:39:49', 1, 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez'),
-(34, 'xQcWOWers', 'qwerty@gmail.com', '$2b$10$rRDYKbXVUL1fWJ4ACmzFGu6A./O1FfsCIWQqMmFDMq0ZzLMh9U/ze', 'Felix Nguyan', NULL, 'GAMBA streams', '2025-06-04', '1749683009262-3d-mountain-landscape-with-moonlit-sky.jpg', '1760196515185-illura_2.png', 'active', 'closed', '2025-06-01 16:23:36', '2025-10-11 15:28:35', 1, 'https://www.instagram.com/lasmeratzi/', 'https://www.instagram.com/lasmeratzi/', 'https://www.instagram.com/lasmeratzi/'),
-(35, 'slytherinz', 'zxc@gmail.com', '$2b$10$nQDj54OV1//a2tOqzUUF1efVMKuxzCXnU4uDYhN0i9fZz4j77a2P.', 'Severus Spane', NULL, 'zxzx', '2025-06-05', '1749738686711-suit1.png', NULL, 'active', 'closed', '2025-06-03 17:17:20', '2025-06-12 14:31:41', 0, NULL, NULL, NULL),
-(36, 'lowkeylokilang', 'xcv@gmail.com', '$2b$10$hgEKp0ebG3wvSBvQayG3ve29/u5jmQ9sk.ntoUbpgPdV0hC/cUwei', 'Loki Odinson', NULL, 'gogog', '2025-06-09', '1bb32ca017a833b2be5a727f4bfde04b', NULL, 'active', 'closed', '2025-06-08 14:30:37', '2025-06-12 07:23:31', 0, NULL, NULL, NULL),
-(37, 'jimjoe', 'poi@gmail.com', '$2b$10$DnSSnZPQ5Ya9A2ZNRdarROh4gbO7XyWKKEOK6AdBF/RLxWoWOjL7W', 'Jim Jom', NULL, NULL, '2025-06-01', 'f9fb8290101fae7e86fc2c67d3d54423', NULL, 'active', 'closed', '2025-06-11 15:13:14', '2025-06-13 06:01:37', 1, 'https://www.twitch.tv/settings/profile', 'https://www.twitch.tv/settings/profile', 'https://www.twitch.tv/settings/profile'),
-(38, 'dodngslm', 'qwe@gmail.com', '$2b$10$4gG0r/B67gB6dvSrZKhl9OpFy1g0.7V9D9jePwff.OOiZzccHCZuu', 'Dodong Dodoo', NULL, '141 ra gud', '2025-06-11', '1f2931932ed4a6ccfa0131db4629826f', NULL, 'active', 'closed', '2025-06-12 03:24:33', '2025-06-12 03:25:53', 0, NULL, NULL, NULL),
-(39, 'silverlilly', 'alex@gmail.com', '$2b$10$PIiZ1RBOHpWrHnbLKV1F..QsnyPt0IaV1XXCjfhrhZe6AS/u7TPW.', 'Alexandra Burningham', NULL, NULL, '2000-07-19', '35eb49d231f325cda954df3755435bcf', NULL, 'active', 'closed', '2025-06-13 08:01:00', '2025-10-09 15:57:29', 1, 'https://www.youtube.com/watch?v=j23SO29LNWE', 'https://www.youtube.com/watch?v=j23SO29LNWE', 'https://www.youtube.com/watch?v=j23SO29LNWE'),
-(40, 'johndoe123', 'email@gmail.com', '$2b$10$LQhCW42G2r8rNi/yiPeJ/eZAtyCAzM0TzYfVR5NCg2oIH1RMpG9km', 'John Doe', NULL, 'gfxbcjvmhv', '2025-06-11', '64844cb6f5a983635b8c95a9805843c7', NULL, 'active', 'open', '2025-06-14 06:30:56', '2025-06-14 07:18:18', 1, 'https://www.facebook.com/', 'https://www.facebook.com/', 'https://www.facebook.com/'),
-(41, 'john123', 'vbnm@gmail.com', '$2b$10$0rZ4rKwB3lQwRTSHmGoqiOUY3jVQB6xc0bvTKjtiKGsuPO8Endf2W', 'John Doe', NULL, 'sdvdcv dvd', '2025-08-29', '1755677083737-mechak6.jpg', NULL, 'active', 'closed', '2025-08-20 08:03:54', '2025-08-20 08:04:43', 0, NULL, NULL, NULL);
+INSERT INTO `users` (`id`, `username`, `email`, `password`, `fullname`, `location_id`, `bio`, `birthdate`, `pfp`, `watermark_path`, `cover_photo`, `account_status`, `commissions`, `created_at`, `updated_at`, `verified`, `twitter_link`, `instagram_link`, `facebook_link`) VALUES
+(28, 'dadarkXYZ123456', 'asd@gmail.com', '$2b$10$ph27ZwaqpvGpgL4qvr6Lre28AUghCdmNDkfZbO/.uKxItLkXfs8YS', 'Dark dark', 41, 'to be testing', '2025-06-05', '1759384976806-mechak6.jpg', '1760030865405-Qwen.png', '1760980774125-3d-mountain-landscape-with-moonlit-sky.jpg', 'active', 'closed', '2025-06-01 16:06:58', '2025-10-20 17:19:34', 1, 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez', 'https://web.facebook.com/ralf.matthew.martinez'),
+(34, 'xQcWOWers', 'qwerty@gmail.com', '$2b$10$rRDYKbXVUL1fWJ4ACmzFGu6A./O1FfsCIWQqMmFDMq0ZzLMh9U/ze', 'Felix Nguyan', 53, 'GAMBA streams', '2025-06-04', '1749683009262-3d-mountain-landscape-with-moonlit-sky.jpg', '1760196515185-illura_2.png', '1760980827279-trytry.jpg', 'active', 'closed', '2025-06-01 16:23:36', '2025-10-20 17:20:27', 1, 'https://www.instagram.com/lasmeratzi/', 'https://www.instagram.com/lasmeratzi/', 'https://www.instagram.com/lasmeratzi/'),
+(35, 'slytherinz', 'zxc@gmail.com', '$2b$10$nQDj54OV1//a2tOqzUUF1efVMKuxzCXnU4uDYhN0i9fZz4j77a2P.', 'Severus Spane', 49, 'zxzx', '2025-06-05', '1749738686711-suit1.png', NULL, NULL, 'active', 'closed', '2025-06-03 17:17:20', '2025-10-19 14:56:31', 0, NULL, NULL, NULL),
+(36, 'lowkeylokilang', 'xcv@gmail.com', '$2b$10$hgEKp0ebG3wvSBvQayG3ve29/u5jmQ9sk.ntoUbpgPdV0hC/cUwei', 'Loki Odinson', NULL, 'gogog', '2025-06-09', '1bb32ca017a833b2be5a727f4bfde04b', NULL, NULL, 'active', 'closed', '2025-06-08 14:30:37', '2025-06-12 07:23:31', 0, NULL, NULL, NULL),
+(37, 'jimjoe', 'poi@gmail.com', '$2b$10$DnSSnZPQ5Ya9A2ZNRdarROh4gbO7XyWKKEOK6AdBF/RLxWoWOjL7W', 'Jim Jom', NULL, NULL, '2025-06-01', 'f9fb8290101fae7e86fc2c67d3d54423', NULL, NULL, 'active', 'closed', '2025-06-11 15:13:14', '2025-06-13 06:01:37', 1, 'https://www.twitch.tv/settings/profile', 'https://www.twitch.tv/settings/profile', 'https://www.twitch.tv/settings/profile'),
+(38, 'dodngslm', 'qwe@gmail.com', '$2b$10$4gG0r/B67gB6dvSrZKhl9OpFy1g0.7V9D9jePwff.OOiZzccHCZuu', 'Dodong Dodoo', NULL, '141 ra gud', '2025-06-11', '1f2931932ed4a6ccfa0131db4629826f', NULL, NULL, 'active', 'closed', '2025-06-12 03:24:33', '2025-06-12 03:25:53', 0, NULL, NULL, NULL),
+(39, 'silverlilly', 'alex@gmail.com', '$2b$10$PIiZ1RBOHpWrHnbLKV1F..QsnyPt0IaV1XXCjfhrhZe6AS/u7TPW.', 'Alexandra Burningham', NULL, NULL, '2000-07-19', '35eb49d231f325cda954df3755435bcf', '1761015655867-alex.png', NULL, 'active', 'closed', '2025-06-13 08:01:00', '2025-10-21 03:00:55', 1, 'https://www.youtube.com/watch?v=j23SO29LNWE', 'https://www.youtube.com/watch?v=j23SO29LNWE', 'https://www.youtube.com/watch?v=j23SO29LNWE'),
+(40, 'johndoe123', 'email@gmail.com', '$2b$10$LQhCW42G2r8rNi/yiPeJ/eZAtyCAzM0TzYfVR5NCg2oIH1RMpG9km', 'John Doe', NULL, 'gfxbcjvmhv', '2025-06-11', '64844cb6f5a983635b8c95a9805843c7', NULL, NULL, 'active', 'open', '2025-06-14 06:30:56', '2025-06-14 07:18:18', 1, 'https://www.facebook.com/', 'https://www.facebook.com/', 'https://www.facebook.com/'),
+(41, 'john123', 'vbnm@gmail.com', '$2b$10$0rZ4rKwB3lQwRTSHmGoqiOUY3jVQB6xc0bvTKjtiKGsuPO8Endf2W', 'John Doe', NULL, 'sdvdcv dvd', '2025-08-29', '1755677083737-mechak6.jpg', NULL, NULL, 'active', 'closed', '2025-08-20 08:03:54', '2025-08-20 08:04:43', 0, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1008,31 +1035,31 @@ ALTER TABLE `admins`
 -- AUTO_INCREMENT for table `artwork_comments`
 --
 ALTER TABLE `artwork_comments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `artwork_media`
 --
 ALTER TABLE `artwork_media`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=91;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
 
 --
 -- AUTO_INCREMENT for table `artwork_posts`
 --
 ALTER TABLE `artwork_posts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- AUTO_INCREMENT for table `artwork_post_likes`
 --
 ALTER TABLE `artwork_post_likes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `artwork_tags`
 --
 ALTER TABLE `artwork_tags`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `auctions`
@@ -1062,7 +1089,7 @@ ALTER TABLE `auto_replies`
 -- AUTO_INCREMENT for table `comments`
 --
 ALTER TABLE `comments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `escrow_releases`
@@ -1074,7 +1101,7 @@ ALTER TABLE `escrow_releases`
 -- AUTO_INCREMENT for table `follows`
 --
 ALTER TABLE `follows`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `locations`
@@ -1086,13 +1113,13 @@ ALTER TABLE `locations`
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=148;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=155;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -1104,7 +1131,7 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `portfolio_items`
 --
 ALTER TABLE `portfolio_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `posts`
@@ -1116,13 +1143,13 @@ ALTER TABLE `posts`
 -- AUTO_INCREMENT for table `post_likes`
 --
 ALTER TABLE `post_likes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `tags`
 --
 ALTER TABLE `tags`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `users`
