@@ -345,11 +345,7 @@ const VisitArt = ({ userId }) => {
                   <div>
                     <p className="font-bold text-gray-800">{post.author}</p>
                     <p className="text-gray-600 text-sm">{post.fullname}</p>
-                    {post.created_at && (
-                      <p className="text-xs text-gray-500">
-                        Posted {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                      </p>
-                    )}
+                    {/* REMOVED DATE FROM HERE */}
                   </div>
                 </div>
 
@@ -378,19 +374,28 @@ const VisitArt = ({ userId }) => {
                   </div>
                 )}
 
-                {/* Likes & Comments inline row */}
-                <div className="flex items-center gap-4 mt-3">
-                  <div className="flex items-center gap-1">
-                    <ArtworkLikes artworkPostId={post.id} />
+                {/* Likes & Comments with date on the right */}
+                <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1">
+                      <ArtworkLikes artworkPostId={post.id} />
+                    </div>
+
+                    <button 
+                      onClick={() => toggleComments(post.id)} 
+                      className="flex items-center gap-1 text-gray-600 hover:text-gray-900"
+                    >
+                      <MessageCircle size={18} />
+                      <span className="text-sm">{commentCounts[post.id] ?? 0}</span>
+                    </button>
                   </div>
 
-                  <button 
-                    onClick={() => toggleComments(post.id)} 
-                    className="flex items-center gap-1 text-gray-600 hover:text-gray-900"
-                  >
-                    <MessageCircle size={18} />
-                    <span className="text-sm">{commentCounts[post.id] ?? 0}</span>
-                  </button>
+                  {/* Date moved to right side */}
+                  {post.created_at && (
+                    <p className="text-xs text-gray-500">
+                      {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                    </p>
+                  )}
                 </div>
 
                 {/* Comments Section */}
@@ -562,11 +567,7 @@ const VisitArt = ({ userId }) => {
                   <div>
                     <p className="font-bold text-gray-800">{modalState.post.author}</p>
                     <p className="text-gray-600 text-sm">{modalState.post.fullname}</p>
-                    {modalState.post.created_at && (
-                      <p className="text-xs text-gray-500">
-                        Posted {formatDistanceToNow(new Date(modalState.post.created_at), { addSuffix: true })}
-                      </p>
-                    )}
+                    {/* REMOVED DATE FROM HERE */}
                   </div>
                 </div>
 
@@ -588,13 +589,22 @@ const VisitArt = ({ userId }) => {
                   </div>
                 )}
 
-                {/* Likes & Comments */}
-                <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-100">
-                  <ArtworkLikes artworkPostId={modalState.post.id} />
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <MessageCircle size={18} />
-                    <span className="text-sm">{commentCounts[modalState.post.id] ?? 0}</span>
+                {/* Likes & Comments with date on the right */}
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <ArtworkLikes artworkPostId={modalState.post.id} />
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <MessageCircle size={18} />
+                      <span className="text-sm">{commentCounts[modalState.post.id] ?? 0}</span>
+                    </div>
                   </div>
+
+                  {/* Date in modal - bottom right */}
+                  {modalState.post.created_at && (
+                    <p className="text-xs text-gray-500">
+                      {formatDistanceToNow(new Date(modalState.post.created_at), { addSuffix: true })}
+                    </p>
+                  )}
                 </div>
               </div>
 
