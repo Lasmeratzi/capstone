@@ -45,7 +45,7 @@ const coverPhotoUpload = multer({
     }
   },
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 10 * 1024 * 1024, // Increased from 5MB to 10MB
   }
 });
 
@@ -65,23 +65,35 @@ router.post("/profile/watermark", authenticateToken, watermarkUpload.single("wat
 router.delete("/profile/watermark", authenticateToken, profileController.deleteWatermark);
 
 // ✅ POST: Upload or replace cover photo
-router.post("/profile/cover-photo", authenticateToken, coverPhotoUpload.single("cover_photo"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: "No cover photo file uploaded." });
-  }
-
-  const userId = req.user.id;
-  const coverPhotoPath = req.file.filename;
-
-  signupModels.updateUser(userId, { cover_photo: coverPhotoPath }, (err) => {
+router.post("/profile/cover-photo", authenticateToken, (req, res) => {
+  coverPhotoUpload.single("cover_photo")(req, res, function(err) {
+    // Handle Multer errors
     if (err) {
-      console.error("Database error updating cover photo:", err);
-      return res.status(500).json({ message: "Database error.", error: err });
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ message: 'File too large. Maximum size is 10MB.' });
+        }
+      }
+      return res.status(400).json({ message: err.message });
     }
 
-    res.status(200).json({ 
-      message: "Cover photo uploaded successfully!", 
-      cover_photo: coverPhotoPath 
+    if (!req.file) {
+      return res.status(400).json({ message: "No cover photo file uploaded." });
+    }
+
+    const userId = req.user.id;
+    const coverPhotoPath = req.file.filename;
+
+    signupModels.updateUser(userId, { cover_photo: coverPhotoPath }, (err) => {
+      if (err) {
+        console.error("Database error updating cover photo:", err);
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+
+      res.status(200).json({ 
+        message: "Cover photo uploaded successfully!", 
+        cover_photo: coverPhotoPath 
+      });
     });
   });
 });
