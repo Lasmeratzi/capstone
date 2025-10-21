@@ -11,6 +11,9 @@ const VisitPost = ({ userId }) => {
   const [yearFilter, setYearFilter] = useState("all");
   const [availableYears, setAvailableYears] = useState([]);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
+  
+  // Get the logged-in user's ID
+  const loggedInUserId = localStorage.getItem("id");
 
   useEffect(() => {
     const fetchUserPosts = async () => {
@@ -77,7 +80,11 @@ const VisitPost = ({ userId }) => {
           {errorMessage && <p className="text-red-500 text-center">{errorMessage}</p>}
           {filteredPosts.length > 0 ? (
             filteredPosts.map((post) => (
-              <Post key={post.id} post={post} userId={userId} />
+              <Post 
+                key={post.id} 
+                post={post} 
+                userId={loggedInUserId} // Pass logged-in user's ID, not visited user's ID
+              />
             ))
           ) : (
             <p className="text-gray-500 text-center text-sm">No posts available.</p>
