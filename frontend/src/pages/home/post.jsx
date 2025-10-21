@@ -131,13 +131,7 @@ const Post = ({ post, userId, handleDelete }) => {
             </div>
             <p className="text-gray-600 text-sm">{post.fullname}</p>
 
-            {/* ✅ Posted time */}
-            {post.created_at && (
-              <p className="text-xs text-gray-500">
-                Posted {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-              </p>
-            )}
-
+            {/* REMOVED DATE FROM HERE */}
             {post.verification_request_status === "pending" && (
               <span className="text-xs text-yellow-500">Verification pending</span>
             )}
@@ -196,17 +190,27 @@ const Post = ({ post, userId, handleDelete }) => {
       {/* ✅ Divider before likes/comments */}
       <hr className="my-4 border-gray-200" />
 
-      <div className="flex items-center gap-4 pt-1">
-        <div className="flex items-center gap-1">
-          <PostLikes postId={post.id} />
+      {/* Likes & Comments with date on the right */}
+      <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1">
+            <PostLikes postId={post.id} />
+          </div>
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center gap-1 text-gray-600 hover:text-gray-900"
+          >
+            <MessageCircle size={18} />
+            <span className="text-sm">{commentCount}</span>
+          </button>
         </div>
-        <button
-          onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1 text-gray-600 hover:text-gray-900"
-        >
-          <MessageCircle size={18} />
-          <span className="text-sm">{commentCount}</span>
-        </button>
+
+        {/* Date moved to right side */}
+        {post.created_at && (
+          <p className="text-xs text-gray-500">
+            {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+          </p>
+        )}
       </div>
 
       {showComments && <Comments postId={post.id} userId={userId} />}
@@ -291,64 +295,74 @@ const Post = ({ post, userId, handleDelete }) => {
       )}
 
       {/* Image Modal */}
-      {isImageModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="relative bg-white rounded-lg max-w-6xl w-full h-[80vh] flex">
-            <div className="flex-[2] overflow-hidden flex items-center justify-center p-4 bg-gray-100">
+{isImageModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="relative bg-white rounded-lg max-w-6xl w-full h-[80vh] flex">
+      <div className="flex-[2] overflow-hidden flex items-center justify-center p-4 bg-gray-100">
+        <img
+          src={`http://localhost:5000/uploads/${post.media_path}`}
+          alt={post.title}
+          className="max-h-full max-w-full object-contain"
+        />
+      </div>
+      <div className="flex-1 flex flex-col border-l border-gray-200">
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            {post.author_pfp ? (
               <img
-                src={`http://localhost:5000/uploads/${post.media_path}`}
-                alt={post.title}
-                className="max-h-full max-w-full object-contain"
+                src={`http://localhost:5000/uploads/${post.author_pfp}`}
+                alt={post.author}
+                className="w-10 h-10 rounded-full border border-gray-300"
               />
-            </div>
-            <div className="flex-1 flex flex-col border-l border-gray-200">
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                  {post.author_pfp ? (
-                    <img
-                      src={`http://localhost:5000/uploads/${post.author_pfp}`}
-                      alt={post.author}
-                      className="w-10 h-10 rounded-full border border-gray-300"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                      <span className="text-gray-600 text-xs">N/A</span>
-                    </div>
-                  )}
-                  <div>
-                    <div className="flex items-center">
-                      <p className="font-bold text-gray-800">{post.author}</p>
-                      {post.is_verified && <VerifiedBadge />}
-                    </div>
-                    <p className="text-gray-600 text-sm">{post.fullname}</p>
-                  </div>
-                </div>
-                <p className="mt-3 text-gray-800">{post.title}</p>
-
-                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
-                  <div className="flex items-center gap-1">
-                    <PostLikes postId={post.id} />
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <MessageCircle size={18} />
-                    <span className="text-sm">{commentCount}</span>
-                  </div>
-                </div>
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                <span className="text-gray-600 text-xs">N/A</span>
               </div>
-              <div className="flex-1 overflow-y-auto">
-                <Comments postId={post.id} userId={userId} />
+            )}
+            <div>
+              <div className="flex items-center">
+                <p className="font-bold text-gray-800">{post.author}</p>
+                {post.is_verified && <VerifiedBadge />}
+              </div>
+              <p className="text-gray-600 text-sm">{post.fullname}</p>
+            </div>
+          </div>
+          <p className="mt-3 text-gray-800">{post.title}</p>
+
+          {/* Likes & Comments with date on the right */}
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <PostLikes postId={post.id} />
+              </div>
+              <div className="flex items-center gap-1 text-gray-600">
+                <MessageCircle size={18} />
+                <span className="text-sm">{commentCount}</span>
               </div>
             </div>
 
-            <button
-              onClick={() => setIsImageModalOpen(false)}
-              className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 transition"
-            >
-              <X size={24} />
-            </button>
+            {/* Date in modal - bottom right */}
+            {post.created_at && (
+              <p className="text-xs text-gray-500">
+                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+              </p>
+            )}
           </div>
         </div>
-      )}
+        <div className="flex-1 overflow-y-auto">
+          <Comments postId={post.id} userId={userId} />
+        </div>
+      </div>
+
+      <button
+        onClick={() => setIsImageModalOpen(false)}
+        className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 transition"
+      >
+        <X size={24} />
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 };

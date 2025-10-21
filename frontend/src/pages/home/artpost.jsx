@@ -388,11 +388,6 @@ const ArtPosts = () => {
               <div>
                 <p className="font-bold text-gray-800">{post.author}</p>
                 <p className="text-gray-600 text-sm">{post.fullname}</p>
-                {post.created_at && (
-                  <p className="text-xs text-gray-500">
-                    Posted {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                  </p>
-                )}
               </div>
 
               {String(post.author_id) === String(userId) && (
@@ -448,32 +443,41 @@ const ArtPosts = () => {
 
             {post.media?.length > 0 && <div className="mt-3">{renderMediaGrid(post.media, postIndex)}</div>}
 
-            {/* Likes & Comments inline row */}
-            <div className="flex items-center gap-4 mt-3">
-              <div className="flex items-center gap-1">
-                <ArtworkLikes artworkPostId={post.id} />
+            {/* Likes & Comments inline row with date on the right */}
+            <div className="flex items-center justify-between mt-3">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <ArtworkLikes artworkPostId={post.id} />
+                </div>
+
+                <button onClick={() => toggleComments(post.id)} className="flex items-center gap-1 text-gray-600 hover:text-gray-900">
+                  <MessageCircle size={18} />
+                  <span className="text-sm">{commentCounts[post.id] ?? 0}</span>
+                </button>
+
+                {confirmDeleteFor === post.id && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setConfirmDeleteFor(null)}
+                      className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleDeleteConfirmed(post.id)}
+                      className="px-3 py-1 rounded text-sm bg-red-500 text-white hover:bg-red-600"
+                    >
+                      Confirm Delete
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <button onClick={() => toggleComments(post.id)} className="flex items-center gap-1 text-gray-600 hover:text-gray-900">
-                <MessageCircle size={18} />
-                <span className="text-sm">{commentCounts[post.id] ?? 0}</span>
-              </button>
-
-              {confirmDeleteFor === post.id && (
-                <div className="ml-auto flex items-center gap-2">
-                  <button
-                    onClick={() => setConfirmDeleteFor(null)}
-                    className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleDeleteConfirmed(post.id)}
-                    className="px-3 py-1 rounded text-sm bg-red-500 text-white hover:bg-red-600"
-                  >
-                    Confirm Delete
-                  </button>
-                </div>
+              {/* Date moved to right side */}
+              {post.created_at && (
+                <p className="text-xs text-gray-500">
+                  {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                </p>
               )}
             </div>
 
@@ -586,11 +590,6 @@ const ArtPosts = () => {
             <div>
               <p className="font-bold text-gray-800">{artPosts[modalState.postIndex].author}</p>
               <p className="text-gray-600 text-sm">{artPosts[modalState.postIndex].fullname}</p>
-              {artPosts[modalState.postIndex].created_at && (
-                <p className="text-xs text-gray-500">
-                  Posted {formatDistanceToNow(new Date(artPosts[modalState.postIndex].created_at), { addSuffix: true })}
-                </p>
-              )}
             </div>
           </div>
 
@@ -611,13 +610,22 @@ const ArtPosts = () => {
             </div>
           )}
 
-          {/* Likes & Comments */}
-          <div className="flex items-center gap-4 mt-3">
-            <ArtworkLikes artworkPostId={artPosts[modalState.postIndex].id} />
-            <div className="flex items-center gap-1 text-gray-600">
-              <MessageCircle size={18} />
-              <span className="text-sm">{commentCounts[artPosts[modalState.postIndex].id] ?? 0}</span>
+          {/* Likes & Comments with date on the right */}
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-4">
+              <ArtworkLikes artworkPostId={artPosts[modalState.postIndex].id} />
+              <div className="flex items-center gap-1 text-gray-600">
+                <MessageCircle size={18} />
+                <span className="text-sm">{commentCounts[artPosts[modalState.postIndex].id] ?? 0}</span>
+              </div>
             </div>
+
+            {/* Date in modal - bottom right */}
+            {artPosts[modalState.postIndex].created_at && (
+              <p className="text-xs text-gray-500">
+                {formatDistanceToNow(new Date(artPosts[modalState.postIndex].created_at), { addSuffix: true })}
+              </p>
+            )}
           </div>
         </div>
 
@@ -637,7 +645,6 @@ const ArtPosts = () => {
     </div>
   </div>
 )}
-
       {/* ArtPostModal for edit/delete */}
       {artPostModal.isOpen && (
         <ArtPostModal
