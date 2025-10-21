@@ -490,149 +490,153 @@ const ArtPosts = () => {
       )}
 
       {/* Media Viewer Modal with tags in sidebar */}
-      {modalState.isOpen && modalState.postIndex !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="relative max-w-6xl w-full max-h-[90vh] flex">
-            {/* Image area */}
-            <div className="flex-[2] relative flex items-center justify-center bg-black">
-              {artPosts[modalState.postIndex]?.media?.length > 1 && (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigateMedia("prev");
-                    }}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-20"
-                    aria-label="Previous"
-                  >
-                    <ChevronLeft size={32} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigateMedia("next");
-                    }}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-20"
-                    aria-label="Next"
-                  >
-                    <ChevronRight size={32} />
-                  </button>
-                </>
-              )}
-
-              {(() => {
-                const currentMedia = artPosts[modalState.postIndex].media[modalState.mediaIndex];
-                const mediaUrl = getMediaUrl(currentMedia.media_path);
-                const isVideo = currentMedia.media_path.endsWith(".mp4");
-
-                const handleContextMenu = (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                };
-
-                const handleDragStart = (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                };
-
-                return isVideo ? (
-                  <video
-                    src={mediaUrl}
-                    controls
-                    autoPlay
-                    className="max-h-[80vh] w-full object-contain"
-                    onContextMenu={handleContextMenu}
-                    onDragStart={handleDragStart}
-                    controlsList="nodownload"
-                  />
-                ) : (
-                  <img
-                    src={mediaUrl}
-                    alt="Artwork media"
-                    className="max-h-[80vh] w-auto max-w-full object-contain"
-                    onContextMenu={handleContextMenu}
-                    onDragStart={handleDragStart}
-                    draggable={false}
-                    style={{
-                      userSelect: 'none',
-                      WebkitUserSelect: 'none',
-                      MozUserSelect: 'none',
-                      msUserSelect: 'none',
-                    }}
-                  />
-                );
-              })()}
-
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white z-20">
-                {modalState.mediaIndex + 1} of {artPosts[modalState.postIndex].media.length}
-              </div>
-            </div>
-
-            {/* Sidebar with tags */}
-            <div className="flex-1 flex flex-col border-l border-gray-200 bg-white">
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                  {artPosts[modalState.postIndex].author_pfp ? (
-                    <img
-                      src={`${API_BASE}/uploads/${artPosts[modalState.postIndex].author_pfp}`}
-                      alt={`${artPosts[modalState.postIndex].author}'s profile`}
-                      className="w-10 h-10 rounded-full border border-gray-300 object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                      <span className="text-gray-600 text-xs">N/A</span>
-                    </div>
-                  )}
-                  <div>
-                    <p className="font-bold text-gray-800">{artPosts[modalState.postIndex].author}</p>
-                    <p className="text-gray-600 text-sm">{artPosts[modalState.postIndex].fullname}</p>
-                    {artPosts[modalState.postIndex].created_at && (
-                      <p className="text-xs text-gray-500">
-                        Posted {formatDistanceToNow(new Date(artPosts[modalState.postIndex].created_at), { addSuffix: true })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <p className="mt-3 text-gray-800">{artPosts[modalState.postIndex].title}</p>
-
-                {/* Tags in modal */}
-                {postTags[artPosts[modalState.postIndex].id] && postTags[artPosts[modalState.postIndex].id].length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {postTags[artPosts[modalState.postIndex].id].map((tag) => (
-                      <span
-                        key={tag.id}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
-                      >
-                        <Tag size={12} />
-                        #{tag.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Likes & Comments */}
-                <div className="flex items-center gap-4 mt-3">
-                  <ArtworkLikes artworkPostId={artPosts[modalState.postIndex].id} />
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <MessageCircle size={18} />
-                    <span className="text-sm">{commentCounts[artPosts[modalState.postIndex].id] ?? 0}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Comments area (scrollable) */}
-              <div className="flex-1 overflow-y-auto p-4">
-                <ArtworkComments artworkPostId={artPosts[modalState.postIndex].id} userId={userId} />
-              </div>
-            </div>
-
-            <button onClick={closeModal} className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 z-30">
-              <X size={24} />
+{modalState.isOpen && modalState.postIndex !== null && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="relative max-w-6xl w-full max-h-[90vh] flex">
+      {/* Image area */}
+      <div className="flex-[2] relative flex items-center justify-center bg-black">
+        {artPosts[modalState.postIndex]?.media?.length > 1 && (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigateMedia("prev");
+              }}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-20"
+              aria-label="Previous"
+            >
+              <ChevronLeft size={32} />
             </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigateMedia("next");
+              }}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-20"
+              aria-label="Next"
+            >
+              <ChevronRight size={32} />
+            </button>
+          </>
+        )}
+
+        {(() => {
+          const currentMedia = artPosts[modalState.postIndex].media[modalState.mediaIndex];
+          const mediaUrl = getMediaUrl(currentMedia.media_path);
+          const isVideo = currentMedia.media_path.endsWith(".mp4");
+
+          const handleContextMenu = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          };
+
+          const handleDragStart = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          };
+
+          return isVideo ? (
+            <video
+              src={mediaUrl}
+              controls
+              autoPlay
+              className="max-h-[80vh] w-full object-contain"
+              onContextMenu={handleContextMenu}
+              onDragStart={handleDragStart}
+              controlsList="nodownload"
+            />
+          ) : (
+            <img
+              src={mediaUrl}
+              alt="Artwork media"
+              className="max-h-[80vh] w-auto max-w-full object-contain"
+              onContextMenu={handleContextMenu}
+              onDragStart={handleDragStart}
+              draggable={false}
+              style={{
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
+              }}
+            />
+          );
+        })()}
+
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white z-20">
+          {modalState.mediaIndex + 1} of {artPosts[modalState.postIndex].media.length}
+        </div>
+      </div>
+
+      {/* Sidebar with tags */}
+      <div className="flex-1 flex flex-col border-l border-gray-200 bg-white">
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            {artPosts[modalState.postIndex].author_pfp ? (
+              <img
+                src={`${API_BASE}/uploads/${artPosts[modalState.postIndex].author_pfp}`}
+                alt={`${artPosts[modalState.postIndex].author}'s profile`}
+                className="w-10 h-10 rounded-full border border-gray-300 object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                <span className="text-gray-600 text-xs">N/A</span>
+              </div>
+            )}
+            <div>
+              <p className="font-bold text-gray-800">{artPosts[modalState.postIndex].author}</p>
+              <p className="text-gray-600 text-sm">{artPosts[modalState.postIndex].fullname}</p>
+              {artPosts[modalState.postIndex].created_at && (
+                <p className="text-xs text-gray-500">
+                  Posted {formatDistanceToNow(new Date(artPosts[modalState.postIndex].created_at), { addSuffix: true })}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <p className="mt-3 text-gray-800">{artPosts[modalState.postIndex].title}</p>
+
+          {/* Tags in modal */}
+          {postTags[artPosts[modalState.postIndex].id] && postTags[artPosts[modalState.postIndex].id].length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {postTags[artPosts[modalState.postIndex].id].map((tag) => (
+                <span
+                  key={tag.id}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
+                >
+                  <Tag size={12} />
+                  #{tag.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Likes & Comments */}
+          <div className="flex items-center gap-4 mt-3">
+            <ArtworkLikes artworkPostId={artPosts[modalState.postIndex].id} />
+            <div className="flex items-center gap-1 text-gray-600">
+              <MessageCircle size={18} />
+              <span className="text-sm">{commentCounts[artPosts[modalState.postIndex].id] ?? 0}</span>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Comments area (scrollable) */}
+        <div className="flex-1 overflow-y-auto p-4">
+          <ArtworkComments artworkPostId={artPosts[modalState.postIndex].id} userId={userId} />
+        </div>
+      </div>
+
+      {/* GitHub-style Close Button */}
+      <button 
+        onClick={closeModal} 
+        className="absolute top-4 right-4 flex items-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300 bg-white/90 backdrop-blur-sm"
+      >
+        <X size={20} />
+      </button>
+    </div>
+  </div>
+)}
 
       {/* ArtPostModal for edit/delete */}
       {artPostModal.isOpen && (
