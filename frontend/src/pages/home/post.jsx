@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { MessageCircle, MoreVertical, Loader, Trash, Pencil, X } from "lucide-react";
 import axios from "axios";
 import Comments from "../comments/comments";
-import { FaCheckCircle } from "react-icons/fa";
+import { CheckIcon } from "@heroicons/react/24/outline";
 import PostLikes from "../likes/postlikes";
 import { formatDistanceToNow } from "date-fns"; // ✅ For posted time
 
 const VerifiedBadge = () => (
-  <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 ml-1">
-    <FaCheckCircle className="w-3 h-3 text-white" />
+  <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 ml-2">
+    <CheckIcon className="w-3 h-3 text-white" />
   </div>
 );
 
@@ -131,13 +131,7 @@ const Post = ({ post, userId, handleDelete }) => {
             </div>
             <p className="text-gray-600 text-sm">{post.fullname}</p>
 
-            {/* REMOVED DATE FROM HERE */}
-            {post.verification_request_status === "pending" && (
-              <span className="text-xs text-yellow-500">Verification pending</span>
-            )}
-            {post.verification_request_status === "rejected" && (
-              <span className="text-xs text-red-500">Verification rejected</span>
-            )}
+            
           </div>
         </div>
 
