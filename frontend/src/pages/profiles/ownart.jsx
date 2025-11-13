@@ -5,8 +5,16 @@ import { formatDistanceToNow } from "date-fns";
 import ArtPostModal from "../../components/modals/artpostmodal";
 import ArtworkLikes from "../../pages/likes/artworklikes";
 import ArtworkComments from "../../pages/comments/artworkcomments";
+import { CheckIcon } from "@heroicons/react/24/outline";
 
 const API_BASE = "http://localhost:5000";
+
+
+const VerifiedBadge = () => (
+  <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 ml-2">
+    <CheckIcon className="w-3 h-3 text-white" />
+  </div>
+);
 
 const OwnArt = ({ userId }) => {
   const [artPosts, setArtPosts] = useState([]);
@@ -288,10 +296,12 @@ const OwnArt = ({ userId }) => {
                     </div>
                   )}
                   <div>
-                    <p className="font-bold text-gray-800">{post.author}</p>
-                    <p className="text-gray-600 text-sm">{post.fullname}</p>
-                    {/* REMOVED DATE FROM HERE */}
-                  </div>
+  <div className="flex items-center">
+    <p className="font-bold text-gray-800">{post.author}</p>
+    {post.is_verified && <VerifiedBadge />}
+  </div>
+  <p className="text-gray-600 text-sm">{post.fullname}</p>
+</div>
 
                   {/* Edit/Delete Dropdown - Always visible since these are user's own posts */}
                   <div className="ml-auto relative">
@@ -569,10 +579,12 @@ const OwnArt = ({ userId }) => {
                     </div>
                   )}
                   <div>
-                    <p className="font-bold text-gray-800">{modalState.post.author}</p>
-                    <p className="text-gray-600 text-sm">{modalState.post.fullname}</p>
-                    {/* REMOVED DATE FROM HERE */}
-                  </div>
+  <div className="flex items-center">
+    <p className="font-bold text-gray-800">{modalState.post.author}</p>
+    {modalState.post.is_verified && <VerifiedBadge />}
+  </div>
+  <p className="text-gray-600 text-sm">{modalState.post.fullname}</p>
+</div>
                 </div>
 
                 <h4 className="mt-3 text-lg font-semibold text-gray-800">{modalState.post.title}</h4>

@@ -16,10 +16,12 @@ const createPost = (postData, callback) => {
 };
 
 // Get all posts (Now includes `author_pfp` and `post_status`)
+// Get all posts
 const getAllPosts = (authorId, callback) => {
   let sql = `
     SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
-           users.id AS author_id, users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
+           users.id AS author_id, users.username AS author, users.fullname, users.pfp AS author_pfp, 
+           posts.post_status, users.verified AS is_verified  -- ✅ ADD THIS LINE
     FROM posts
     JOIN users ON posts.author_id = users.id
     ORDER BY posts.created_at DESC
@@ -29,7 +31,8 @@ const getAllPosts = (authorId, callback) => {
   if (authorId) {
     sql = `
       SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
-             users.id AS author_id, users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
+             users.id AS author_id, users.username AS author, users.fullname, users.pfp AS author_pfp, 
+             posts.post_status, users.verified AS is_verified  -- ✅ ADD THIS LINE
       FROM posts
       JOIN users ON posts.author_id = users.id
       WHERE posts.author_id = ?
@@ -41,11 +44,12 @@ const getAllPosts = (authorId, callback) => {
   db.query(sql, params, callback);
 };
 
-// Get posts by a specific author (Now includes `author_pfp` and `post_status`)
+// Get posts by a specific author
 const getPostsByAuthorId = (authorId, callback) => {
   const sql = `
     SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
-           users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status
+           users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status,
+           users.verified AS is_verified  -- ✅ ADD THIS LINE
     FROM posts
     JOIN users ON posts.author_id = users.id
     WHERE posts.author_id = ?
@@ -54,19 +58,18 @@ const getPostsByAuthorId = (authorId, callback) => {
   db.query(sql, [authorId], callback);
 };
 
-// Get a post by ID (Now includes `author_pfp` and `post_status`)
+// Get a post by ID
 const getPostById = (id, callback) => {
   const sql = `
     SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
            users.username AS author, users.fullname, users.pfp AS author_pfp, posts.post_status,
-           posts.author_id  -- Added to verify ownership for updates/deletion
+           posts.author_id, users.verified AS is_verified  -- ✅ ADD THIS LINE
     FROM posts
     JOIN users ON posts.author_id = users.id
     WHERE posts.id = ?
   `;
   db.query(sql, [id], callback);
 };
-
 // Update a post (Only if user is the author)
 // Update post by ID with data
 const updatePostById = (id, postData, callback) => {
