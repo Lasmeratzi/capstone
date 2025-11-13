@@ -13,8 +13,16 @@ import { formatDistanceToNow } from "date-fns";
 import ArtPostModal from "../../components/modals/artpostmodal";
 import ArtworkLikes from "../../pages/likes/artworklikes";
 import ArtworkComments from "../../pages/comments/artworkcomments";
+import { CheckIcon } from "@heroicons/react/24/outline";
 
 const API_BASE = "http://localhost:5000";
+
+
+const VerifiedBadge = () => (
+  <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 ml-2">
+    <CheckIcon className="w-3 h-3 text-white" />
+  </div>
+);
 
 const getMediaUrl = (media_path) => {
   const cleanPath = media_path.startsWith("uploads/")
@@ -386,9 +394,12 @@ const ArtPosts = () => {
                 </div>
               )}
               <div>
-                <p className="font-bold text-gray-800">{post.author}</p>
-                <p className="text-gray-600 text-sm">{post.fullname}</p>
-              </div>
+  <div className="flex items-center">
+    <p className="font-bold text-gray-800">{post.author}</p>
+    {post.is_verified && <VerifiedBadge />}
+  </div>
+  <p className="text-gray-600 text-sm">{post.fullname}</p>
+</div>
 
               {String(post.author_id) === String(userId) && (
                 <div className="ml-auto relative">
@@ -588,9 +599,12 @@ const ArtPosts = () => {
               </div>
             )}
             <div>
-              <p className="font-bold text-gray-800">{artPosts[modalState.postIndex].author}</p>
-              <p className="text-gray-600 text-sm">{artPosts[modalState.postIndex].fullname}</p>
-            </div>
+  <div className="flex items-center">
+    <p className="font-bold text-gray-800">{artPosts[modalState.postIndex].author}</p>
+    {artPosts[modalState.postIndex].is_verified && <VerifiedBadge />}
+  </div>
+  <p className="text-gray-600 text-sm">{artPosts[modalState.postIndex].fullname}</p>
+</div>
           </div>
 
           <p className="mt-3 text-gray-800">{artPosts[modalState.postIndex].title}</p>
