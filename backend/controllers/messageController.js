@@ -181,6 +181,7 @@ const getFollowingInbox = (req, res) => {
             pfp: followedUser.pfp,
             lastMessage: lastMessage ? lastMessage.message_text : null,
             lastMessageTime: lastMessage ? lastMessage.created_at : null,
+            lastMessageSenderId: lastMessage ? lastMessage.sender_id : null, // ✅ ADD THIS LINE
             unreadCount,
           });
         });
