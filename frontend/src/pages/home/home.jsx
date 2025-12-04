@@ -9,34 +9,7 @@ import Post from "../home/post";
 import ArtPosts from "../home/artpost";
 import Auctions from "../home/auctions";
 import RSideHome from "../home/rsidehome";
-import { motion } from "framer-motion";
-
-const ArtPostCard = ({ post }) => {
-  return (
-    <div
-      key={post.id}
-      className="border border-gray-300 rounded p-4 mb-4 shadow-sm bg-white"
-    >
-      <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
-      <div className="flex overflow-x-auto space-x-2 mb-3">
-        {post.media?.map((mediaItem) => (
-          <img
-            key={mediaItem.id}
-            src={`http://localhost:5000/${mediaItem.file_path}`}
-            alt={post.title}
-            className="h-40 object-cover rounded"
-          />
-        ))}
-      </div>
-      <p className="text-sm text-gray-600 mb-1">
-        By: {post.author?.username || "Unknown"}
-      </p>
-      <p className="text-xs text-gray-500">
-        {new Date(post.created_at).toLocaleString()}
-      </p>
-    </div>
-  );
-};
+import CreateModal from "../../components/modals/createmodal"; // ✅ new import
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -44,13 +17,17 @@ const Home = () => {
   const [artPosts, setArtPosts] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // modal states
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isMakePostOpen, setIsMakePostOpen] = useState(false);
   const [isMakeArtOpen, setIsMakeArtOpen] = useState(false);
   const [isMakeAuctionOpen, setIsMakeAuctionOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("posts");
 
+  const [activeTab, setActiveTab] = useState("artworks");
   const navigate = useNavigate();
 
+  // fetch profile + posts
   useEffect(() => {
     const fetchProfileAndPosts = async () => {
       try {
@@ -64,35 +41,30 @@ const Home = () => {
         const payload = JSON.parse(atob(token.split(".")[1]));
         const currentTime = Math.floor(Date.now() / 1000);
         if (payload.exp && payload.exp < currentTime) {
-          console.error("Token expired. Redirecting...");
           localStorage.removeItem("token");
           navigate("/login");
           return;
         }
 
-        const userResponse = await axios.get("http://localhost:5000/api/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUser(userResponse.data);
+        const [userRes, postsRes, artRes, accountsRes] = await Promise.all([
+          axios.get("http://localhost:5000/api/profile", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get("http://localhost:5000/api/posts", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get("http://localhost:5000/api/artwork-posts", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get("http://localhost:5000/api/users", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-        const postsResponse = await axios.get("http://localhost:5000/api/posts", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setPosts(postsResponse.data);
-
-        const artPostsResponse = await axios.get("http://localhost:5000/api/artwork-posts", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setArtPosts(artPostsResponse.data);
-
-        const accountsResponse = await axios.get("http://localhost:5000/api/users", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setAccounts(
-          accountsResponse.data.filter(
-            (account) => account.id !== userResponse.data.id
-          )
-        );
+        setUser(userRes.data);
+        setPosts(postsRes.data);
+        setArtPosts(artRes.data);
+        setAccounts(accountsRes.data.filter((a) => a.id !== userRes.data.id));
       } catch (error) {
         console.error("Failed to fetch data:", error);
         if (error.response?.status === 403) {
@@ -107,21 +79,14 @@ const Home = () => {
     fetchProfileAndPosts();
   }, [navigate]);
 
-  const toggleMakePostModal = () => {
-    setIsMakePostOpen(!isMakePostOpen);
-  };
-
-  const toggleMakeArtModal = () => {
-    setIsMakeArtOpen(!isMakeArtOpen);
-  };
-
+  // delete post
   const handleDelete = async (postId) => {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`http://localhost:5000/api/posts/${postId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPosts(posts.filter((post) => post.id !== postId));
+      setPosts(posts.filter((p) => p.id !== postId));
     } catch (error) {
       console.error("Failed to delete post:", error);
     }
@@ -138,161 +103,139 @@ const Home = () => {
   return (
     <div className="flex">
       {/* Sidebar */}
-      <div className="fixed h-screen w-60 bg-white border-r shadow-md">
-        <Sidebar />
+      <div className="fixed h-screen w-50 bg-white border-r shadow-md">
+        <Sidebar onOpenCreate={() => setIsCreateOpen(true)} /> {/* ✅ pass handler */}
       </div>
 
-      {/* Main Feed */}
-      <motion.div
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -50 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="ml-[350px] flex-grow max-w-2xl mx-auto min-h-screen bg-white"
-      >
-        {/* Top Tabs */}
-        <div className="flex border-b border-gray-300">
-          <button
-            onClick={() => setActiveTab("posts")}
-            className={`flex-1 text-center py-4 font-semibold text-lg hover:bg-gray-100 transition ${
-              activeTab === "posts"
-                ? "border-b-4 border-blue-500 text-blue-600"
-                : "text-gray-600"
-            }`}
+      {/* Main Content */}
+      <div className="ml-[200px] flex-grow max-w-5xl mx-auto min-h-screen px-6 py-6">
+        {/* Hero Section */}
+        <div className="mb-10">
+          <div
+            className="rounded-2xl shadow-lg p-10 text-white relative overflow-hidden"
+            style={{
+              backgroundImage: user.pfp
+                ? `url("http://localhost:5000/uploads/${user.pfp}")`
+                : "linear-gradient(to right, #6366F1, #8B5CF6, #F9A8D4)",
+              backgroundSize: "cover",
+              backgroundPosition: "95% 30%",
+            }}
           >
-            Posts
-          </button>
-          <button
-            onClick={() => setActiveTab("auctions")}
-            className={`flex-1 text-center py-4 font-semibold text-lg hover:bg-gray-100 transition ${
-              activeTab === "auctions"
-                ? "border-b-4 border-blue-500 text-blue-600"
-                : "text-gray-600"
-            }`}
-          >
-            Auctions
-          </button>
-        </div>
-
-        {/* Top Buttons */}
-        <div className="p-4 border-b mb-4 border-gray-300 flex justify-between items-center">
-          {activeTab === "posts" && (
-            <>
-              <p className="text-gray-700 font-medium text-lg">
-                Want to share something?
-              </p>
-              <div className="flex space-x-3">
-                <button
-                  onClick={toggleMakePostModal}
-                  className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Create Post
-                </button>
-                <button
-                  onClick={toggleMakeArtModal}
-                  className="px-5 py-2.5 bg-gradient-to-r from-green-500 to-teal-500 text-white font-medium rounded-lg shadow-md hover:from-green-600 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 flex items-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                  </svg>
-                  Share Artwork
-                </button>
-              </div>
-            </>
-          )}
-
-          {activeTab === "auctions" && (
-            <>
-              <p className="text-gray-700 font-medium text-lg">
-                Want to auction something?
-              </p>
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setIsMakeAuctionOpen(true)}
-                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg shadow-md hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 flex items-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Start Auction
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Main Content */}
-        <div className="flex flex-col">
-          {activeTab === "posts" && (
-            <>
-              {errorMessage && (
-                <p className="text-red-500 p-4 text-center">{errorMessage}</p>
-              )}
-
-              {posts.length > 0 ? (
-                posts.map((post) => (
-                  <Post
-                    key={post.id}
-                    post={post}
-                    userId={user.id}
-                    handleDelete={() => handleDelete(post.id)}
-                  />
-                ))
-              ) : (
-                <p className="text-gray-500 text-sm text-center p-6">
-                  No posts available.
-                </p>
-              )}
-
-              <div className="mt-6">
-                <ArtPosts />
-              </div>
-            </>
-          )}
-
-          {activeTab === "auctions" && (
-            <div className="mt-4">
-              <Auctions />
+            <div className="absolute inset-0 rounded-2xl">
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/60 via-purple-500/50 to-pink-400/60 mix-blend-multiply"></div>
             </div>
-          )}
+
+            <div className="relative z-10 max-w-lg">
+              <h1 className="text-3xl font-bold mb-2">
+                Welcome back, {user.username}!
+              </h1>
+              <p className="text-lg">
+                Share your thoughts, showcase your art, or join auctions from
+                fellow artists.
+              </p>
+            </div>
+          </div>
         </div>
-      </motion.div>
+
+        {/* Tabs */}
+        <div className="relative mb-6 mt-[-4px]">
+          <div className="flex space-x-1">
+            {["artworks", "posts", "auctions"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`relative px-6 py-2 text-sm font-medium rounded-t-md transition-colors duration-200
+                  ${
+                    activeTab === tab
+                      ? "bg-white shadow-md border-x border-t border-gray-300 text-blue-600 -mb-[2px]"
+                      : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-transparent"
+                  }`}
+                style={{
+                  clipPath: "polygon(0 0, 88% 0, 100% 100%, 0% 100%)",
+                  zIndex: activeTab === tab ? 10 : 1,
+                  minWidth: "fit-content",
+                  width: "auto",
+                }}
+              >
+                {tab === "artworks"
+                  ? "Artworks"
+                  : tab === "posts"
+                  ? "Posts"
+                  : "Auctions"}
+              </button>
+            ))}
+          </div>
+          <div className="h-[2px] bg-gray-300 w-full absolute top-full left-0 z-0" />
+        </div>
+
+        {/* Content */}
+        {activeTab === "artworks" && (
+          <div className="columns-1 md:columns-2 gap-4">
+            <ArtPosts />
+          </div>
+        )}
+
+        {activeTab === "posts" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {errorMessage && (
+              <p className="col-span-2 text-red-500 text-center">
+                {errorMessage}
+              </p>
+            )}
+            {posts.length > 0 ? (
+              posts.map((post) => (
+                <Post
+                  key={post.id}
+                  post={post}
+                  userId={user.id}
+                  handleDelete={() => handleDelete(post.id)}
+                />
+              ))
+            ) : (
+              <p className="col-span-2 text-gray-500 text-center">
+                No posts available.
+              </p>
+            )}
+          </div>
+        )}
+
+        {activeTab === "auctions" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Auctions />
+          </div>
+        )}
+      </div>
 
       {/* Right Sidebar */}
       <RSideHome user={user} accounts={accounts} />
 
-      {/* Modals */}
-      {isMakePostOpen && (
-        <div
-          id="makePostModal"
-          onClick={(e) => {
-            if (e.target.id === "makePostModal") setIsMakePostOpen(false);
+      {/* ✅ Create Modal */}
+      {isCreateOpen && (
+        <CreateModal
+          onClose={() => setIsCreateOpen(false)}
+          onSelect={(type) => {
+            setIsCreateOpen(false); // close create modal first
+            if (type === "post") {
+              setIsMakePostOpen(true);
+            } else if (type === "art") {
+              setIsMakeArtOpen(true);
+            } else if (type === "auction") {
+              setIsMakeAuctionOpen(true);
+            }
           }}
-          className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex justify-center items-center z-50 transition-opacity duration-300"
-        >
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full relative mx-4">
-            <button
-              onClick={toggleMakePostModal}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <MakePost onSuccess={toggleMakePostModal} />
-          </div>
-        </div>
+        />
+      )}
+
+      {/* ✅ Modals for Post, Art, Auction */}
+      {isMakePostOpen && (
+        <MakePost onClose={() => setIsMakePostOpen(false)} />
       )}
       {isMakeArtOpen && (
-        <MakeArt onClose={toggleMakeArtModal} />
+        <MakeArt onClose={() => setIsMakeArtOpen(false)} />
       )}
       {isMakeAuctionOpen && (
-        <MakeAuction 
-          onClose={() => setIsMakeAuctionOpen(false)} 
-        />
+        <MakeAuction onClose={() => setIsMakeAuctionOpen(false)} />
       )}
     </div>
   );

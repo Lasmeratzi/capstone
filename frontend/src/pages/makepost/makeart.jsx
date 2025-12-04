@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { X } from "lucide-react";
 
 export default function MakeArt({ onClose }) {
+  const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState([]);
   const [filePreviews, setFilePreviews] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
+  const [tagSuggestions, setTagSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Clean up object URLs when component unmounts
   useEffect(() => {
     return () => {
       filePreviews.forEach(preview => {
@@ -18,6 +24,30 @@ export default function MakeArt({ onClose }) {
       });
     };
   }, [filePreviews]);
+
+  // Fetch tag suggestions as user types
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (tagInput.length >= 2) {
+        try {
+          const response = await axios.get(
+            `http://localhost:5000/api/tags/search?query=${tagInput}`,
+            { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+          );
+          setTagSuggestions(response.data);
+          setShowSuggestions(true);
+        } catch (err) {
+          console.error("Error fetching tag suggestions:", err);
+        }
+      } else {
+        setTagSuggestions([]);
+        setShowSuggestions(false);
+      }
+    };
+
+    const debounce = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(debounce);
+  }, [tagInput]);
 
   const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files);
@@ -35,14 +65,37 @@ export default function MakeArt({ onClose }) {
   const removeFile = (index) => {
     const newFiles = [...files];
     const newPreviews = [...filePreviews];
-    
     URL.revokeObjectURL(newPreviews[index].preview);
-    
     newFiles.splice(index, 1);
     newPreviews.splice(index, 1);
-    
     setFiles(newFiles);
     setFilePreviews(newPreviews);
+  };
+
+  // Add tag when user presses Enter or clicks suggestion
+  const addTag = (tagName) => {
+    const cleanTag = tagName.trim().toLowerCase();
+    if (cleanTag && !tags.includes(cleanTag) && tags.length < 10) {
+      setTags([...tags, cleanTag]);
+      setTagInput("");
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleTagInputKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (tagInput.trim()) {
+        addTag(tagInput);
+      }
+    } else if (e.key === "Backspace" && !tagInput && tags.length > 0) {
+      // Remove last tag if input is empty and user presses backspace
+      setTags(tags.slice(0, -1));
+    }
+  };
+
+  const removeTag = (indexToRemove) => {
+    setTags(tags.filter((_, index) => index !== indexToRemove));
   };
 
   const handleSubmit = async (e) => {
@@ -57,13 +110,17 @@ export default function MakeArt({ onClose }) {
 
     try {
       setSubmitting(true);
+      
+      // Create post with tags
       const postResponse = await axios.post(
         "http://localhost:5000/api/artwork-posts",
-        { title, description },
+        { title, description, tags }, // ✅ Include tags
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
 
       const postId = postResponse.data.postId;
+      
+      // Upload media
       const formData = new FormData();
       formData.append("post_id", postId);
       files.forEach((file) => formData.append("media", file));
@@ -80,6 +137,11 @@ export default function MakeArt({ onClose }) {
       setDescription("");
       setFiles([]);
       setFilePreviews([]);
+      setTags([]);
+
+      onClose();
+      navigate("/home");
+      window.location.reload();
 
     } catch (error) {
       console.error("Error uploading artwork:", error);
@@ -141,6 +203,68 @@ export default function MakeArt({ onClose }) {
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     ></textarea>
                   </div>
+
+                  {/* Tags Input */}
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tags (optional) <span className="text-gray-500 text-xs">- Max 10</span>
+                    </label>
+                    
+                    {/* Display added tags */}
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                        >
+                          #{tag}
+                          <button
+                            type="button"
+                            onClick={() => removeTag(index)}
+                            className="hover:bg-blue-200 rounded-full p-0.5"
+                          >
+                            <X size={14} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Tag input field */}
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={handleTagInputKeyDown}
+                      onFocus={() => tagSuggestions.length > 0 && setShowSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      placeholder="Type and press Enter to add tags..."
+                      disabled={tags.length >= 10}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                    />
+
+                    {/* Tag suggestions dropdown */}
+                    {showSuggestions && tagSuggestions.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        {tagSuggestions.map((suggestion) => (
+                          <button
+                            key={suggestion.id}
+                            type="button"
+                            onClick={() => addTag(suggestion.name)}
+                            className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm flex items-center justify-between"
+                          >
+                            <span>#{suggestion.name}</span>
+                            <span className="text-xs text-gray-500">
+                              {suggestion.usage_count} posts
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <p className="text-xs text-gray-500 mt-1">
+                      Press Enter to add tags. Separate multiple tags with Enter.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Right side - Image upload */}
@@ -150,22 +274,20 @@ export default function MakeArt({ onClose }) {
                   </label>
                   
                   {/* Square image previews */}
-                  <div className="grid grid-cols-3 mb-3">
+                  <div className="grid grid-cols-3 gap-2 mb-3">
                     {filePreviews.map((preview, index) => (
-                      <div key={index} className="relative ">
+                      <div key={index} className="relative">
                         <img
                           src={preview.preview}
                           alt={`Preview ${index}`}
-                          className="w-30 h-30 object-cover rounded-lg border border-gray-200"
+                          className="w-full h-24 object-cover rounded-lg border border-gray-200"
                         />
                         <button
                           type="button"
                           onClick={() => removeFile(index)}
                           className="absolute top-1 right-1 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-70 transition"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
+                          <X size={14} />
                         </button>
                       </div>
                     ))}
@@ -195,7 +317,7 @@ export default function MakeArt({ onClose }) {
                 </div>
               </div>
 
-              {/* Community Guidelines - Cleaner version */}
+              {/* Community Guidelines */}
               <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                 <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Posting Guidelines</h3>
                 <ul className="text-xs text-gray-600 space-y-1.5">
@@ -209,7 +331,7 @@ export default function MakeArt({ onClose }) {
                   </li>
                   <li className="flex items-start">
                     <span className="text-gray-400 mr-1.5">•</span>
-                    <span>Consider sharing your creative process (sketches, WIP shots)</span>
+                    <span>Use relevant tags to help others discover your work</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-gray-400 mr-1.5">•</span>
@@ -220,11 +342,12 @@ export default function MakeArt({ onClose }) {
 
               <div className="flex justify-end gap-3 pt-2">
                 <button
-            type="button"
-            onClick={onClose} 
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-            Close
-          </button>
+                  type="button"
+                  onClick={onClose} 
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Close
+                </button>
                 <button
                   type="submit"
                   disabled={submitting}

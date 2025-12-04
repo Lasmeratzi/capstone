@@ -1,5 +1,7 @@
 const express = require("express");
 const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
 require("dotenv").config();
 
 const signupRoutes = require("./routes/signupRoutes");
@@ -22,13 +24,20 @@ const notificationsRoutes = require("./routes/notificationsRoutes");
 const verifyrequestRoutes = require("./routes/verifyrequestRoutes");
 const followRoutes = require("./routes/followRoutes");
 const postlikesRoutes = require("./routes/postlikesRoutes");
+const artworkpostlikesRoutes = require("./routes/artworkpostlikesRoutes");
+const artworkcommentsRoutes = require("./routes/artworkcommentsRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+const autoReplyRoutes = require("./routes/autoReplyRoutes");
+const tagsRoutes = require("./routes/tagsRoutes"); 
+const locationRoutes = require("./routes/locationRoutes");
+const searchRoutes = require("./routes/searchRoutes"); // NEW
 
-// 👉 Import the auction cron job
+// Auction cron job
 const checkAndEndAuctions = require("./jobs/auctionJobs");
 
 const app = express();
-
 const cors = require("cors");
+
 app.use(cors({
   origin: "http://localhost:5173",
   credentials: true
@@ -45,11 +54,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// 👉 Serve uploads with CORS
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// ✅ Serve uploads with CORS-safe headers
+// ✅ Serve all uploaded files (including watermarks) with open CORS
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders: (res, filePath) => {
+      // Allow frontend (Vite dev server) to access
+      res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+      res.setHeader("Cache-Control", "public, max-age=0");
+    },
+  })
+);
 
-
-
+// Routes
 app.use("/api", signupRoutes);
 app.use("/api", loginRoutes);
 app.use("/api", logoutRoutes);
@@ -70,6 +90,14 @@ app.use("/api/notifications", notificationsRoutes);
 app.use("/api", verifyrequestRoutes);
 app.use("/api/follow", followRoutes);
 app.use("/api", postlikesRoutes);
+app.use("/api/artwork-post-likes", artworkpostlikesRoutes);
+app.use("/api/artwork-comments", artworkcommentsRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/auto-replies", autoReplyRoutes);
+app.use("/api", tagsRoutes); 
+app.use("/api/locations", locationRoutes); 
+app.use("/api", searchRoutes); 
+
 
 app.get("/", (req, res) => {
   res.send("Welcome to the API! Explore Signup, Login, Logout, Profile, Post, Tag, Artwork, Auction, and Media APIs.");
@@ -77,7 +105,38 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-// 👉 Start the auction cron job before starting the server
+// Socket.IO setup
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+io.on("connection", (socket) => {
+  console.log("🔌 New client connected:", socket.id);
+
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    console.log(`👤 User ${userId} joined room`);
+  });
+
+  socket.on("sendMessage", (data) => {
+    const { senderId, recipientId, text } = data;
+    io.to(recipientId).emit("receiveMessage", {
+      senderId,
+      text,
+      created_at: new Date()
+    });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ Client disconnected:", socket.id);
+  });
+});
+
 checkAndEndAuctions();
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));

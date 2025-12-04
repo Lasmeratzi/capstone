@@ -9,14 +9,17 @@ import {
   UserIcon,
   ArrowRightOnRectangleIcon,
   TrophyIcon,
+  ChatBubbleLeftEllipsisIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/solid";
 
-
-const Sidebar = () => {
+const Sidebar = ({ onOpenCreate }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
   const userId = localStorage.getItem("id");
   const token = localStorage.getItem("token");
 
@@ -27,19 +30,43 @@ const Sidebar = () => {
       try {
         const response = await axios.get(
           `http://localhost:5000/api/notifications/${userId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        // Check if there is any unread notification
-        const unreadExists = response.data.some(notif => !notif.is_read);
-        setHasUnread(unreadExists);
+        setHasUnread(response.data.some((notif) => !notif.is_read));
       } catch (error) {
-        console.error("Failed to fetch notifications for sidebar:", error);
+        console.error("Failed to fetch notifications:", error);
       }
     };
 
-    if (userId && token) fetchNotifications();
+    if (userId && token) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [userId, token]);
+
+  useEffect(() => {
+    const fetchUnreadMessages = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/messages/following-inbox`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const totalUnread = response.data.reduce(
+          (sum, conv) => sum + (conv.unreadCount || 0),
+          0
+        );
+        setUnreadMessagesCount(totalUnread);
+      } catch (error) {
+        console.error("Failed to fetch unread messages:", error);
+      }
+    };
+
+    if (userId && token) {
+      fetchUnreadMessages();
+      const interval = setInterval(fetchUnreadMessages, 10000);
+      return () => clearInterval(interval);
+    }
   }, [userId, token]);
 
   const navItems = [
@@ -50,85 +77,127 @@ const Sidebar = () => {
       label: "Notifications",
       icon: BellIcon,
       path: "/notifications",
-      showBadge: hasUnread,
+      showBadge: hasUnread ? "dot" : null,
+    },
+    {
+      label: "Messages",
+      icon: ChatBubbleLeftEllipsisIcon,
+      path: "/inbox",
+      showBadge: unreadMessagesCount > 0 ? unreadMessagesCount : null,
     },
     { label: "Profile", icon: UserIcon, path: "/profile" },
     { label: "Auction Wins", icon: TrophyIcon, path: "/auctionwins" },
-
   ];
 
   return (
     <div
-      className="h-screen w-60 flex flex-col py-4 pl-14 shadow-md"
-      style={{ backgroundColor: "#00040d" }}
+      className="h-screen w-50 flex flex-col py-6 px-4 relative"
+      style={{
+        backgroundColor: "#0D1117",
+      }}
     >
-      {/* Logo */}
-      <div className="mb-5 flex items-center space-x-4">
-        <img
-          src="src/assets/images/illura.png"
-          alt="Illura Logo"
-          className="w-12 h-12"
-        />
-        <h1 className="text-2xl font-bold text-white custom-font">Illura</h1>
-      </div>
+      {/* Gradient Border */}
+      <div
+        className="absolute top-0 right-0 h-full w-1"
+        style={{
+          background: "linear-gradient(to bottom, #6366ff, #f9a1e3, #6366ff)",
+        }}
+      ></div>
 
-      {/* Navigation */}
-      <nav className="flex flex-col space-y-6 flex-grow">
-        {navItems.map(({ label, icon: Icon, path, showBadge }) => (
-          <button
-            key={label}
-            onClick={() => navigate(path)}
-            className={`relative flex items-center hover:text-[#5E66FF] ${
-              isActive(path) ? "text-[#5E66FF] font-bold" : "text-white"
-            } transition-colors duration-300`}
-          >
-            <Icon className="h-8 w-8" />
-            {showBadge && (
-              <span
-                className="absolute top-0 left-5 block h-3 w-3 rounded-full bg-red-600 ring-2 ring-black"
-                aria-label="Unread notifications"
-              />
-            )}
-            <span className="ml-4 text-lg">{label}</span>
-          </button>
-        ))}
-
-        {/* Chatbot with hover icon swap */}
-        <button
-          onClick={() => navigate("/chatbot")}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          className={`flex items-center hover:text-[#5E66FF] ${
-            isActive("/chatbot") ? "text-[#5E66FF] font-bold" : "text-white"
-          } transition-colors duration-300 ease-in-out`}
-        >
+      {/* Sidebar Content */}
+      <div className="flex flex-col flex-grow relative z-10">
+        {/* Logo */}
+        <div className="mb-10 flex items-center space-x-3 px-2">
           <img
-            src={isHovered || isActive("/chatbot") ? "/qwenhover.png" : "/qwenwhite.png"}
-            alt="AI Icon"
-            className="h-8 w-8 transition-opacity duration-300 ease-in-out"
+            src="src/assets/images/illura.png"
+            alt="Illura Logo"
+            className="w-10 h-10"
           />
-          <span className="ml-4 text-lg transition-colors duration-300 ease-in-out">
-            Chatbot
-          </span>
-        </button>
-      </nav>
+          <h1 className="text-2xl font-bold text-white custom-font tracking-tight">
+            Illura
+          </h1>
+        </div>
 
-      {/* Divider Line Above Logout (Limited Width) */}
-      <div className="w-fit border-t border-gray-600 mt-8 mb-4" />
+        {/* Navigation */}
+        <nav className="flex flex-col space-y-1 flex-grow">
+          {navItems.map(({ label, icon: Icon, path, showBadge }, index) => (
+            <React.Fragment key={label}>
+              <button
+                onClick={() => navigate(path)}
+                className={`relative flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200
+                  ${
+                    isActive(path)
+                      ? "bg-[#5E66FF] text-white shadow-md"
+                      : "text-gray-300 hover:bg-[#161B22] hover:text-[#5E66FF]"
+                  }`}
+              >
+                <Icon className="h-5 w-5" />
+                {showBadge &&
+                  (showBadge === "dot" ? (
+                    <span className="absolute top-1 left-5 block h-2 w-2 rounded-full bg-red-500" />
+                  ) : (
+                    <span className="absolute -top-2 left-5 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                      {showBadge}
+                    </span>
+                  ))}
+                <span className="ml-3">{label}</span>
+              </button>
 
-      {/* Logout */}
-      <div>
-        <button
-          onClick={() => {
-            localStorage.clear();
-            sessionStorage.clear();
-            navigate("/login");
-          }}
-          className="flex items-center text-white hover:text-red-500 transition-colors duration-300"
-        >
-          <ArrowRightOnRectangleIcon className="h-8 w-8" />
-          <span className="ml-4 text-lg">Logout</span>
-        </button>
+              {/* Create button under Home */}
+              {index === 0 && (
+                <button
+                  onClick={onOpenCreate}
+                  className="flex items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-[#161B22] hover:text-[#5E66FF] transition-colors duration-200"
+                >
+                  <PencilSquareIcon className="h-5 w-5" />
+                  <span className="ml-3">Create</span>
+                </button>
+              )}
+            </React.Fragment>
+          ))}
+
+          {/* Chatbot */}
+          <button
+            onClick={() => navigate("/chatbot")}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className={`flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200
+              ${
+                isActive("/chatbot")
+                  ? "bg-[#5E66FF] text-white shadow-md"
+                  : "text-gray-300 hover:bg-[#161B22] hover:text-[#5E66FF]"
+              }`}
+          >
+            <img
+              src={
+                isHovered && !isActive("/chatbot")
+                  ? "/qwenhover.png"
+                  : "/qwenwhite.png"
+              }
+              alt="AI Icon"
+              className="h-5 w-5"
+            />
+            <span className="ml-3">Chatbot</span>
+          </button>
+        </nav>
+
+        {/* Divider */}
+        <div className="border-t border-[#30363D] my-5" />
+
+        {/* Logout */}
+        <div className="px-2">
+          <button
+            onClick={() => {
+              localStorage.clear();
+              sessionStorage.clear();
+              navigate("/login");
+            }}
+            className="flex items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:text-red-500 hover:bg-[#161B22] transition-colors duration-200"
+          >
+            <ArrowRightOnRectangleIcon className="h-5 w-5" />
+            <span className="ml-3">Logout</span>
+          </button>
+        </div>
       </div>
     </div>
   );

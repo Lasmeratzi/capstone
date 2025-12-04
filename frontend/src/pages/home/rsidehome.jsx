@@ -5,7 +5,7 @@ const RSideHome = ({ user, accounts }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="w-95 py-6 pr-40">
+    <div className="w-95 py-6 pr-4">
       {/* Logged In User */}
       <div
         className="flex items-center mb-6 cursor-pointer"

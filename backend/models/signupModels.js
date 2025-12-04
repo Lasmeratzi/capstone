@@ -3,8 +3,8 @@ const db = require("../config/database");
 // Create a new user
 const createUser = (userData, callback) => {
   const sql = `
-    INSERT INTO users (fullname, username, email, password, bio, birthdate, pfp)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO users (fullname, username, email, password, bio, birthdate, pfp, watermark_path, cover_photo)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const params = [
     userData.fullname,
@@ -14,6 +14,8 @@ const createUser = (userData, callback) => {
     userData.bio,
     userData.birthdate,
     userData.pfp,
+    userData.watermark_path || null,
+    userData.cover_photo || null, // Add this line
   ];
   db.query(sql, params, callback);
 };
@@ -21,7 +23,7 @@ const createUser = (userData, callback) => {
 // Get all users
 const getAllUsers = (callback) => {
   const sql = `
-    SELECT id, fullname, username, email, bio, birthdate, pfp, account_status, commissions, created_at, updated_at
+    SELECT id, fullname, username, email, bio, birthdate, pfp, watermark_path, account_status, commissions, created_at, updated_at
     FROM users
   `;
   db.query(sql, callback);
@@ -29,8 +31,8 @@ const getAllUsers = (callback) => {
 
 const getUserById = (id, callback) => {
   const sql = `
-    SELECT id, fullname, username, bio, birthdate, pfp, account_status, commissions, 
-           verification_request_status, twitter_link, instagram_link, facebook_link
+    SELECT id, fullname, username, bio, birthdate, pfp, watermark_path, cover_photo, account_status, commissions,
+           twitter_link, instagram_link, facebook_link
     FROM users
     WHERE id = ?
   `;
@@ -40,7 +42,7 @@ const getUserById = (id, callback) => {
 const searchUsers = (query, callback) => {
   const sql = `
     SELECT 
-      u.id, u.fullname, u.username, u.bio, u.birthdate, u.pfp, u.account_status, u.commissions,
+      u.id, u.fullname, u.username, u.bio, u.birthdate, u.pfp, u.watermark_path, u.account_status, u.commissions,
       vr.status AS verification_request_status
     FROM users u
     LEFT JOIN verification_requests vr ON u.id = vr.user_id
@@ -49,7 +51,6 @@ const searchUsers = (query, callback) => {
   `;
   db.query(sql, [`%${query}%`, `%${query}%`], callback);
 };
-
 
 // Search for a user by email
 const searchUserByEmail = (email, callback) => {
@@ -76,18 +77,28 @@ const updateUser = (id, userData, callback) => {
     updates.push("pfp = ?");
     values.push(userData.pfp);
   }
+  if (userData.watermark_path !== undefined) {
+    updates.push("watermark_path = ?");
+    values.push(userData.watermark_path);
+  }
+  if (userData.location_id !== undefined) {
+    updates.push("location_id = ?");
+    values.push(userData.location_id);
+  }
+  if (userData.cover_photo !== undefined) {
+    updates.push("cover_photo = ?");
+    values.push(userData.cover_photo);
+  }
 
   if (updates.length === 0) {
-    return callback(null, { affectedRows: 0 }); // nothing to update
+    return callback(null, { affectedRows: 0 });
   }
 
   values.push(id);
 
   const sql = `UPDATE users SET ${updates.join(", ")} WHERE id = ?`;
-
   db.query(sql, values, callback);
 };
-
 
 
 // Update account status (active, on hold, banned)
@@ -99,7 +110,6 @@ const updateAccountStatus = (id, newAccountStatus, callback) => {
   `;
   db.query(sql, [newAccountStatus, id], callback);
 };
-
 
 // Update commissions field (open or closed)
 const updateCommissions = (id, commissions, callback) => {
@@ -123,18 +133,32 @@ const deleteUserById = (id, callback) => {
 const getUserWithVerificationStatusById = (id, callback) => {
   const sql = `
     SELECT 
-      u.id, u.fullname, u.username, u.bio, u.birthdate, u.pfp, u.account_status, u.commissions,
-      u.twitter_link, u.instagram_link, u.facebook_link,
+      u.id,
+      u.fullname,
+      u.username,
+      u.bio,
+      u.birthdate,
+      u.pfp,
+      u.watermark_path,
+      u.cover_photo, 
+      u.account_status,
+      u.commissions,
+      u.twitter_link,
+      u.instagram_link,
+      u.facebook_link,
+      u.location_id,
+      l.name AS location_name,
+      l.province AS location_province,
       vr.status AS verification_request_status
     FROM users u
     LEFT JOIN verification_requests vr ON u.id = vr.user_id
+    LEFT JOIN locations l ON u.location_id = l.id
     WHERE u.id = ?
     ORDER BY vr.request_date DESC
     LIMIT 1
   `;
   db.query(sql, [id], callback);
 };
-
 
 
 module.exports = {
