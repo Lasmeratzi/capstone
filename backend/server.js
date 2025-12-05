@@ -17,7 +17,6 @@ const artmediaRoutes = require("./routes/artmediaRoutes");
 const auctionRoutes = require("./routes/auctionRoutes");
 const auctionMediaRoutes = require("./routes/auctionmediaRoutes"); 
 const auctionbidsRoutes = require("./routes/auctionbidsRoutes");
-const walletRoutes = require("./routes/walletRoutes");
 const adminLoginRoutes = require("./routes/adminLoginRoutes");
 const adminLogoutRoutes = require("./routes/adminLogoutRoutes");
 const notificationsRoutes = require("./routes/notificationsRoutes");
@@ -30,10 +29,13 @@ const messageRoutes = require("./routes/messageRoutes");
 const autoReplyRoutes = require("./routes/autoReplyRoutes");
 const tagsRoutes = require("./routes/tagsRoutes"); 
 const locationRoutes = require("./routes/locationRoutes");
-const searchRoutes = require("./routes/searchRoutes"); // NEW
+const searchRoutes = require("./routes/searchRoutes"); 
+const illuraAccountRoutes = require("./routes/illuraAccountRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 // Auction cron job
 const checkAndEndAuctions = require("./jobs/auctionJobs");
+const activateScheduledAuctions = require("./jobs/auctionActivationJobs");
 
 const app = express();
 const cors = require("cors");
@@ -69,7 +71,24 @@ app.use(
   })
 );
 
-// Routes
+
+console.log("\n🟢 DEBUG: About to mount paymentRoutes...");
+console.log("🟢 paymentRoutes variable exists:", !!paymentRoutes);
+console.log("🟢 Type of paymentRoutes:", typeof paymentRoutes);
+console.log("🟢 Is function?", typeof paymentRoutes === 'function');
+console.log("🟢 Is object?", typeof paymentRoutes === 'object');
+
+// Remove this entire try-catch block or change it to:
+console.log("🟢 paymentRoutes will be mounted at /api/payments below");
+
+// Also mount at a different path to test
+console.log("\n🟢 Also mounting at /api/v2/payments for testing...");
+app.use("/api/v2/payments", paymentRoutes);
+console.log("✅ Test mount complete");
+
+
+
+app.use("/api/payments", paymentRoutes);
 app.use("/api", signupRoutes);
 app.use("/api", loginRoutes);
 app.use("/api", logoutRoutes);
@@ -83,7 +102,6 @@ app.use("/api", artmediaRoutes);
 app.use("/api", auctionRoutes);
 app.use("/api", auctionMediaRoutes); 
 app.use("/api/auctionbids", auctionbidsRoutes);
-app.use("/api", walletRoutes);
 app.use("/api", adminLoginRoutes); 
 app.use("/api", adminLogoutRoutes);
 app.use("/api/notifications", notificationsRoutes);
@@ -97,6 +115,9 @@ app.use("/api/auto-replies", autoReplyRoutes);
 app.use("/api", tagsRoutes); 
 app.use("/api/locations", locationRoutes); 
 app.use("/api", searchRoutes); 
+app.use("/api", illuraAccountRoutes);
+
+
 
 
 app.get("/", (req, res) => {
@@ -138,5 +159,31 @@ io.on("connection", (socket) => {
 });
 
 checkAndEndAuctions();
+activateScheduledAuctions();
 
-server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+// Add this right before server.listen:
+
+// Simple route debugging
+console.log("\n🟢 CHECKING PAYMENT ROUTE REGISTRATION:");
+
+// Check if paymentRoutes was loaded
+try {
+  const routes = require('./routes/paymentRoutes');
+  console.log("✅ paymentRoutes module loaded");
+} catch (error) {
+  console.log("❌ paymentRoutes module failed to load:", error.message);
+}
+
+// Test if route responds
+app.post("/api/debug-test", (req, res) => {
+  console.log("✅ /api/debug-test route hit!");
+  res.json({ message: "Debug route works" });
+});
+
+console.log("✅ /api/debug-test route registered");
+
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🔗 Test payment route: POST http://localhost:${PORT}/api/payments/confirm-auction-payment`);
+  console.log(`🔗 Debug route: POST http://localhost:${PORT}/api/debug-test`);
+});

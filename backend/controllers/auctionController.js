@@ -3,7 +3,7 @@ const notificationsModels = require("../models/notificationsModels");
 
 // Helper to send notification
 const sendNotification = (userId, message) => {
-  console.log("sendNotification triggered for:", userId, message); // ← ADD THIS
+  console.log("sendNotification triggered for:", userId, message);
 
   notificationsModels.createNotification(userId, message, (err) => {
     if (err) {
@@ -14,54 +14,183 @@ const sendNotification = (userId, message) => {
   });
 };
 
-
-// Create auction (Starts as 'pending')
+// Create auction (Starts as 'draft' - requires payment first)
 const createAuction = (req, res) => {
-  const { title, description, starting_price, end_time } = req.body;
+  const { title, description, starting_price, auction_start_time, auction_duration_hours } = req.body;
   const author_id = req.user.id;
-  const status = "pending";
+  
+  // DEBUG: Log what we're receiving
+  console.log("🟡 [CREATE AUCTION] Request body:", req.body);
+  console.log("🟡 [CREATE AUCTION] auction_start_time from form:", auction_start_time);
+  console.log("🟡 [CREATE AUCTION] auction_duration_hours:", auction_duration_hours);
 
-  if (!title || !description || !starting_price || !end_time) {
-    return res.status(400).json({ message: "All fields are required." });
+  // UPDATED: Status starts as 'draft', no payment_status or payment_amount
+  const status = "draft";
+  const payment_id = null; // No payment ID initially
+
+  if (!title || !description || !starting_price || !auction_start_time) {
+    console.log("❌ Missing fields:", { title, description, starting_price, auction_start_time });
+    return res.status(400).json({ 
+      message: "Title, description, starting price, and auction start time are required." 
+    });
   }
 
-  const current_price = starting_price;
+  // Validate auction start time is in the future
+  const startTime = new Date(auction_start_time);
+  const now = new Date();
+  
+  console.log("🟡 Start time parsed:", startTime);
+  console.log("🟡 Current time:", now);
+  
+  if (startTime <= now) {
+    return res.status(400).json({ 
+      message: "Auction start time must be in the future." 
+    });
+  }
 
+  // Validate duration (minimum 0.25 hours = 15 minutes)
+  const durationHours = auction_duration_hours || 24;
+if (durationHours < 0.0833) {  // Changed from 0.25 to 0.0833
+  return res.status(400).json({ 
+    message: "Minimum auction duration is 5 minutes (0.0833 hours)." 
+  });
+}
+  if (durationHours > 720) {
+  return res.status(400).json({ 
+    message: "Maximum auction duration is 720 hours (30 days)." 
+  });
+}
+
+  // Calculate end_time based on start_time + duration
+  const endTime = new Date(startTime.getTime() + (durationHours * 60 * 60 * 1000));
+
+  console.log("🟡 Calculated end time:", endTime);
+  console.log("🟡 Duration hours:", durationHours);
+
+  // UPDATED: Remove payment_status and payment_amount from auctionData
   const auctionData = {
     author_id,
     title,
     description,
     starting_price,
-    current_price,
-    end_time,
-    status,
+    current_price: starting_price,
+    end_time: endTime, // This is when auction ends (start_time + duration)
+    auction_start_time: startTime, // This is when auction starts
+    auction_duration_hours: durationHours,
+    status, // Should be "draft"
+    payment_id // Will be null initially
   };
 
-  auctionModels.createAuction(auctionData, (err, result) => {
-    if (err)
-      return res.status(500).json({ message: "Database error.", error: err });
+  console.log("🟡 Final auction data:", auctionData);
 
-    // Notify user about auction pending approval
-    sendNotification(author_id, `Your auction "${title}" has been created and is pending approval.`);
+  auctionModels.createAuction(auctionData, (err, result) => {
+    if (err) {
+      console.error("❌ Error creating auction:", err);
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    const auctionId = result.insertId;
+
+    console.log("✅ Auction created with ID:", auctionId);
+    console.log("✅ Auction status:", status);
+
+    // Notify user to make payment
+    sendNotification(author_id, 
+      `Your auction "${title}" is created. Please pay ₱100 to submit it for approval. Check your auctions to proceed with payment.`
+    );
 
     res.status(201).json({
-      message: "Auction created successfully.",
-      auctionId: result.insertId,
+      message: "Auction created successfully. Please pay ₱100 to submit for approval.",
+      auctionId: auctionId,
+      paymentRequired: true,
+      amount: 100.00, // Fixed amount for auction creation
+      auctionStatus: status, // This is "draft"
+      nextStep: "Make payment to proceed"
+    });
+  });
+};
+
+const getAuctionsByUserId = (req, res) => {
+  const { userId } = req.params;
+
+  console.log("🟡 Fetching ALL auctions for user ID:", userId);
+
+  auctionModels.getAuctionsByAuthorId(userId, (err, results) => {
+    if (err) {
+      console.error("Error fetching user auctions:", err);
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    console.log("✅ Found", results.length, "auctions for user", userId);
+    res.status(200).json(results);
+  });
+};
+
+
+// Activate scheduled auctions (to be called by cron job)
+const activateScheduledAuctions = () => {
+  console.log("🕐 Checking for scheduled auctions to activate...");
+
+  auctionModels.getAuctionsToActivate((err, results) => {
+    if (err) {
+      console.error("Error fetching auctions to activate:", err);
+      return;
+    }
+
+    if (results.length === 0) {
+      console.log("No scheduled auctions to activate at this time.");
+      return;
+    }
+
+    results.forEach((auction) => {
+      console.log(`⏰ Activating scheduled auction ID: ${auction.id} - "${auction.title}"`);
+      
+      auctionModels.updateAuctionStatus(auction.id, "active", (err) => {
+        if (err) {
+          console.error(`Failed to activate auction ${auction.id}:`, err);
+          return;
+        }
+
+        console.log(`✅ Auction ${auction.id} activated and is now live!`);
+        
+        // Notify the auction creator
+        sendNotification(
+          auction.author_id,
+          `Your auction "${auction.title}" is now LIVE! The bidding has started.`
+        );
+
+        // Notify followers (you can implement this later)
+        console.log(`📢 Auction ${auction.id} is now active and visible to all users.`);
+      });
     });
   });
 };
 
 // Admin-only: Get all auctions (with role control)
 const getAllAuctions = (req, res) => {
+  console.log("🟡 [CONTROLLER] Fetching all auctions for admin...");
+  console.log("🟡 Admin role:", req.admin ? req.admin.role : "No admin");
+  
   auctionModels.getAllAuctions((err, results) => {
-    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    if (err) {
+      console.error("❌ [CONTROLLER] Database error:", err);
+      console.error("❌ [CONTROLLER] Full error object:", JSON.stringify(err, null, 2));
+      return res.status(500).json({ 
+        message: "Database error in getAllAuctions", 
+        error: err.message,
+        sqlError: err.sqlMessage,
+        code: err.code
+      });
+    }
 
-    console.log("Admin Role:", req.admin ? req.admin.role : "No admin role detected");
-
+    console.log("✅ [CONTROLLER] Query successful, returning", results.length, "auctions");
+    
+    // For super_admin, return all auctions
     if (req.admin && req.admin.role === "super_admin") {
       return res.status(200).json(results);
     }
 
+    // For regular admin, filter out sensitive data
     const filteredResults = results.filter(
       (auction) =>
         auction.status === "approved" ||
@@ -69,6 +198,7 @@ const getAllAuctions = (req, res) => {
         auction.status === "rejected"
     );
 
+    console.log("✅ [CONTROLLER] Filtered to", filteredResults.length, "auctions for admin");
     res.status(200).json(filteredResults);
   });
 };
@@ -157,6 +287,243 @@ const getUserAuctions = (req, res) => {
   });
 };
 
+// Get auctions sold by logged-in user (Seller's perspective)
+const getSoldAuctions = (req, res) => {
+  const sellerId = req.user.id;
+  console.log("🟡 Fetching sold auctions for seller:", sellerId);
+
+  auctionModels.getAuctionsSoldByUser(sellerId, (err, results) => {
+    if (err) {
+      console.error("Error fetching sold auctions:", err);
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    console.log("✅ Found sold auctions:", results.length);
+    res.status(200).json(results);
+  });
+};
+
+// Get auctions won by the logged-in user
+const getAuctionsWonByUser = (req, res) => {
+  const userId = req.user.id;
+  console.log("🟡 Fetching auctions won by user:", userId);
+
+  auctionModels.getAuctionsWonByUser(userId, (err, results) => {
+    if (err) {
+      console.error("Error fetching won auctions:", err);
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    console.log("✅ Found won auctions:", results.length);
+    res.status(200).json(results);
+  });
+};
+
+// Buyer confirms payment to admin (GCash)
+const confirmPayment = (req, res) => {
+  const { auctionId } = req.params;
+  const buyerId = req.user.id;
+
+  // First, verify that this user is the actual winner of this auction
+  auctionModels.getAuctionById(auctionId, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Auction not found." });
+    }
+
+    const auction = results[0];
+
+    // Check if the current user is the winner
+    if (auction.winner_id !== buyerId) {
+      return res.status(403).json({ message: "You are not the winner of this auction." });
+    }
+
+    // Check if auction is in the right status for payment
+    if (auction.escrow_status !== 'pending_payment') {
+      return res.status(400).json({ message: "Payment cannot be confirmed at this time." });
+    }
+
+    // Update escrow status to 'paid'
+    auctionModels.updateEscrowStatus(auctionId, 'paid', (err) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+
+      // Notify the seller that payment has been made
+      sendNotification(
+        auction.author_id,
+        `Payment has been made for your auction "${auction.title}". Please wait for the buyer to confirm receipt.`
+      );
+
+      // Notify admin (you) that payment is confirmed
+      console.log(`🟡 ADMIN ALERT: Payment confirmed for auction ${auctionId} by user ${buyerId}`);
+
+      res.status(200).json({ message: "Payment confirmed successfully. Please wait for the seller to ship your item." });
+    });
+  });
+};
+
+// Buyer confirms they received the item
+const confirmItemReceived = (req, res) => {
+  const { auctionId } = req.params;
+  const buyerId = req.user.id;
+
+  // Verify that this user is the winner
+  auctionModels.getAuctionById(auctionId, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Auction not found." });
+    }
+
+    const auction = results[0];
+
+    // Check if the current user is the winner
+    if (auction.winner_id !== buyerId) {
+      return res.status(403).json({ message: "You are not the winner of this auction." });
+    }
+
+    // Check if auction is in 'paid' status
+    if (auction.escrow_status !== 'paid') {
+      return res.status(400).json({ message: "Item receipt cannot be confirmed at this time." });
+    }
+
+    // Update escrow status to 'item_received'
+    auctionModels.updateEscrowStatus(auctionId, 'item_received', (err) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+
+      // Notify the seller that item was received
+      sendNotification(
+        auction.author_id,
+        `The buyer has confirmed receiving "${auction.title}". Payment will be released to you shortly.`
+      );
+
+      // Notify admin (you) to release payment to seller
+      console.log(`🟢 ADMIN ALERT: Item received confirmed for auction ${auctionId}. Release payment to seller ${auction.author_id}`);
+
+      res.status(200).json({ message: "Item receipt confirmed. Payment will be released to the seller soon." });
+    });
+  });
+};
+
+// Admin releases payment to seller (manual trigger for now)
+const releasePaymentToSeller = (req, res) => {
+  const { auctionId } = req.params;
+
+  if (!req.admin || req.admin.role !== "super_admin") {
+    return res.status(403).json({ message: "Forbidden: Admin privileges required." });
+  }
+
+  auctionModels.getAuctionById(auctionId, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Auction not found." });
+    }
+
+    const auction = results[0];
+
+    // Check if item has been received by buyer
+    if (auction.escrow_status !== 'item_received') {
+      return res.status(400).json({ message: "Cannot release payment until buyer confirms item receipt." });
+    }
+
+    // Update escrow status to 'completed'
+    auctionModels.updateEscrowStatus(auctionId, 'completed', (err) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+
+      // Notify seller that payment has been released
+      sendNotification(
+        auction.author_id,
+        `Payment of ₱${auction.final_price} for your auction "${auction.title}" has been released to your GCash account.`
+      );
+
+      // Notify buyer that transaction is complete
+      sendNotification(
+        auction.winner_id,
+        `Transaction completed for "${auction.title}". Thank you for using Illura!`
+      );
+
+      res.status(200).json({ message: "Payment released to seller successfully." });
+    });
+  });
+};
+
+// Admin rejects payment claim
+const rejectPayment = (req, res) => {
+  const { auctionId } = req.params;
+
+  if (!req.admin || req.admin.role !== "super_admin") {
+    return res.status(403).json({ message: "Forbidden: Admin privileges required." });
+  }
+
+  auctionModels.getAuctionById(auctionId, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Auction not found." });
+    }
+
+    const auction = results[0];
+
+    // Update escrow status to 'payment_rejected'
+    auctionModels.updateEscrowStatus(auctionId, 'payment_rejected', (err) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+
+      // Notify the buyer
+      sendNotification(
+        auction.winner_id,
+        `Payment for auction "${auction.title}" was not confirmed. Please check if payment was sent correctly or contact support.`
+      );
+
+      res.status(200).json({ message: "Payment rejected. Buyer has been notified." });
+    });
+  });
+};
+
+// Admin confirms payment manually
+const adminConfirmPayment = (req, res) => {
+  const { auctionId } = req.params;
+
+  if (!req.admin || req.admin.role !== "super_admin") {
+    return res.status(403).json({ message: "Forbidden: Admin privileges required." });
+  }
+
+  auctionModels.updateEscrowStatus(auctionId, 'paid', (err) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    // Notify seller
+    auctionModels.getAuctionById(auctionId, (err, results) => {
+      if (!err && results.length > 0) {
+        const auction = results[0];
+        sendNotification(
+          auction.author_id,
+          `Payment for your auction "${auction.title}" has been confirmed by Illura. Please ship the item.`
+        );
+      }
+    });
+
+    res.status(200).json({ message: "Payment confirmed manually." });
+  });
+};
+
 // Automatically end auctions when 'end_time' is reached
 const checkAndEndAuctions = () => {
   console.log("🕑 Checking for expired auctions...");
@@ -193,19 +560,19 @@ const checkAndEndAuctions = () => {
 
             if (bids.length > 0) {
               const topBid = bids[0];
-              console.log(`🏆 Top bid: $${topBid.amount} by @${topBid.username}`);
+              console.log(`🏆 Top bid: ₱${topBid.bid_amount} by @${topBid.username}`);
 
               // Notify auction author
               sendNotification(
                 auction.author_id,
-                `Your auction "${auction.title}" has ended. Highest bidder: @${topBid.username} with $${topBid.amount}.`
+                `Your auction "${auction.title}" has ended. Highest bidder: @${topBid.username} with ₱${topBid.bid_amount}.`
               );
 
               // Notify winning bidder
               sendNotification(
-                topBid.bidder_id, // not topBid.user_id
-              `You won the auction for "${auction.title}" with a bid of ₱${topBid.bid_amount}.`
-);
+                topBid.bidder_id,
+                `You won the auction for "${auction.title}" with a bid of ₱${topBid.bid_amount}. Check your Auction Wins section to proceed with payment.`
+              );
             } else {
               // No bids placed
               sendNotification(
@@ -222,11 +589,20 @@ const checkAndEndAuctions = () => {
 
 module.exports = {
   createAuction,
-  getAllAuctions,        // Admin-only
-  getAllAuctionsPublic,  // User/Public
+  getAllAuctions,
+  getAllAuctionsPublic,
   getAuctionById,
   updateAuctionStatus,
   deleteAuction,
   getUserAuctions,
+  getSoldAuctions,
+  getAuctionsWonByUser,
+  confirmPayment,
+  confirmItemReceived,
+  releasePaymentToSeller,
+  rejectPayment,
+  adminConfirmPayment,
   checkAndEndAuctions,
+  activateScheduledAuctions,
+  getAuctionsByUserId,
 };
