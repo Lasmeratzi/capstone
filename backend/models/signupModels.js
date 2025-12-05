@@ -32,7 +32,7 @@ const getAllUsers = (callback) => {
 const getUserById = (id, callback) => {
   const sql = `
     SELECT id, fullname, username, bio, birthdate, pfp, watermark_path, cover_photo, account_status, commissions,
-           twitter_link, instagram_link, facebook_link
+           twitter_link, instagram_link, facebook_link, gcash_number
     FROM users
     WHERE id = ?
   `;
@@ -88,6 +88,18 @@ const updateUser = (id, userData, callback) => {
   if (userData.cover_photo !== undefined) {
     updates.push("cover_photo = ?");
     values.push(userData.cover_photo);
+  }
+  if (userData.twitter_link !== undefined) {
+    updates.push("twitter_link = ?");
+    values.push(userData.twitter_link);
+  }
+  if (userData.instagram_link !== undefined) {
+    updates.push("instagram_link = ?");
+    values.push(userData.instagram_link);
+  }
+  if (userData.facebook_link !== undefined) {
+    updates.push("facebook_link = ?");
+    values.push(userData.facebook_link);
   }
 
   if (updates.length === 0) {
@@ -146,6 +158,7 @@ const getUserWithVerificationStatusById = (id, callback) => {
       u.twitter_link,
       u.instagram_link,
       u.facebook_link,
+      u.gcash_number,
       u.location_id,
       l.name AS location_name,
       l.province AS location_province,
@@ -160,6 +173,16 @@ const getUserWithVerificationStatusById = (id, callback) => {
   db.query(sql, [id], callback);
 };
 
+// Update GCash number
+const updateGcashNumber = (id, gcash_number, callback) => {
+  const sql = `
+    UPDATE users
+    SET gcash_number = ?
+    WHERE id = ?
+  `;
+  db.query(sql, [gcash_number || null, id], callback);
+};
+
 
 module.exports = {
   createUser,
@@ -172,4 +195,5 @@ module.exports = {
   updateCommissions,
   deleteUserById,
   getUserWithVerificationStatusById,
+  updateGcashNumber,
 };

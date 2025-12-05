@@ -30,6 +30,7 @@ const getUserProfile = (req, res) => {
       location_id: user.location_id,
       location_name: user.location_name,
       location_province: user.location_province,
+      gcash_number: user.gcash_number || null,
     });
   });
 };
@@ -62,6 +63,7 @@ const getUserProfileById = (req, res) => {
       location_id: user.location_id,
       location_name: user.location_name,
       location_province: user.location_province,
+      gcash_number: user.gcash_number || null,
     });
   });
 };
@@ -95,11 +97,12 @@ const searchUsers = (req, res) => {
 };
 
 // Update profile
+// Update profile
 const updateProfile = (req, res) => {
   const userId = req.user.id;
-  const { username, bio, pfp, location_id } = req.body;
+  const { username, bio, pfp, location_id, twitter_link, instagram_link, facebook_link } = req.body; // ADDED social media fields
 
-  if (!username && !bio && !pfp && !location_id) {
+  if (!username && !bio && !pfp && !location_id && !twitter_link && !instagram_link && !facebook_link) {
     return res.status(400).json({ message: "At least one field is required for update." });
   }
 
@@ -110,7 +113,7 @@ const updateProfile = (req, res) => {
 
   signupModels.updateUser(
     userId,
-    { username, bio, pfp, location_id },
+    { username, bio, pfp, location_id, twitter_link, instagram_link, facebook_link }, // ADDED social media fields
     (err) => {
       if (err) {
         console.error("Database error updating profile:", err);
@@ -191,6 +194,25 @@ const deleteWatermark = (req, res) => {
   });
 };
 
+// ✅ Update GCash number
+const updateGcashNumber = (req, res) => {
+  const userId = req.user.id;
+  const { gcash_number } = req.body;
+
+  // Check if it's a valid GCash number (09XXXXXXXXX)
+  if (gcash_number && !/^09\d{9}$/.test(gcash_number)) {
+    return res.status(400).json({ message: "Invalid GCash number. Must be 11 digits starting with 09." });
+  }
+
+  signupModels.updateGcashNumber(userId, gcash_number, (err) => {
+    if (err) return res.status(500).json({ message: "Database error.", error: err });
+    
+    res.status(200).json({ 
+      message: "GCash number updated successfully!",
+      gcash_number: gcash_number || null
+    });
+  });
+};
 
 module.exports = {
   getUserProfile,
@@ -200,4 +222,5 @@ module.exports = {
   updateProfile,
   uploadWatermark,
   deleteWatermark,
+  updateGcashNumber,
 };
