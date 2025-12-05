@@ -15,7 +15,6 @@ import {
   PhotoIcon,
   Squares2X2Icon,
   TagIcon,
-  BoltIcon,
   CheckIcon,
   XMarkIcon,
   ShieldCheckIcon,
@@ -23,270 +22,106 @@ import {
   CloudArrowUpIcon,
   MapPinIcon,
   ChevronDownIcon, 
-  ExclamationCircleIcon, 
   CameraIcon,
 } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
-import Wallet from "../wallet/wallet";
 import { FaInstagram, FaFacebook } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { FaPaintBrush, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import FollowStats from "../follow/followstats";
 
+// Custom hooks
+import { useProfile } from "../../hooks/useProfile";
+import { useWatermark } from "../../hooks/useWatermark";
+import { useCoverPhoto } from "../../hooks/useCoverPhoto";
+
+// Components
+import ProfileHeader from "../../components/profile/ProfileHeader";
+import ProfileInfo from "../../components/profile/ProfileInfo";
+import ProfilePictureSection from "../../components/profile/ProfilePictureSection";
+import ActionButtons from "../../components/profile/ActionButtons";
+import WatermarkSection from "../../components/profile/WatermarkSection";
+import SocialMediaModal from "../../components/modals/socialmediamodal"; // NEW IMPORT
+
 const BASE_URL = "http://localhost:5000";
 
-const VerifiedBadge = () => (
-  <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500">
-    <CheckIcon className="w-3 h-3 text-white" />
-  </div>
-);
-
-// Protected Image Component with anti-download features
-const ProtectedWatermarkImage = ({ src, alt, className, onError }) => {
-  const handleContextMenu = (e) => {
-    e.preventDefault();
-  };
-
-  const handleDragStart = (e) => {
-    e.preventDefault();
-  };
-
-  const handleSelectStart = (e) => {
-    e.preventDefault();
-  };
-
-  return (
-    <div className="relative inline-block">
-      <img
-        src={src}
-        alt={alt}
-        className={className}
-        onError={onError}
-        onContextMenu={handleContextMenu}
-        onDragStart={handleDragStart}
-        onSelect={handleSelectStart}
-        style={{
-          pointerEvents: 'none',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          MozUserSelect: 'none',
-          msUserSelect: 'none',
-        }}
-      />
-      {/* Invisible overlay to block interactions */}
-      <div 
-        className="absolute inset-0 cursor-not-allowed"
-        style={{
-          pointerEvents: 'auto'
-        }}
-        onContextMenu={handleContextMenu}
-        onDragStart={handleDragStart}
-      />
-    </div>
-  );
-};
-
-const Profile = () => {
-  const [user, setUser] = useState(null);
-  const [commissions, setCommissions] = useState("closed");
-  const [portfolioItems, setPortfolioItems] = useState([]);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("posts");
-  const [isEditing, setIsEditing] = useState(false);
-  const [editUsername, setEditUsername] = useState("");
-  const [editBio, setEditBio] = useState("");
-  const [editPfp, setEditPfp] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [locations, setLocations] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [locationError, setLocationError] = useState(null);
-  const [coverPhoto, setCoverPhoto] = useState(null);
-  const [coverPhotoFile, setCoverPhotoFile] = useState(null);
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState(null);
-  const [isCoverUploading, setIsCoverUploading] = useState(false);
-  const [coverImageLoadError, setCoverImageLoadError] = useState(false);
-
-  // Watermark state
-  const [watermark, setWatermark] = useState(null);
-  const [watermarkFile, setWatermarkFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [imageLoadError, setImageLoadError] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showCoverDeleteConfirm, setShowCoverDeleteConfirm] = useState(false);
-
-  useEffect(() => {
-    fetchProfile();
-    fetchPortfolio();
-    fetchLocations();
-
-    
-    // Add global event listeners to prevent right-click and drag
-    const preventDefault = (e) => {
-      if (e.target.closest('.watermark-protected')) {
-        e.preventDefault();
-        return false;
-      }
-    };
-
-    document.addEventListener('contextmenu', preventDefault);
-    document.addEventListener('dragstart', preventDefault);
-    
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      document.removeEventListener('contextmenu', preventDefault);
-      document.removeEventListener('dragstart', preventDefault);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Fetch profile (logged-in user)
-const fetchProfile = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    const userResponse = await axios.get(`${BASE_URL}/api/profile`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    
-    console.log("Full user response:", userResponse.data);
-    console.log("Location data:", {
-      location_id: userResponse.data.location_id,
-      location_name: userResponse.data.location_name, 
-      location_province: userResponse.data.location_province
-    });
-    
-    const userData = userResponse.data;
-    const wm = userData.watermark_path ?? userData.watermark ?? null;
-    
-    setUser(userData);
-    setSelectedLocation(userData.location_id || null);
-    setCommissions(userData.commissions);
-    setWatermark(wm);
-    setCoverPhoto(userData.cover_photo || null);
-    setImageLoadError(false);
-  } catch (error) {
-    console.error("Failed to fetch profile:", error);
-  }
-};
-  
-
-  const coverPhotoUrl = (filename) => {
+// URL functions that need BASE_URL
+const coverPhotoUrl = (filename) => {
   if (!filename) return null;
   const timestamp = new Date().getTime();
   return `${BASE_URL}/uploads/cover_photos/${encodeURIComponent(filename)}?t=${timestamp}`;
 };
 
-const handleCoverPhotoUpload = async () => {
-  if (!coverPhotoFile) return;
-  setIsCoverUploading(true);
-  const token = localStorage.getItem("token");
-  const formData = new FormData();
-  formData.append("cover_photo", coverPhotoFile);
-
-  try {
-    const resp = await axios.post(`${BASE_URL}/api/profile/cover-photo`, formData, {
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
-      },
-    });
-    setCoverPhoto(resp.data.cover_photo);
-    if (coverPreviewUrl) {
-      URL.revokeObjectURL(coverPreviewUrl);
-      setCoverPreviewUrl(null);
-    }
-    setCoverPhotoFile(null);
-    await fetchProfile();
-  } catch (error) {
-    console.error("Failed to upload cover photo:", error);
-    
-    // Show user-friendly error message
-    if (error.response?.status === 400 && error.response?.data?.message?.includes('File too large')) {
-      alert('File is too large. Please choose an image smaller than 10MB.');
-    } else if (error.response?.status === 400) {
-      alert(error.response.data.message || 'Invalid file. Please try again.');
-    } else if (error.response?.status === 500) {
-      alert('Server error. Please try again.');
-    } else {
-      alert('Failed to upload cover photo. Please try again.');
-    }
-  } finally {
-    setIsCoverUploading(false);
-  }
+const watermarkUrl = (filename) => {
+  if (!filename) return null;
+  const timestamp = new Date().getTime();
+  return `${BASE_URL}/uploads/watermarks/${encodeURIComponent(filename)}?t=${timestamp}`;
 };
 
-const handleCoverPhotoSelect = (file) => {
-  if (!file) return;
-  
-  // Check file size (10MB limit)
-  if (file.size > 10 * 1024 * 1024) {
-    alert('File is too large. Please choose an image smaller than 10MB.');
-    return;
-  }
-  
-  // Check file type
-  if (!file.type.startsWith('image/')) {
-    alert('Please select a valid image file.');
-    return;
-  }
-  
-  setCoverPhotoFile(file);
-  if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
-  const url = URL.createObjectURL(file);
-  setCoverPreviewUrl(url);
-  setCoverImageLoadError(false);
-};
+const Profile = () => {
+  // Use custom hooks
+  const {
+    user,
+    isLoading,
+    locations,
+    selectedLocation,
+    commissions,
+    watermark: profileWatermark,
+    coverPhoto: profileCoverPhoto,
+    setSelectedLocation,
+    updateProfile,
+    updateCommissions,
+    refreshProfile,
+    setWatermarkState,
+    setCoverPhotoState
+  } = useProfile();
 
-const handleCoverCancelSelection = () => {
-  if (coverPreviewUrl) {
-    URL.revokeObjectURL(coverPreviewUrl);
-    setCoverPreviewUrl(null);
-  }
-  setCoverPhotoFile(null);
-};
+  const {
+    watermark,
+    watermarkFile,
+    previewUrl,
+    isUploading,
+    isDeleting,
+    imageLoadError,
+    setImageLoadError,
+    handleWatermarkSelect,
+    handleWatermarkUpload,
+    handleCancelSelection,
+    handleDeleteWatermark,
+  } = useWatermark(refreshProfile, profileWatermark, setWatermarkState);
 
-// Updated handleRemoveCoverPhoto with fallback
-const handleRemoveCoverPhoto = async () => {
-  const token = localStorage.getItem("token");
-  try {
-    // Try the DELETE endpoint first
-    const response = await axios.delete(`${BASE_URL}/api/profile/cover-photo`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("Cover photo removal response:", response.data);
-    setCoverPhoto(null);
-    await fetchProfile();
-  } catch (error) {
-    console.error("Failed to remove cover photo:", error);
-    
-    // If DELETE fails with 400 (no cover photo), just update locally
-    if (error.response?.status === 400) {
-      console.log("No cover photo found in database, updating locally...");
-      setCoverPhoto(null);
-      await fetchProfile();
-    } else {
-      // For other errors, try using PATCH as fallback
-      try {
-        console.log("Trying PATCH method to remove cover photo...");
-        await axios.patch(
-          `${BASE_URL}/api/profile`,
-          { cover_photo: null },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setCoverPhoto(null);
-        await fetchProfile();
-      } catch (patchError) {
-        console.error("Fallback method also failed:", patchError);
-        // Last resort: just update local state
-        setCoverPhoto(null);
-      }
-    }
-  }
-  setShowCoverDeleteConfirm(false);
-};
+  const {
+    coverPhoto,
+    coverPhotoFile,
+    coverPreviewUrl,
+    isCoverUploading,
+    coverImageLoadError,
+    setCoverImageLoadError,
+    handleCoverPhotoSelect,
+    handleCoverPhotoUpload,
+    handleCoverCancelSelection,
+    handleRemoveCoverPhoto,
+  } = useCoverPhoto(refreshProfile, profileCoverPhoto, setCoverPhotoState);
 
+  // Local state only for UI interactions
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [isSocialMediaModalOpen, setIsSocialMediaModalOpen] = useState(false); // NEW STATE
+  const [isSavingSocialMedia, setIsSavingSocialMedia] = useState(false); // NEW STATE
+  const [activeTab, setActiveTab] = useState("posts");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editUsername, setEditUsername] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editPfp, setEditPfp] = useState(null);
+  const [portfolioItems, setPortfolioItems] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCoverDeleteConfirm, setShowCoverDeleteConfirm] = useState(false);
+  const [gcashNumber, setGcashNumber] = useState("");
+  const [isEditingGcash, setIsEditingGcash] = useState(false);
+  const [isSavingGcash, setIsSavingGcash] = useState(false);
+  const [gcashError, setGcashError] = useState("");
+
+  // Fetch portfolio
   const fetchPortfolio = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -299,41 +134,7 @@ const handleRemoveCoverPhoto = async () => {
     }
   };
 
-const fetchLocations = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await axios.get(`${BASE_URL}/api/locations`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("Locations response:", res.data);
-    // Handle both response formats
-    const locationsData = Array.isArray(res.data) ? res.data : res.data.locations || [];
-    setLocations(locationsData);
-    setLocationError(null);
-  } catch (error) {
-    console.error("Failed to fetch locations:", error);
-    setLocationError("Failed to load locations");
-  }
-};
-
-
-
-  const toggleCommissions = async () => {
-    const token = localStorage.getItem("token");
-    const newStatus = commissions === "closed" ? "open" : "closed";
-
-    try {
-      await axios.patch(
-        `${BASE_URL}/api/profile/commissions`,
-        { commissions: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setCommissions(newStatus);
-    } catch (error) {
-      console.error("Failed to update commissions status:", error);
-    }
-  };
-
+  // Event handlers
   const toggleUploadModal = () => setIsUploadModalOpen(!isUploadModalOpen);
   const toggleVerifyModal = () => setIsVerifyModalOpen(!isVerifyModalOpen);
 
@@ -350,24 +151,53 @@ const fetchLocations = async () => {
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    const token = localStorage.getItem("token");
-    const formData = new FormData();
-    formData.append("username", editUsername);
-    formData.append("bio", editBio);
-    if (selectedLocation) formData.append("location_id", selectedLocation);
-    if (editPfp) formData.append("pfp", editPfp);
-
-    try {
-      await axios.patch(`${BASE_URL}/api/profile`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      await fetchProfile();
+    const success = await updateProfile({
+      username: editUsername,
+      bio: editBio,
+      location_id: selectedLocation,
+      pfp: editPfp
+      // Social media links removed from here - handled separately
+    });
+    if (success) {
       setIsEditing(false);
+    }
+  };
+
+  // NEW: Handler for saving social media links
+  const handleSaveSocialMedia = async (socialMediaData) => {
+  setIsSavingSocialMedia(true);
+  const success = await updateProfile(socialMediaData);
+  if (success) {
+    setIsSocialMediaModalOpen(false);
+    // ADD THIS: Refresh profile to update local state
+    await refreshProfile();
+  }
+  setIsSavingSocialMedia(false);
+};
+
+  const handleSaveGcash = async () => {
+    if (gcashNumber && !/^09\d{9}$/.test(gcashNumber)) {
+      setGcashError("Invalid GCash number. Must be 11 digits starting with 09.");
+      return;
+    }
+
+    setIsSavingGcash(true);
+    const token = localStorage.getItem("token");
+    
+    try {
+      await axios.patch(
+        `${BASE_URL}/api/profile/gcash`,
+        { gcash_number: gcashNumber || null },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      await refreshProfile();
+      setIsEditingGcash(false);
+      setGcashError("");
     } catch (error) {
-      console.error("Failed to update profile:", error);
+      setGcashError(error.response?.data?.message || "Failed to update GCash.");
     } finally {
-      setIsLoading(false);
+      setIsSavingGcash(false);
     }
   };
 
@@ -378,86 +208,33 @@ const fetchLocations = async () => {
     }
   };
 
-  // Watermark file selection
-  const handleWatermarkSelect = (file) => {
-    if (!file) return;
-    setWatermarkFile(file);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-    setImageLoadError(false);
+  const toggleCommissions = async () => {
+    const newStatus = commissions === "closed" ? "open" : "closed";
+    await updateCommissions(newStatus);
   };
 
-  // Upload watermark to server
-  const handleWatermarkUpload = async () => {
-    if (!watermarkFile) return;
-    setIsUploading(true);
-    const token = localStorage.getItem("token");
-    const formData = new FormData();
-    formData.append("watermark", watermarkFile);
-
-    try {
-      const resp = await axios.post(`${BASE_URL}/api/profile/watermark`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const serverFilename = resp.data?.watermark_path ?? resp.data?.watermark ?? null;
-      if (serverFilename) {
-        setWatermark(serverFilename);
-      } else {
-        await fetchProfile();
+  // Global event listeners for image protection
+  useEffect(() => {
+    const preventDefault = (e) => {
+      if (e.target.closest('.watermark-protected')) {
+        e.preventDefault();
+        return false;
       }
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(null);
-      }
-      setWatermarkFile(null);
-    } catch (error) {
-      console.error("Failed to upload watermark:", error);
-    } finally {
-      setIsUploading(false);
-    }
-  };
+    };
 
-  // Cancel selected file
-  const handleCancelSelection = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
-    setWatermarkFile(null);
-  };
+    document.addEventListener('contextmenu', preventDefault);
+    document.addEventListener('dragstart', preventDefault);
+    
+    return () => {
+      document.removeEventListener('contextmenu', preventDefault);
+      document.removeEventListener('dragstart', preventDefault);
+    };
+  }, []);
 
-  // Delete watermark with confirmation
-  const handleDeleteWatermark = async () => {
-    if (!watermark) return;
-    setIsDeleting(true);
-    const token = localStorage.getItem("token");
-    try {
-      await axios.delete(`${BASE_URL}/api/profile/watermark`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setWatermark(null);
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(null);
-      }
-      setWatermarkFile(null);
-      await fetchProfile();
-      setShowDeleteConfirm(false);
-    } catch (error) {
-      console.error("Failed to delete watermark:", error);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  // Watermark URL with cache busting
-  const watermarkUrl = (filename) => {
-    if (!filename) return null;
-    // Add timestamp to prevent caching and make URL unique
-    const timestamp = new Date().getTime();
-    return `${BASE_URL}/uploads/watermarks/${encodeURIComponent(filename)}?t=${timestamp}`;
-  };
+  // Fetch portfolio on component mount
+  useEffect(() => {
+    fetchPortfolio();
+  }, []);
 
   if (!user) {
     return (
@@ -480,382 +257,93 @@ const fetchLocations = async () => {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="ml-50 flex-grow px-6"
       >
-        {/* Profile Header with Cover Photo Background - UPDATED */}
-        <div className="relative mb-6 -mx-6 bg-gray-200 h-80">
-          {/* Cover Photo Background */}
-          <div className="w-full h-full">
-            {coverPhoto || coverPreviewUrl ? (
-              <img
-                src={coverPreviewUrl || coverPhotoUrl(coverPhoto)}
-                alt="Cover"
-                className="w-full h-full object-cover"
-                onError={() => setCoverImageLoadError(true)}
+        {/* Profile Header with Cover Photo */}
+        <ProfileHeader
+          coverPhoto={coverPhoto}
+          coverPreviewUrl={coverPreviewUrl}
+          coverPhotoUrl={coverPhotoUrl}
+          onCoverImageError={() => setCoverImageLoadError(true)}
+        >
+          {/* 3-Column Grid Layout */}
+          <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-6 items-start">
+            {/* Column 1: Profile Picture + Commissions */}
+            <ProfilePictureSection
+              user={user}
+              isEditing={isEditing}
+              editPfp={editPfp}
+              onPfpChange={handlePfpChange}
+            >
+              <ActionButtons
+                commissions={commissions}
+                onToggleCommissions={toggleCommissions}
+                onToggleUploadModal={toggleUploadModal}
+                onToggleVerifyModal={toggleVerifyModal}
+                user={user}
+                isEditing={isEditing}
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-gray-300 to-gray-400">
-                <CameraIcon className="w-16 h-16 text-gray-500" />
-              </div>
-            )}
+            </ProfilePictureSection>
+
+            {/* Column 2: Profile Details */}
+            <ProfileInfo
+              user={user}
+              isEditing={isEditing}
+              editUsername={editUsername}
+              editBio={editBio}
+              locations={locations}
+              selectedLocation={selectedLocation}
+              onEdit={startEditing}
+              onUsernameChange={(e) => setEditUsername(e.target.value)}
+              onBioChange={(e) => setEditBio(e.target.value)}
+              onLocationChange={(e) => setSelectedLocation(e.target.value ? Number(e.target.value) : null)}
+              CheckIcon={CheckIcon}
+              onSaveChanges={handleProfileUpdate}
+              onCancelEditing={cancelEditing}
+              isLoading={isLoading}
+              gcashNumber={gcashNumber}
+              setGcashNumber={setGcashNumber}
+              isEditingGcash={isEditingGcash}
+              setIsEditingGcash={setIsEditingGcash}
+              isSavingGcash={isSavingGcash}
+              gcashError={gcashError}
+              onSaveGcash={handleSaveGcash}
+              onEditSocialMedia={() => setIsSocialMediaModalOpen(true)} // NEW PROP
+            />
+
+            {/* Column 3: Watermark + Cover Photo */}
+            <WatermarkSection
+              // Watermark state
+              watermark={watermark}
+              watermarkFile={watermarkFile}
+              previewUrl={previewUrl}
+              isUploading={isUploading}
+              isDeleting={isDeleting}
+              imageLoadError={imageLoadError}
+              
+              // Cover photo state
+              coverPhoto={coverPhoto}
+              coverPhotoFile={coverPhotoFile}
+              coverPreviewUrl={coverPreviewUrl}
+              isCoverUploading={isCoverUploading}
+              
+              // Handlers
+              onWatermarkSelect={handleWatermarkSelect}
+              onWatermarkUpload={handleWatermarkUpload}
+              onCancelSelection={handleCancelSelection}
+              onDeleteWatermark={handleDeleteWatermark}
+              onCoverPhotoSelect={handleCoverPhotoSelect}
+              onCoverPhotoUpload={handleCoverPhotoUpload}
+              onCoverCancelSelection={handleCoverCancelSelection}
+              onRemoveCoverPhoto={handleRemoveCoverPhoto}
+              onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
+              onShowCoverDeleteConfirm={() => setShowCoverDeleteConfirm(true)}
+              
+              // URLs
+              watermarkUrl={watermarkUrl}
+            />
           </div>
+        </ProfileHeader>
 
-          {/* Profile Content Overlay */}
-          <div className="absolute inset-0 p-6 bg-gradient-to-t from-black/50 to-transparent h-full">
-            <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-6 items-start">
-              {/* Profile Picture + Commissions */}
-              <div className="w-32 flex flex-col items-center mx-auto sm:mx-0">
-                <div className="relative group">
-                  <img
-                    src={
-                      editPfp
-                        ? URL.createObjectURL(editPfp)
-                        : `${BASE_URL}/uploads/${user.pfp}`
-                    }
-                    alt={`${user.username}'s Profile`}
-                    className="w-32 h-32 rounded-full object-cover shadow-lg border-4 border-white transition-all duration-300"
-                  />
-                  {isEditing && (
-                    <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full cursor-pointer transition-opacity opacity-0 group-hover:opacity-100">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePfpChange}
-                        className="hidden"
-                      />
-                      <span className="text-white text-sm font-medium">
-                        Change Photo
-                      </span>
-                    </label>
-                  )}
-                </div>
-
-                {/* Commissions Button - UPDATED ICON COLORS */}
-                <div className="mt-3 flex flex-col items-center">
-                  <div className="flex items-center text-white font-medium text-xs uppercase tracking-wider mb-1">
-                    <FaPaintBrush className="mr-1.5 text-white" size={12} />
-                    <span>Commissions</span>
-                  </div>
-                  <button
-                    onClick={toggleCommissions}
-                    className={`px-4 py-1.5 rounded-full flex items-center gap-2 shadow-sm transition-all duration-200 ${
-                      commissions === "open"
-                        ? "bg-green-500 hover:bg-green-600 text-white"
-                        : "bg-rose-500 hover:bg-rose-600 text-white"
-                    }`}
-                  >
-                    {commissions === "open" ? (
-                      <>
-                        <FaCheckCircle size={14} />
-                        <span className="text-sm font-medium">Open</span>
-                      </>
-                    ) : (
-                      <>
-                        <FaTimesCircle size={14} />
-                        <span className="text-sm font-medium">Closed</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Profile Details */}
-              <div className="flex flex-col space-y-2 text-white">
-                <div className="flex items-center flex-wrap gap-2">
-                  <div className="flex items-center gap-2">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editUsername}
-                        onChange={(e) => setEditUsername(e.target.value)}
-                        className="text-2xl sm:text-3xl font-bold text-white bg-transparent border-b border-white/50 focus:border-white focus:outline-none px-1 py-0.5"
-                        placeholder="Username"
-                      />
-                    ) : (
-                      <>
-                        <h2 className="text-2xl sm:text-3xl font-bold text-white">
-                          {user.username}
-                        </h2>
-                        {user.isVerified && (
-                          <span title="Verified" className="text-blue-300">
-                            <VerifiedBadge />
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  {!isEditing && (
-                    <>
-                      <button
-                        onClick={startEditing}
-                        className="p-1 text-white hover:text-white transition-colors"
-                        title="Edit Profile"
-                      >
-                        <PencilSquareIcon className="w-5 h-5" />
-                      </button>
-                      <FollowStats targetUserId={user.id} />
-                    </>
-                  )}
-                </div>
-
-                <div className="text-xl text-white">{user.fullname}</div>
-
-                <div className="flex items-center text-sm text-white">
-                  <CakeIcon className="w-5 h-5 mr-2 text-white" />
-                  {new Date(user.birthdate).toLocaleDateString()}
-                </div>
-
-                {isEditing ? (
-                  <textarea
-                    value={editBio}
-                    onChange={(e) => setEditBio(e.target.value)}
-                    className="text-sm text-white bg-transparent border-b border-white/50 focus:border-white focus:outline-none px-1 py-0.5 resize-none"
-                    placeholder="Tell us about yourself..."
-                    rows="2"
-                  />
-                ) : (
-                  <p className="text-sm text-white italic max-w-xl overflow-hidden text-ellipsis">
-                    {user.bio ? `"${user.bio}"` : "No bio provided."}
-                  </p>
-                )}
-                
-                {/* Location Field - UPDATED ICON COLORS */}
-                {isEditing ? (
-                  <div className="mt-2">
-                    <label className="block text-sm font-medium text-white mb-2">
-                      <MapPinIcon className="w-4 h-4 inline mr-1 text-white" />
-                      Location
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={selectedLocation?.toString() || ""}
-                        onChange={(e) => setSelectedLocation(e.target.value ? Number(e.target.value) : null)}
-                        className="w-full max-w-xs text-sm border border-white/50 rounded-lg px-3 py-2.5 focus:border-white focus:ring-2 focus:ring-white/20 focus:outline-none transition-all duration-200 appearance-none bg-black/30 text-white cursor-pointer"
-                      >
-                        <option value="" className="text-gray-700">Select your location...</option>
-                        {locations.map((loc) => (
-                          <option key={loc.id} value={loc.id} className="text-gray-700">
-                            {loc.name}, {loc.province}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
-                        <ChevronDownIcon className="h-4 w-4" />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  user.location_id && (
-                    <p className="text-sm text-white flex items-center gap-1">
-                      <MapPinIcon className="w-4 h-4 text-white" />
-                      <span>
-                        {(() => {
-                          const loc = locations.find(l => l.id === Number(user.location_id));
-                          return loc ? (
-                            <span className="font-medium text-white">
-                              {loc.name}, <span className="text-white">{loc.province}</span>
-                            </span>
-                          ) : "Location not found";
-                        })()}
-                      </span>
-                    </p>
-                  )
-                )}
-
-                <div className="text-xs mt-1">
-                  {user.verification_request_status === "pending" && (
-                    <p className="text-yellow-300">Your verification is under review.</p>
-                  )}
-                  {user.verification_request_status === "rejected" && (
-                    <p className="text-red-300">Your verification request was rejected.</p>
-                  )}
-                </div>
-
-                {/* Social Media Icons - UPDATED COLORS */}
-                {user.isVerified && (
-                  <div className="flex gap-3 mt-1">
-                    {user.twitter_link && (
-                      <a href={user.twitter_link} target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-200">
-                        <FaXTwitter size={20} />
-                      </a>
-                    )}
-                    {user.instagram_link && (
-                      <a href={user.instagram_link} target="_blank" rel="noopener noreferrer" className="text-white hover:text-pink-200">
-                        <FaInstagram size={20} />
-                      </a>
-                    )}
-                    {user.facebook_link && (
-                      <a href={user.facebook_link} target="_blank" rel="noopener noreferrer" className="text-white hover:text-blue-200">
-                        <FaFacebook size={20} />
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                {/* Portfolio & Verify Buttons - Moved inside cover photo */}
-                {!isEditing && (
-                  <div className="flex gap-3 mt-4">
-                    <button onClick={toggleUploadModal} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow transition-all duration-300">
-                      <PlusCircleIcon className="h-4 w-4" />
-                      <span>Portfolio</span>
-                    </button>
-                    {!user.isVerified && (
-                      <button onClick={toggleVerifyModal} className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-md shadow transition-all duration-300">
-                        <ShieldCheckIcon className="h-4 w-4" />
-                        <span>Verify Account</span>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Watermark Management & Cover Photo Upload */}
-              <div className="w-40 flex flex-col items-center space-y-4">
-                {/* Watermark Section */}
-                <div className="w-full">
-                  <h3 className="text-xs font-semibold text-white uppercase mb-2">
-                    Watermark
-                  </h3>
-
-                  {previewUrl ? (
-                    <div className="flex flex-col items-center space-y-2">
-                      <ProtectedWatermarkImage
-                        src={previewUrl}
-                        alt="Watermark Preview (local)"
-                        className="w-20 h-20 object-contain border rounded-md shadow-sm bg-white"
-                        onError={() => setImageLoadError(true)}
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={handleWatermarkUpload}
-                          disabled={isUploading}
-                          className="flex items-center gap-1 text-xs text-green-500 hover:text-green-400"
-                        >
-                          <CloudArrowUpIcon className="w-4 h-4" />
-                          {isUploading ? "Uploading..." : "Upload"}
-                        </button>
-                        <button
-                          onClick={handleCancelSelection}
-                          className="flex items-center gap-1 text-xs text-white hover:text-gray-200"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : watermark ? (
-                    <div className="flex flex-col items-center space-y-2">
-                      <ProtectedWatermarkImage
-                        src={watermarkUrl(watermark)}
-                        alt="Watermark Preview"
-                        className={`w-20 h-20 object-contain border rounded-md shadow-sm bg-white ${
-                          imageLoadError ? "hidden" : ""
-                        }`}
-                        onError={() => setImageLoadError(true)}
-                      />
-                      {imageLoadError && (
-                        <div className="text-xs text-red-400">Preview unavailable</div>
-                      )}
-                      <div className="flex gap-2">
-                        <label className="cursor-pointer text-xs text-blue-500 hover:text-blue-400 flex items-center gap-1">
-                          <input
-                            type="file"
-                            accept="image/png"
-                            className="hidden"
-                            onChange={(e) => handleWatermarkSelect(e.target.files[0])}
-                          />
-                          <CloudArrowUpIcon className="w-4 h-4" />
-                          Replace
-                        </label>
-
-                        <button
-                          onClick={() => setShowDeleteConfirm(true)}
-                          disabled={isDeleting}
-                          className="flex items-center gap-1 text-xs text-red-500 hover:text-red-400"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                          {isDeleting ? "Deleting..." : "Delete"}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center space-y-2">
-                      <label className="cursor-pointer text-blue-500 hover:text-blue-400 text-xs">
-                        <input
-                          type="file"
-                          accept="image/png"
-                          className="hidden"
-                          onChange={(e) => handleWatermarkSelect(e.target.files[0])}
-                        />
-                        {watermarkFile ? watermarkFile.name : "Choose PNG File"}
-                      </label>
-                      <button
-                        onClick={handleWatermarkUpload}
-                        disabled={!watermarkFile || isUploading}
-                        className={`flex items-center gap-1 text-xs ${
-                          isUploading
-                            ? "text-gray-400 cursor-not-allowed"
-                            : "text-green-500 hover:text-green-400"
-                        }`}
-                      >
-                        <CloudArrowUpIcon className="w-4 h-4" />
-                        {isUploading ? "Uploading..." : "Upload"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Cover Photo Upload Section */}
-                <div className="w-full pt-4 border-t border-white/20">
-                  <h3 className="text-xs font-semibold text-white uppercase mb-2">
-                    Cover Photo
-                  </h3>
-                  <div className="flex flex-col items-center space-y-2">
-                    <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white text-xs rounded-lg px-3 py-2 transition-all duration-200 flex items-center gap-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleCoverPhotoSelect(e.target.files[0])}
-                      />
-                      <CameraIcon className="w-4 h-4 text-white" />
-                      {coverPhotoFile ? coverPhotoFile.name : "Upload Cover"}
-                    </label>
-                    
-                    {/* Remove Cover Photo Button - Only show when cover photo exists */}
-                    {coverPhoto && !coverPhotoFile && (
-                      <button
-                        onClick={() => setShowCoverDeleteConfirm(true)}
-                        className="flex items-center gap-1 text-xs text-red-500 hover:text-red-400"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                        Remove Cover
-                      </button>
-                    )}
-                    
-                    {(coverPreviewUrl || coverPhotoFile) && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={handleCoverPhotoUpload}
-                          disabled={isCoverUploading}
-                          className="flex items-center gap-1 text-xs text-green-500 hover:text-green-400"
-                        >
-                          <CloudArrowUpIcon className="w-4 h-4" />
-                          {isCoverUploading ? "Uploading..." : "Upload"}
-                        </button>
-                        <button
-                          onClick={handleCoverCancelSelection}
-                          className="flex items-center gap-1 text-xs text-white hover:text-gray-200"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Cover Photo Upload Controls - Only show when actively uploading */}
+        {/* Cover Photo Upload Status */}
         {isCoverUploading && (
           <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-center justify-between">
@@ -886,7 +374,10 @@ const fetchLocations = async () => {
                   Cancel
                 </button>
                 <button
-                  onClick={handleDeleteWatermark}
+                  onClick={async () => {
+                    await handleDeleteWatermark();
+                    setShowDeleteConfirm(false);
+                  }}
                   disabled={isDeleting}
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-md transition-colors flex items-center gap-2"
                 >
@@ -914,7 +405,10 @@ const fetchLocations = async () => {
                   Cancel
                 </button>
                 <button
-                  onClick={handleRemoveCoverPhoto}
+                  onClick={async () => {
+                    await handleRemoveCoverPhoto();
+                    setShowCoverDeleteConfirm(false);
+                  }}
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-md transition-colors flex items-center gap-2"
                 >
                   <TrashIcon className="w-4 h-4" />
@@ -925,38 +419,14 @@ const fetchLocations = async () => {
           </div>
         )}
 
-        {/* Edit Buttons */}
-        {isEditing && (
-          <div className="flex justify-start space-x-3 mb-4">
-            <button
-              onClick={handleProfileUpdate}
-              disabled={isLoading}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow transition-all"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <CheckIcon className="h-4 w-4" />
-                  Save Changes
-                </>
-              )}
-            </button>
-            <button
-              onClick={cancelEditing}
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded-md shadow transition-all"
-            >
-              <XMarkIcon className="h-4 w-4 inline mr-1" />
-              Cancel
-            </button>
-          </div>
-        )}
+        {/* Social Media Modal - ADD THIS */}
+        <SocialMediaModal
+          isOpen={isSocialMediaModalOpen}
+          onClose={() => setIsSocialMediaModalOpen(false)}
+          user={user}
+          onSave={handleSaveSocialMedia}
+          isLoading={isSavingSocialMedia}
+        />
 
         <div className="border-b border-gray-200 mb-4"></div>
 
@@ -967,7 +437,6 @@ const fetchLocations = async () => {
             { key: "ownart", icon: PhotoIcon, label: "Own Art" },
             { key: "portfolio", icon: Squares2X2Icon, label: "Portfolio" },
             { key: "ownauct", icon: TagIcon, label: "Own Auction" },
-            { key: "wallet", icon: BoltIcon, label: "Wallet" },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -991,7 +460,6 @@ const fetchLocations = async () => {
           <PortfolioGrid portfolioItems={portfolioItems} loggedInUserId={user.id} />
         )}
         {activeTab === "ownauct" && <OwnAuct userId={user.id} />}
-        {activeTab === "wallet" && <Wallet />}
 
         {/* Upload Modal */}
         {isUploadModalOpen && (

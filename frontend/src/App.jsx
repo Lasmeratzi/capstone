@@ -30,6 +30,7 @@ import Message from "./pages/message/message";
 import TagPostsPage from "./pages/search/TagsPostsPage";
 import ArtworkPostPage from "./pages/search/ArtWorkPostPage";
 import LocationPostsPage from "./pages/search/LocationPostsPage";
+import IlluraAccount from "./pages/ADMIN/illuraaccount/illuraaccount";
 
 function App() {
   return (
@@ -149,6 +150,12 @@ function App() {
 
         {/* Admin Routes */}
         <Route path="/loginadmin" element={<Loginadmin />} />
+
+        <Route path="/illuraaccount" element={
+          <AdminProtectedRoute>
+            <IlluraAccount />
+          </AdminProtectedRoute>
+        } />
         
         {/* Admin Protected Routes */}
         <Route path="/homeadmin" element={

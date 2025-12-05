@@ -9,7 +9,7 @@ import Post from "../home/post";
 import ArtPosts from "../home/artpost";
 import Auctions from "../home/auctions";
 import RSideHome from "../home/rsidehome";
-import CreateModal from "../../components/modals/createmodal"; // ✅ new import
+import CreateModal from "../../components/modals/createmodal";
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -104,7 +104,7 @@ const Home = () => {
     <div className="flex">
       {/* Sidebar */}
       <div className="fixed h-screen w-50 bg-white border-r shadow-md">
-        <Sidebar onOpenCreate={() => setIsCreateOpen(true)} /> {/* ✅ pass handler */}
+        <Sidebar onOpenCreate={() => setIsCreateOpen(true)} />
       </div>
 
       {/* Main Content */}
@@ -201,7 +201,10 @@ const Home = () => {
         )}
 
         {activeTab === "auctions" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            {errorMessage && (
+              <p className="text-red-500 text-center">{errorMessage}</p>
+            )}
             <Auctions />
           </div>
         )}
@@ -210,12 +213,12 @@ const Home = () => {
       {/* Right Sidebar */}
       <RSideHome user={user} accounts={accounts} />
 
-      {/* ✅ Create Modal */}
+      {/* Create Modal */}
       {isCreateOpen && (
         <CreateModal
           onClose={() => setIsCreateOpen(false)}
           onSelect={(type) => {
-            setIsCreateOpen(false); // close create modal first
+            setIsCreateOpen(false);
             if (type === "post") {
               setIsMakePostOpen(true);
             } else if (type === "art") {
@@ -227,7 +230,7 @@ const Home = () => {
         />
       )}
 
-      {/* ✅ Modals for Post, Art, Auction */}
+      {/* Modals for Post, Art, Auction */}
       {isMakePostOpen && (
         <MakePost onClose={() => setIsMakePostOpen(false)} />
       )}

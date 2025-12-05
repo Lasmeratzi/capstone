@@ -1,4 +1,4 @@
-const auctionMediaModels = require("../models/auctionMediaModels");
+const auctionMediaModels = require("../models/auctionmediaModels");
 
 // Add media to an auction
 const addAuctionMedia = (req, res) => {
