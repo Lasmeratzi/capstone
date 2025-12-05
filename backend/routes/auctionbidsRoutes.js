@@ -4,14 +4,16 @@ const auctionbidsController = require("../controllers/auctionbidsController");
 
 const router = express.Router();
 
+// Get all bids for a specific auction
+router.get("/:auctionId", authenticateToken, auctionbidsController.getBidsForAuction);
+
+// Get highest bid for an auction
+router.get("/highest/:auctionId", authenticateToken, auctionbidsController.getHighestBidForAuction);
+
 // Place a bid on an auction
 router.post("/place-bid", authenticateToken, auctionbidsController.placeBid);
 
-// Get all bids for a specific auction
-router.get("/auction-bids/:auctionId", authenticateToken, auctionbidsController.getBidsForAuction);
-
-router.get("/highest/:auctionId", authenticateToken, auctionbidsController.getHighestBidForAuction);
-
+// Test route
 router.get("/test", (req, res) => {
   res.send("Auction Bids API is working!");
 });

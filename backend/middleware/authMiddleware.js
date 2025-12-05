@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config(); // Load environment variables from .env file
 
 // Authenticate token middleware
+// In authMiddleware.js, modify the authenticateToken function:
 const authenticateToken = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -23,8 +24,16 @@ const authenticateToken = (req, res, next) => {
       if (err) {
         return res.status(403).json({ message: "Unauthorized: Invalid token." });
       }
-      req.user = decoded; // Attach decoded user info to request object
-      next(); // Proceed to the next middleware or route handler
+      
+      // Set req.user for all authenticated users
+      req.user = decoded;
+      
+      // If it's an admin token, also set req.admin
+      if (decoded.role === 'admin' || decoded.role === 'super_admin') {
+        req.admin = decoded;
+      }
+      
+      next();
     });
   } catch (error) {
     console.error("Unexpected server error during token authentication:", error);

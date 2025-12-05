@@ -47,16 +47,26 @@ const checkAndEndAuctions = () => {
         if (bids.length > 0) {
           const { bidder_id, bid_amount, username } = bids[0];
 
+          // ✅ FIXED: Use promise-based query
+          await db.query(
+            `UPDATE auctions 
+             SET winner_id = ?, final_price = ?, escrow_status = 'pending_payment' 
+             WHERE id = ?`,
+            [bidder_id, bid_amount, auctionId]
+          );
+
+          console.log(`✅ Winner set for auction ${auctionId}: ${username} with ₱${bid_amount}`);
+
           // Notify auction author
           await sendNotification(
             auction.author_id,
-            `Your auction "${auction.title}" has ended. Highest bidder: @${username} with ₱${bid_amount}.`
+            `Your auction "${auction.title}" has ended. Highest bidder: @${username} with ₱${bid_amount}. Check your auctions.`
           );
 
           // Notify top bidder
           await sendNotification(
             bidder_id,
-            `You won the auction "${auction.title}" with ₱${bid_amount}. Congratulations!`
+            `You won the auction "${auction.title}" with ₱${bid_amount}. Check your Auction Wins section to proceed with payment.`
           );
 
         } else {

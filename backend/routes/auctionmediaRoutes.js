@@ -2,7 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const { authenticateToken } = require("../middleware/authMiddleware");
-const auctionMediaController = require("../controllers/auctionMediaController");
+const auctionMediaController = require("../controllers/auctionmediaController");
 
 // Configure multer for auction uploads
 const storage = multer.diskStorage({
