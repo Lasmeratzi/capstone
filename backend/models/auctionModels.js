@@ -3,28 +3,74 @@ const db = require("../config/database");
 // Create a new auction (Starts as 'pending')
 const createAuction = (auctionData, callback) => {
   const sql = `
-    INSERT INTO auctions (author_id, title, description, starting_price, current_price, end_time, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO auctions (
+      author_id, title, description, starting_price, current_price, 
+      end_time, auction_start_time, auction_duration_hours, 
+      status, payment_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
-  const { author_id, title, description, starting_price, current_price, end_time } = auctionData;
-  const status = "pending"; // ✅ Auctions start as 'pending'
-  db.query(sql, [author_id, title, description, starting_price, current_price, end_time, status], callback);
+  
+  const { 
+    author_id, title, description, starting_price, current_price, 
+    end_time, auction_start_time, auction_duration_hours,
+    status, payment_id 
+  } = auctionData;
+  
+  console.log("🟡 [MODEL] Inserting auction with:", {
+    status, auction_start_time, auction_duration_hours, payment_id
+  });
+  
+  db.query(sql, [
+    author_id, title, description, starting_price, current_price,
+    end_time, auction_start_time, auction_duration_hours,
+    status, payment_id || null
+  ], callback);
 };
 
 // Get all auctions (statuses handled by controller filter)
 const getAllAuctions = (callback) => {
   const sql = `
     SELECT 
-      auctions.*,
-      users.username AS author_username,
-      users.fullname AS author_fullname,
-      users.pfp AS author_pfp
-    FROM auctions
-    JOIN users ON auctions.author_id = users.id
-    ORDER BY auctions.created_at DESC
+      a.*,
+      -- Seller information
+      u.username AS author_username,
+      u.fullname AS author_fullname,
+      u.gcash_number AS author_gcash,
+      u.pfp AS author_pfp,
+      u.verified AS author_is_verified,
+      -- Winner information
+      w.username AS winner_username,
+      w.fullname AS winner_fullname,
+      w.gcash_number AS winner_gcash,
+      w.pfp AS winner_pfp,
+      -- Payment information via JOIN
+      p.status AS payment_status,
+      p.amount AS payment_amount
+    FROM auctions a
+    JOIN users u ON a.author_id = u.id
+    LEFT JOIN users w ON a.winner_id = w.id
+    LEFT JOIN payments p ON a.payment_id = p.id
+    ORDER BY a.created_at DESC
   `;
   
-  db.query(sql, callback); // No filtering here — handled in controller
+  console.log("🔍 SQL Query for getAllAuctions:", sql);
+  
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("❌ SQL Error in getAllAuctions:", err);
+      console.error("❌ SQL Message:", err.sqlMessage);
+      console.error("❌ SQL Code:", err.code);
+      console.error("❌ Full error:", err);
+    } else {
+      console.log("✅ Query successful, found", results.length, "auctions");
+    }
+    callback(err, results);
+  });
+};
+
+const updateAuctionPaymentId = (auctionId, paymentId, callback) => {
+  const sql = `UPDATE auctions SET payment_id = ? WHERE id = ?`;
+  db.query(sql, [paymentId, auctionId], callback);
 };
 
 // Get a single auction by ID
@@ -34,9 +80,14 @@ const getAuctionById = (auctionId, callback) => {
       auctions.*,
       users.username AS author_username,
       users.fullname AS author_fullname,
-      users.pfp AS author_pfp
+      users.pfp AS author_pfp,
+      winner.username AS winner_username,
+      winner.fullname AS winner_fullname,
+      winner.pfp AS winner_pfp,
+      winner.gcash_number AS winner_gcash
     FROM auctions
     JOIN users ON auctions.author_id = users.id
+    LEFT JOIN users winner ON auctions.winner_id = winner.id
     WHERE auctions.id = ?
   `;
   db.query(sql, [auctionId], callback);
@@ -65,15 +116,32 @@ const getAuctionsByAuthorId = (authorId, callback) => {
       auctions.*,
       users.username AS author_username,
       users.fullname AS author_fullname,
-      users.pfp AS author_pfp
+      users.pfp AS author_pfp,
+      winner.username AS winner_username,
+      winner.fullname AS winner_fullname,
+      winner.pfp AS winner_pfp
     FROM auctions
     JOIN users ON auctions.author_id = users.id
+    LEFT JOIN users winner ON auctions.winner_id = winner.id
     WHERE auctions.author_id = ?
     ORDER BY auctions.created_at DESC
   `;
   
   db.query(sql, [authorId], (err, results) => {
-    console.log("Filtered Auctions from DB:", results);
+    if (err) {
+      console.error("❌ SQL Error in getAuctionsByAuthorId:", err);
+      console.error("❌ SQL Message:", err.sqlMessage);
+      console.error("❌ SQL Code:", err.code);
+    } else {
+      console.log("✅ getAuctionsByAuthorId successful, found", results.length, "auctions");
+      console.log("✅ Sample auction data:", results[0] ? {
+        id: results[0].id,
+        title: results[0].title,
+        winner_id: results[0].winner_id,
+        winner_username: results[0].winner_username,
+        winner_pfp: results[0].winner_pfp
+      } : "No results");
+    }
     callback(err, results);
   });
 };
@@ -99,7 +167,146 @@ const getHighestBidForAuction = (auctionId, callback) => {
   db.query(sql, [auctionId], callback);
 };
 
+// Get auctions won by a specific user
+const getAuctionsWonByUser = (userId, callback) => {
+  const sql = `
+    SELECT 
+      a.*, 
+      u.username AS seller_username,
+      u.fullname AS seller_fullname,
+      u.gcash_number AS seller_gcash,
+      am.media_path
+    FROM auctions a
+    LEFT JOIN users u ON a.author_id = u.id
+    LEFT JOIN auction_media am ON a.id = am.auction_id
+    WHERE a.winner_id = ? AND a.status = 'ended'
+    ORDER BY a.created_at DESC
+  `;
+  db.query(sql, [userId], callback);
+};
 
+// Get auctions sold by a specific user (seller's perspective)
+const getAuctionsSoldByUser = (sellerId, callback) => {
+  const sql = `
+    SELECT 
+      a.*, 
+      winner.username AS winner_username,
+      winner.fullname AS winner_fullname,
+      winner.gcash_number AS winner_gcash,
+      am.media_path
+    FROM auctions a
+    LEFT JOIN users winner ON a.winner_id = winner.id
+    LEFT JOIN auction_media am ON a.id = am.auction_id
+    WHERE a.author_id = ? AND a.status = 'ended' AND a.winner_id IS NOT NULL
+    ORDER BY a.created_at DESC
+  `;
+  db.query(sql, [sellerId], callback);
+};
+
+// Update auction winner and final price when auction ends
+const setAuctionWinner = (auctionId, winnerId, finalPrice, callback) => {
+  const sql = `
+    UPDATE auctions 
+    SET winner_id = ?, final_price = ?, escrow_status = 'pending_payment' 
+    WHERE id = ?
+  `;
+  db.query(sql, [winnerId, finalPrice, auctionId], callback);
+};
+
+// Update escrow status
+const updateEscrowStatus = (auctionId, escrowStatus, callback) => {
+  const sql = `
+    UPDATE auctions SET escrow_status = ? WHERE id = ?
+  `;
+  db.query(sql, [escrowStatus, auctionId], callback);
+};
+
+// Get auction with winner details for admin
+const getAuctionWithWinnerDetails = (auctionId, callback) => {
+  const sql = `
+    SELECT 
+      a.*,
+      seller.username AS seller_username,
+      seller.gcash_number AS seller_gcash,
+      seller.fullname AS seller_fullname,
+      winner.username AS winner_username,
+      winner.gcash_number AS winner_gcash,
+      winner.fullname AS winner_fullname
+    FROM auctions a
+    LEFT JOIN users seller ON a.author_id = seller.id
+    LEFT JOIN users winner ON a.winner_id = winner.id
+    WHERE a.id = ?
+  `;
+  db.query(sql, [auctionId], callback);
+};
+
+const updateAuctionPaymentStatus = (auctionId, paymentStatus, callback) => {
+  const sql = `UPDATE auctions SET payment_status = ? WHERE id = ?`;
+  db.query(sql, [paymentStatus, auctionId], callback);
+};
+
+// Get auctions by payment status (for admin)
+const getAuctionsByPaymentStatus = (paymentStatus, callback) => {
+  const sql = `
+    SELECT auctions.*,
+           users.username AS author_username,
+           users.fullname AS author_fullname
+    FROM auctions
+    JOIN users ON auctions.author_id = users.id
+    WHERE auctions.payment_status = ?
+    ORDER BY auctions.created_at DESC
+  `;
+  db.query(sql, [paymentStatus], callback);
+};
+
+// Activate auction (change status from approved to active when start_time is reached)
+const activateScheduledAuctions = (callback) => {
+  const sql = `
+    UPDATE auctions 
+    SET status = 'active'
+    WHERE status = 'approved' 
+      AND auction_start_time <= NOW()
+      AND (auction_start_time IS NOT NULL)
+  `;
+  db.query(sql, callback);
+};
+
+// Get auctions that need to be activated (for cron job)
+const getAuctionsToActivate = (callback) => {
+  const sql = `
+    SELECT * FROM auctions 
+    WHERE status = 'approved' 
+      AND auction_start_time <= NOW()
+      AND (auction_start_time IS NOT NULL)
+  `;
+  db.query(sql, callback);
+};
+
+// Update auction with start time and duration
+const updateAuctionSchedule = (auctionId, auctionStartTime, auctionDurationHours, callback) => {
+  const sql = `
+    UPDATE auctions 
+    SET auction_start_time = ?, auction_duration_hours = ?
+    WHERE id = ?
+  `;
+  db.query(sql, [auctionStartTime, auctionDurationHours, auctionId], callback);
+};
+
+// Get auction with payment details
+const getAuctionWithPaymentDetails = (auctionId, callback) => {
+  const sql = `
+    SELECT a.*,
+           u.username AS author_username,
+           u.fullname AS author_fullname,
+           p.status AS payment_record_status,
+           p.paid_at AS payment_date
+    FROM auctions a
+    JOIN users u ON a.author_id = u.id
+    LEFT JOIN payments p ON a.id = p.auction_id
+    WHERE a.id = ?
+  `;
+  db.query(sql, [auctionId], callback);
+};
 
 module.exports = {
   createAuction,
@@ -110,4 +317,14 @@ module.exports = {
   updateAuctionStatus,
   updateAuctionCurrentPrice,
   deleteAuction,
+  getAuctionsWonByUser,
+  getAuctionsSoldByUser,
+  setAuctionWinner,
+  updateEscrowStatus,
+  getAuctionWithWinnerDetails,
+  updateAuctionPaymentId,
+  activateScheduledAuctions,
+  getAuctionsToActivate,
+  updateAuctionSchedule,
+  getAuctionWithPaymentDetails
 };

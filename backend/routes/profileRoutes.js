@@ -167,4 +167,6 @@ router.get("/search", authenticateToken, profileController.searchUsers);
 // ✅ PATCH: Toggle commissions
 router.patch("/profile/commissions", authenticateToken, profileController.toggleCommissions);
 
+router.patch("/profile/gcash", authenticateToken, profileController.updateGcashNumber);
+
 module.exports = router;
