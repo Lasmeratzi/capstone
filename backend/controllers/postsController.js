@@ -4,37 +4,57 @@ const postsModels = require("../models/postsModels");
 const createPost = (req, res) => {
   console.log("POST /posts - Request received");
   const authorId = req.user.id;
-  const { title } = req.body;
+  const { title, visibility } = req.body; // Add visibility here
   const mediaPath = req.file ? req.file.filename : null;
 
   if (!title) {
     return res.status(400).json({ message: "Title is required." });
   }
 
-  const postData = { author_id: authorId, title, media_path: mediaPath, post_status: "active" };
+  const postData = { 
+    author_id: authorId, 
+    title, 
+    media_path: mediaPath, 
+    post_status: "active",
+    visibility: visibility || "private" // Default to private if not provided
+  };
 
   postsModels.createPost(postData, (err, result) => {
     if (err) {
       return res.status(500).json({ message: "Database error.", error: err });
     }
-    res.status(201).json({ message: "Post created successfully!", postId: result.insertId });
+    res.status(201).json({ 
+      message: "Post created successfully!", 
+      postId: result.insertId,
+      visibility: postData.visibility
+    });
   });
 };
 
 // Get all posts
 const getAllPosts = (req, res) => {
   const authorId = req.query.author_id;
+  const viewerId = req.user.id; // Get the logged-in viewer's ID
 
-  postsModels.getAllPosts(authorId, (err, results) => {
+  console.log("🔍 getAllPosts called:");
+  console.log("  - authorId (profile being viewed):", authorId);
+  console.log("  - viewerId (logged-in user):", viewerId);
+  console.log("  - Are they the same?", authorId == viewerId);
+
+  postsModels.getAllPosts(authorId, viewerId, (err, results) => {
     if (err) {
+      console.error("❌ Database error in getAllPosts:", err);
       return res.status(500).json({ message: "Database error.", error: err });
     }
 
+    console.log(`✅ Found ${results.length} posts for viewer`);
+    
     res.status(200).json(results.map(post => ({
       ...post,
-      author_id: post.author_id, // 🔥 Ensure author_id is included
+      author_id: post.author_id,
       author_pfp: post.author_pfp || "default.png",
-      post_status: post.post_status || "active"
+      post_status: post.post_status || "active",
+      visibility: post.visibility || "private"
     })));
   });
 };
@@ -74,12 +94,28 @@ const getPostById = (req, res) => {
   });
 };
 
+const getFollowingPosts = (req, res) => {
+  const followerId = req.user.id; // The logged-in user who is following others
 
+  postsModels.getFollowingPosts(followerId, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    res.status(200).json(results.map(post => ({
+      ...post,
+      author_id: post.author_id,
+      author_pfp: post.author_pfp || "default.png",
+      post_status: post.post_status || "active",
+      visibility: post.visibility || "private" // Add visibility here
+    })));
+  });
+};
 
 // Update a post (Only if user is the author)
 const updatePost = (req, res) => {
   const { id } = req.params;
-  const { title } = req.body;
+  const { title, visibility } = req.body; // Add visibility here
   const media = req.file ? req.file.filename : null;
   const authorId = req.user.id;
 
@@ -95,10 +131,12 @@ const updatePost = (req, res) => {
 
     const updatedTitle = title || post.title;
     const updatedMediaPath = media || post.media_path;
+    const updatedVisibility = visibility || post.visibility; // Add this
 
     const postData = {
       title: updatedTitle,
       media_path: updatedMediaPath,
+      visibility: updatedVisibility // Add this
     };
 
     postsModels.updatePostById(id, postData, (updateErr) => {
@@ -156,4 +194,5 @@ module.exports = {
   updatePost,
   updatePostStatus,
   deletePost,
+   getFollowingPosts,
 };

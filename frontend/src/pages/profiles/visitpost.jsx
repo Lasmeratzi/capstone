@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Post from "../home/post"; // Reuse Post component for displaying posts
+import Post from "../home/post";
 import { ChevronDown, Calendar, SortAsc } from "lucide-react";
 
 const VisitPost = ({ userId }) => {
@@ -12,13 +12,26 @@ const VisitPost = ({ userId }) => {
   const [availableYears, setAvailableYears] = useState([]);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   
-  // Get the logged-in user's ID
-  const loggedInUserId = localStorage.getItem("id");
+  // Get the logged-in user's ID from token
+  const [loggedInUserId, setLoggedInUserId] = useState(null);
+
+  useEffect(() => {
+    // Extract user ID from JWT token
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setLoggedInUserId(payload.id);
+      } catch (error) {
+        console.error("Failed to parse token:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchUserPosts = async () => {
       try {
-        if (!userId) return; // Ensure userId is defined
+        if (!userId) return;
 
         const token = localStorage.getItem("token");
         if (!token) {
@@ -72,6 +85,21 @@ const VisitPost = ({ userId }) => {
     setFilteredPosts(result);
   }, [userPosts, sortOption, yearFilter]);
 
+  // Handle delete function (only works if loggedInUserId === userId)
+  const handleDelete = async (postId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:5000/api/posts/${postId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Remove deleted post from state
+      setUserPosts(userPosts.filter((post) => post.id !== postId));
+    } catch (error) {
+      console.error("Failed to delete post:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Main Posts - Centered */}
@@ -83,11 +111,14 @@ const VisitPost = ({ userId }) => {
               <Post 
                 key={post.id} 
                 post={post} 
-                userId={loggedInUserId} // Pass logged-in user's ID, not visited user's ID
+                userId={loggedInUserId} // Pass logged-in user's ID
+                handleDelete={loggedInUserId === userId ? handleDelete : undefined} // Only pass if viewing own profile
               />
             ))
           ) : (
-            <p className="text-gray-500 text-center text-sm">No posts available.</p>
+            <p className="text-gray-500 text-center text-sm">
+              {userPosts.length === 0 ? "This user has no visible posts." : "No posts match your filters."}
+            </p>
           )}
         </div>
       </div>

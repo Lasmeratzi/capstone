@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import ArtworkLikes from "../../pages/likes/artworklikes";
 import ArtworkComments from "../../pages/comments/artworkcomments";
 import { CheckIcon } from "@heroicons/react/24/outline";
+import { Globe, Users, Lock } from "lucide-react";
 
 const API_BASE = "http://localhost:5000";
 
@@ -15,6 +16,29 @@ const VerifiedBadge = () => (
   </div>
 );
 
+const VisibilityBadge = ({ visibility }) => {
+  const getVisibilityInfo = () => {
+    switch (visibility) {
+      case 'public':
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+      case 'friends':
+        return { icon: <Users size={14} />, text: 'Friends Only', color: 'text-green-600', bg: 'bg-green-50' };
+      case 'private':
+        return { icon: <Lock size={14} />, text: 'Private', color: 'text-gray-600', bg: 'bg-gray-50' };
+      default:
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+    }
+  };
+
+  const info = getVisibilityInfo();
+
+  return (
+    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${info.bg} ${info.color} ml-2`}>
+      {info.icon}
+      <span>{info.text}</span>
+    </div>
+  );
+};
 
 const getMediaUrl = (media_path) => {
   const cleanPath = media_path.startsWith("uploads/")
@@ -329,8 +353,10 @@ const VisitArt = ({ userId }) => {
           )}
 
           {!loading && filteredPosts.length === 0 ? (
-            <p className="text-gray-500 text-center text-sm">No artwork available.</p>
-          ) : (
+  <p className="text-gray-500 text-center text-sm">
+    {artPosts.length === 0 ? "This user has no artwork." : "No visible artwork."}
+  </p>
+) : (
             filteredPosts.map((post) => (
               <div key={post.id} className="relative bg-white p-4 rounded-lg shadow-md border border-gray-200 mb-4">
                 {post.post_status === "down" && (
@@ -355,6 +381,7 @@ const VisitArt = ({ userId }) => {
   <div className="flex items-center">
     <p className="font-bold text-gray-800">{post.author}</p>
     {post.is_verified && <VerifiedBadge />}
+    <VisibilityBadge visibility={post.visibility} />
   </div>
   <p className="text-gray-600 text-sm">{post.fullname}</p>
 </div>
@@ -579,6 +606,7 @@ const VisitArt = ({ userId }) => {
   <div className="flex items-center">
     <p className="font-bold text-gray-800">{modalState.post.author}</p>
     {modalState.post.is_verified && <VerifiedBadge />}
+    <VisibilityBadge visibility={modalState.post.visibility} />
   </div>
   <p className="text-gray-600 text-sm">{modalState.post.fullname}</p>
 </div>

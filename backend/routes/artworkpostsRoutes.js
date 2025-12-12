@@ -6,6 +6,8 @@ const upload = multer({ dest: "uploads/" });
 
 const router = express.Router();
 
+router.get("/artwork-posts/following", authenticateToken, artworkPostsController.getFollowingArtworkPosts);
+
 // Create a new artwork post
 router.post("/artwork-posts", authenticateToken, upload.array("media", 10), artworkPostsController.createArtworkPost);
 

@@ -4,13 +4,18 @@ const tagsController = require("./tagsController");
 // Create a new artwork post (with tags)
 const createArtworkPost = async (req, res) => {
   const authorId = req.user.id;
-  const { title, description, tags } = req.body; // tags is an array of strings
-  
+  const { title, description, tags, visibility } = req.body;
+
   if (!title) {
     return res.status(400).json({ message: "Title is required." });
   }
 
-  const postData = { author_id: authorId, title, description };
+  const postData = { 
+    author_id: authorId, 
+    title, 
+    description,
+    visibility: visibility || "private"  // Add visibility
+  };
 
   artworkPostsModels.createArtworkPost(postData, async (err, result) => {
     if (err) {
@@ -36,13 +41,20 @@ const createArtworkPost = async (req, res) => {
   });
 };
 
-// Get all artwork posts
 const getAllArtworkPosts = (req, res) => {
-  artworkPostsModels.getAllArtworkPosts((err, results) => {
+  const authorId = req.query.author_id;
+  const viewerId = req.user.id;  // Get logged-in viewer's ID
+
+  artworkPostsModels.getAllArtworkPosts(authorId, viewerId, (err, results) => {
     if (err) {
       return res.status(500).json({ message: "Database error.", error: err });
     }
-    res.status(200).json(results);
+    res.status(200).json(results.map(post => ({
+      ...post,
+      author_id: post.author_id,
+      author_pfp: post.author_pfp || "default.png",
+      visibility: post.visibility || "private"
+    })));
   });
 };
 
@@ -72,7 +84,7 @@ const getUserArtworkPosts = (req, res) => {
 // Update an artwork post (with tags support)
 const updateArtworkPost = async (req, res) => {
   const { id } = req.params;
-  const { title, description, tags } = req.body;
+  const { title, description, tags, visibility } = req.body;  // Add visibility
   const authorId = req.user.id;
 
   artworkPostsModels.getArtworkPostById(id, async (err, result) => {
@@ -87,8 +99,8 @@ const updateArtworkPost = async (req, res) => {
     const updatedData = {
       title: title || post.title,
       description: description || post.description,
+      visibility: visibility || post.visibility  // Add visibility
     };
-
     artworkPostsModels.updateArtworkPostById(id, updatedData, async (updateErr) => {
       if (updateErr) return res.status(500).json({ message: "Database error.", error: updateErr });
 
@@ -140,6 +152,23 @@ const deleteArtworkPost = (req, res) => {
   });
 };
 
+// Get artwork posts from followed users
+const getFollowingArtworkPosts = (req, res) => {
+  const viewerId = req.user.id;
+
+  artworkPostsModels.getFollowingArtworkPosts(viewerId, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+    res.status(200).json(results.map(post => ({
+      ...post,
+      author_id: post.author_id,
+      author_pfp: post.author_pfp || "default.png",
+      visibility: post.visibility || "private"
+    })));
+  });
+};
+
 module.exports = {
   createArtworkPost,
   getAllArtworkPosts,
@@ -147,4 +176,5 @@ module.exports = {
   getUserArtworkPosts,
   updateArtworkPost,
   deleteArtworkPost,
+  getFollowingArtworkPosts,
 };
