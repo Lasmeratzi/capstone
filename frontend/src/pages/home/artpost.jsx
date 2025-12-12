@@ -8,15 +8,17 @@ import {
   MoreVertical,
   MessageCircle,
   Tag,
+  Flag,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ArtPostModal from "../../components/modals/artpostmodal";
+import ReportsModal from "../../components/modals/reportsmodal"; // ADD THIS IMPORT
 import ArtworkLikes from "../../pages/likes/artworklikes";
 import ArtworkComments from "../../pages/comments/artworkcomments";
 import { CheckIcon } from "@heroicons/react/24/outline";
+import { Globe, Users, Lock } from "lucide-react";
 
 const API_BASE = "http://localhost:5000";
-
 
 const VerifiedBadge = () => (
   <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 ml-2">
@@ -29,6 +31,30 @@ const getMediaUrl = (media_path) => {
     ? media_path.slice("uploads/".length)
     : media_path;
   return `${API_BASE}/uploads/artwork/${cleanPath}`;
+};
+
+const VisibilityBadge = ({ visibility }) => {
+  const getVisibilityInfo = () => {
+    switch (visibility) {
+      case 'public':
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+      case 'friends':
+        return { icon: <Users size={14} />, text: 'Friends Only', color: 'text-green-600', bg: 'bg-green-50' };
+      case 'private':
+        return { icon: <Lock size={14} />, text: 'Private', color: 'text-gray-600', bg: 'bg-gray-50' };
+      default:
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+    }
+  };
+
+  const info = getVisibilityInfo();
+
+  return (
+    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${info.bg} ${info.color} ml-2`}>
+      {info.icon}
+      <span>{info.text}</span>
+    </div>
+  );
 };
 
 // Protected Media Component - prevents right-click, drag, and selection
@@ -100,10 +126,11 @@ const ProtectedMedia = ({ file, onClick, className = "" }) => {
   );
 };
 
-const ArtPosts = () => {
-  const [artPosts, setArtPosts] = useState([]);
+const ArtPosts = ({ initialArtworks = [], userId: propUserId, onDeleteArtwork }) => {
+  // Use initialArtworks if provided, otherwise fetch from API
+  const [artPosts, setArtPosts] = useState(initialArtworks.length > 0 ? initialArtworks : []);
   const [errorMessage, setErrorMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(initialArtworks.length === 0); // Only load if no initial data
 
   // Store tags for each post
   const [postTags, setPostTags] = useState({});
@@ -122,6 +149,12 @@ const ArtPosts = () => {
     post: null,
   });
 
+  // ADD THIS: Report modal state
+  const [reportModal, setReportModal] = useState({
+    isOpen: false,
+    post: null,
+  });
+
   // dropdown open per post id
   const [dropdownOpen, setDropdownOpen] = useState(null);
 
@@ -132,7 +165,8 @@ const ArtPosts = () => {
   // per-post delete confirmation
   const [confirmDeleteFor, setConfirmDeleteFor] = useState(null);
 
-  const userId = localStorage.getItem("id");
+  // Use propUserId if provided, otherwise get from localStorage
+  const userId = propUserId || localStorage.getItem("id");
   const token = localStorage.getItem("token");
 
   // Fetch tags for a specific post
@@ -148,7 +182,7 @@ const ArtPosts = () => {
     }
   };
 
-  // fetch posts + their media + tags
+  // fetch posts + their media + tags (only if no initialArtworks provided)
   const fetchArtPostsWithMedia = async () => {
     setLoading(true);
     setErrorMessage("");
@@ -159,32 +193,47 @@ const ArtPosts = () => {
     }
 
     try {
-      const postsResponse = await axios.get(`${API_BASE}/api/artwork-posts`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // Try to fetch from followed users first
+      let postsResponse;
+      try {
+        postsResponse = await axios.get(`${API_BASE}/api/artwork-posts/following`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (followError) {
+        if (followError.response?.status === 404) {
+          // If following endpoint doesn't exist yet, fall back to all posts
+          console.log("Following endpoint not found, falling back to all artwork posts");
+          postsResponse = await axios.get(`${API_BASE}/api/artwork-posts`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } else {
+          throw followError;
+        }
+      }
 
       const posts = postsResponse.data || [];
-
-      // fetch media for each post in parallel
+      
+      // Fetch media for each post
       const mediaRequests = posts.map((post) =>
         axios.get(`${API_BASE}/api/artwork-media/${post.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
       );
-
+      
       const mediaResponses = await Promise.all(mediaRequests);
-      const postsWithMedia = posts.map((post, idx) => ({
+      const postsWithMedia = posts.map((post, index) => ({
         ...post,
-        media: mediaResponses[idx]?.data || [],
+        media: mediaResponses[index].data || [],
       }));
-
+      
       setArtPosts(postsWithMedia);
-
-      // fetch comment counts and tags for each post
+      
+      // Fetch tags for each post
       postsWithMedia.forEach((p) => {
-        fetchCommentCount(p.id);
         fetchTagsForPost(p.id);
+        fetchCommentCount(p.id);
       });
+      
     } catch (err) {
       console.error("Failed to fetch artwork posts or media:", err);
       setErrorMessage("Failed to load artwork posts. Please try again.");
@@ -205,16 +254,58 @@ const ArtPosts = () => {
     }
   };
 
+  // Fetch media for initial artworks if they don't have media
+  const fetchMediaForInitialArtworks = async () => {
+    if (initialArtworks.length === 0) return;
+    
+    try {
+      const postsWithMedia = await Promise.all(
+        initialArtworks.map(async (post) => {
+          try {
+            const mediaRes = await axios.get(`${API_BASE}/api/artwork-media/${post.id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            return {
+              ...post,
+              media: mediaRes.data || [],
+            };
+          } catch (err) {
+            console.error(`Error fetching media for post ${post.id}:`, err);
+            return {
+              ...post,
+              media: [],
+            };
+          }
+        })
+      );
+      
+      setArtPosts(postsWithMedia);
+      
+      // Fetch tags and comment counts for each post
+      postsWithMedia.forEach((p) => {
+        fetchTagsForPost(p.id);
+        fetchCommentCount(p.id);
+      });
+    } catch (err) {
+      console.error("Error fetching media for initial artworks:", err);
+    }
+  };
+
   useEffect(() => {
-    fetchArtPostsWithMedia();
+    if (initialArtworks.length > 0) {
+      // We have initial artworks, fetch their media
+      fetchMediaForInitialArtworks();
+    } else {
+      // No initial artworks, fetch from API
+      fetchArtPostsWithMedia();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initialArtworks]);
 
   // Handle tag click - filter posts by tag (future feature)
   const handleTagClick = (tagName) => {
     console.log(`Filter by tag: ${tagName}`);
     // TODO: Implement filtering by tag
-    // You can add this feature later to show only posts with this tag
   };
 
   // Delete (actual API call)
@@ -225,6 +316,11 @@ const ArtPosts = () => {
       });
       setArtPosts((prev) => prev.filter((p) => p.id !== postId));
       setConfirmDeleteFor(null);
+      
+      // Call parent's onDeleteArtwork if provided
+      if (onDeleteArtwork) {
+        onDeleteArtwork(postId);
+      }
       
       // clear comment toggles/counts and tags
       setShowCommentsMap((prev) => {
@@ -265,7 +361,14 @@ const ArtPosts = () => {
       );
 
       setArtPostModal({ isOpen: false, type: "", post: null });
-      fetchArtPostsWithMedia();
+      
+      // Refresh data
+      if (initialArtworks.length > 0 && onDeleteArtwork) {
+        // If we're in home page with initialArtworks, let parent handle refresh
+        onDeleteArtwork(postId); // Reuse this to trigger parent refresh
+      } else {
+        fetchArtPostsWithMedia();
+      }
     } catch (err) {
       console.error("Failed to edit post:", err);
       alert("Failed to edit post.");
@@ -394,43 +497,62 @@ const ArtPosts = () => {
                 </div>
               )}
               <div>
-  <div className="flex items-center">
-    <p className="font-bold text-gray-800">{post.author}</p>
-    {post.is_verified && <VerifiedBadge />}
-  </div>
-  <p className="text-gray-600 text-sm">{post.fullname}</p>
-</div>
-
-              {String(post.author_id) === String(userId) && (
-                <div className="ml-auto relative">
-                  <button className="p-2 rounded-full hover:bg-gray-100" onClick={() => setDropdownOpen(dropdownOpen === post.id ? null : post.id)}>
-                    <MoreVertical className="w-5 h-5 text-gray-600" />
-                  </button>
-
-                  {dropdownOpen === post.id && (
-                    <div className="absolute right-0 mt-2 w-36 bg-white shadow-lg rounded border border-gray-200 z-50">
-                      <button
-                        className="w-full px-4 py-2 hover:bg-gray-100 text-left"
-                        onClick={() => {
-                          setArtPostModal({ isOpen: true, type: "edit", post });
-                          setDropdownOpen(null);
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="w-full px-4 py-2 hover:bg-gray-100 text-left text-red-600"
-                        onClick={() => {
-                          setConfirmDeleteFor(post.id);
-                          setDropdownOpen(null);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+                <div className="flex items-center">
+                  <p className="font-bold text-gray-800">{post.author}</p>
+                  {post.is_verified && <VerifiedBadge />}
+                  <VisibilityBadge visibility={post.visibility} />
                 </div>
-              )}
+                <p className="text-gray-600 text-sm">{post.fullname}</p>
+              </div>
+
+              {/* UPDATE THIS SECTION: Make menu visible to everyone */}
+              <div className="ml-auto relative">
+                <button className="p-2 rounded-full hover:bg-gray-100" onClick={() => setDropdownOpen(dropdownOpen === post.id ? null : post.id)}>
+                  <MoreVertical className="w-5 h-5 text-gray-600" />
+                </button>
+
+                {dropdownOpen === post.id && (
+                  <div className="absolute right-0 mt-2 w-36 bg-white shadow-lg rounded border border-gray-200 z-50">
+                    {/* Author-only options */}
+                    {String(post.author_id) === String(userId) && (
+                      <>
+                        <button
+                          className="w-full px-4 py-2 hover:bg-gray-100 text-left"
+                          onClick={() => {
+                            setArtPostModal({ isOpen: true, type: "edit", post });
+                            setDropdownOpen(null);
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="w-full px-4 py-2 hover:bg-gray-100 text-left text-red-600"
+                          onClick={() => {
+                            setConfirmDeleteFor(post.id);
+                            setDropdownOpen(null);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                    
+                    {/* ADD THIS: Report button for non-authors */}
+                    {String(post.author_id) !== String(userId) && (
+                      <button
+                        className="w-full px-4 py-2 hover:bg-gray-100 text-left text-orange-500 flex items-center gap-2"
+                        onClick={() => {
+                          setReportModal({ isOpen: true, post });
+                          setDropdownOpen(null);
+                        }}
+                      >
+                        <Flag size={14} />
+                        Report
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <h4 className="text-base font-semibold text-gray-800 mb-2">{post.title}</h4>
@@ -505,160 +627,162 @@ const ArtPosts = () => {
       )}
 
       {/* Media Viewer Modal with tags in sidebar */}
-{modalState.isOpen && modalState.postIndex !== null && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-    <div className="relative max-w-6xl w-full max-h-[90vh] flex">
-      {/* Image area */}
-      <div className="flex-[2] relative flex items-center justify-center bg-black">
-        {artPosts[modalState.postIndex]?.media?.length > 1 && (
-          <>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigateMedia("prev");
-              }}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-20"
-              aria-label="Previous"
-            >
-              <ChevronLeft size={32} />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigateMedia("next");
-              }}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-20"
-              aria-label="Next"
-            >
-              <ChevronRight size={32} />
-            </button>
-          </>
-        )}
+      {modalState.isOpen && modalState.postIndex !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="relative max-w-6xl w-full max-h-[90vh] flex">
+            {/* Image area */}
+            <div className="flex-[2] relative flex items-center justify-center bg-black">
+              {artPosts[modalState.postIndex]?.media?.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateMedia("prev");
+                    }}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-20"
+                    aria-label="Previous"
+                  >
+                    <ChevronLeft size={32} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateMedia("next");
+                    }}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-20"
+                    aria-label="Next"
+                  >
+                    <ChevronRight size={32} />
+                  </button>
+                </>
+              )}
 
-        {(() => {
-          const currentMedia = artPosts[modalState.postIndex].media[modalState.mediaIndex];
-          const mediaUrl = getMediaUrl(currentMedia.media_path);
-          const isVideo = currentMedia.media_path.endsWith(".mp4");
+              {(() => {
+                const currentMedia = artPosts[modalState.postIndex].media[modalState.mediaIndex];
+                const mediaUrl = getMediaUrl(currentMedia.media_path);
+                const isVideo = currentMedia.media_path.endsWith(".mp4");
 
-          const handleContextMenu = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          };
+                const handleContextMenu = (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                };
 
-          const handleDragStart = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          };
+                const handleDragStart = (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                };
 
-          return isVideo ? (
-            <video
-              src={mediaUrl}
-              controls
-              autoPlay
-              className="max-h-[80vh] w-full object-contain"
-              onContextMenu={handleContextMenu}
-              onDragStart={handleDragStart}
-              controlsList="nodownload"
-            />
-          ) : (
-            <img
-              src={mediaUrl}
-              alt="Artwork media"
-              className="max-h-[80vh] w-auto max-w-full object-contain"
-              onContextMenu={handleContextMenu}
-              onDragStart={handleDragStart}
-              draggable={false}
-              style={{
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                MozUserSelect: 'none',
-                msUserSelect: 'none',
-              }}
-            />
-          );
-        })()}
+                return isVideo ? (
+                  <video
+                    src={mediaUrl}
+                    controls
+                    autoPlay
+                    className="max-h-[80vh] w-full object-contain"
+                    onContextMenu={handleContextMenu}
+                    onDragStart={handleDragStart}
+                    controlsList="nodownload"
+                  />
+                ) : (
+                  <img
+                    src={mediaUrl}
+                    alt="Artwork media"
+                    className="max-h-[80vh] w-auto max-w-full object-contain"
+                    onContextMenu={handleContextMenu}
+                    onDragStart={handleDragStart}
+                    draggable={false}
+                    style={{
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                      MozUserSelect: 'none',
+                      msUserSelect: 'none',
+                    }}
+                  />
+                );
+              })()}
 
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white z-20">
-          {modalState.mediaIndex + 1} of {artPosts[modalState.postIndex].media.length}
-        </div>
-      </div>
-
-      {/* Sidebar with tags */}
-      <div className="flex-1 flex flex-col border-l border-gray-200 bg-white">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            {artPosts[modalState.postIndex].author_pfp ? (
-              <img
-                src={`${API_BASE}/uploads/${artPosts[modalState.postIndex].author_pfp}`}
-                alt={`${artPosts[modalState.postIndex].author}'s profile`}
-                className="w-10 h-10 rounded-full border border-gray-300 object-cover"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                <span className="text-gray-600 text-xs">N/A</span>
-              </div>
-            )}
-            <div>
-  <div className="flex items-center">
-    <p className="font-bold text-gray-800">{artPosts[modalState.postIndex].author}</p>
-    {artPosts[modalState.postIndex].is_verified && <VerifiedBadge />}
-  </div>
-  <p className="text-gray-600 text-sm">{artPosts[modalState.postIndex].fullname}</p>
-</div>
-          </div>
-
-          <p className="mt-3 text-gray-800">{artPosts[modalState.postIndex].title}</p>
-
-          {/* Tags in modal */}
-          {postTags[artPosts[modalState.postIndex].id] && postTags[artPosts[modalState.postIndex].id].length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {postTags[artPosts[modalState.postIndex].id].map((tag) => (
-                <span
-                  key={tag.id}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
-                >
-                  <Tag size={12} />
-                  #{tag.name}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Likes & Comments with date on the right */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-            <div className="flex items-center gap-4">
-              <ArtworkLikes artworkPostId={artPosts[modalState.postIndex].id} />
-              <div className="flex items-center gap-1 text-gray-600">
-                <MessageCircle size={18} />
-                <span className="text-sm">{commentCounts[artPosts[modalState.postIndex].id] ?? 0}</span>
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white z-20">
+                {modalState.mediaIndex + 1} of {artPosts[modalState.postIndex].media.length}
               </div>
             </div>
 
-            {/* Date in modal - bottom right */}
-            {artPosts[modalState.postIndex].created_at && (
-              <p className="text-xs text-gray-500">
-                {formatDistanceToNow(new Date(artPosts[modalState.postIndex].created_at), { addSuffix: true })}
-              </p>
-            )}
+            {/* Sidebar with tags */}
+            <div className="flex-1 flex flex-col border-l border-gray-200 bg-white">
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  {artPosts[modalState.postIndex].author_pfp ? (
+                    <img
+                      src={`${API_BASE}/uploads/${artPosts[modalState.postIndex].author_pfp}`}
+                      alt={`${artPosts[modalState.postIndex].author}'s profile`}
+                      className="w-10 h-10 rounded-full border border-gray-300 object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                      <span className="text-gray-600 text-xs">N/A</span>
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center">
+                      <p className="font-bold text-gray-800">{artPosts[modalState.postIndex].author}</p>
+                      {artPosts[modalState.postIndex].is_verified && <VerifiedBadge />}
+                      <VisibilityBadge visibility={artPosts[modalState.postIndex].visibility} />
+                    </div>
+                    <p className="text-gray-600 text-sm">{artPosts[modalState.postIndex].fullname}</p>
+                  </div>
+                </div>
+
+                <p className="mt-3 text-gray-800">{artPosts[modalState.postIndex].title}</p>
+
+                {/* Tags in modal */}
+                {postTags[artPosts[modalState.postIndex].id] && postTags[artPosts[modalState.postIndex].id].length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {postTags[artPosts[modalState.postIndex].id].map((tag) => (
+                      <span
+                        key={tag.id}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
+                      >
+                        <Tag size={12} />
+                        #{tag.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Likes & Comments with date on the right */}
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <ArtworkLikes artworkPostId={artPosts[modalState.postIndex].id} />
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <MessageCircle size={18} />
+                      <span className="text-sm">{commentCounts[artPosts[modalState.postIndex].id] ?? 0}</span>
+                    </div>
+                  </div>
+
+                  {/* Date in modal - bottom right */}
+                  {artPosts[modalState.postIndex].created_at && (
+                    <p className="text-xs text-gray-500">
+                      {formatDistanceToNow(new Date(artPosts[modalState.postIndex].created_at), { addSuffix: true })}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Comments area (scrollable) */}
+              <div className="flex-1 overflow-y-auto p-4">
+                <ArtworkComments artworkPostId={artPosts[modalState.postIndex].id} userId={userId} />
+              </div>
+            </div>
+
+            {/* GitHub-style Close Button */}
+            <button 
+              onClick={closeModal} 
+              className="absolute top-4 right-4 flex items-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300 bg-white/90 backdrop-blur-sm"
+            >
+              <X size={20} />
+            </button>
           </div>
         </div>
-
-        {/* Comments area (scrollable) */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <ArtworkComments artworkPostId={artPosts[modalState.postIndex].id} userId={userId} />
-        </div>
-      </div>
-
-      {/* GitHub-style Close Button */}
-      <button 
-        onClick={closeModal} 
-        className="absolute top-4 right-4 flex items-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300 bg-white/90 backdrop-blur-sm"
-      >
-        <X size={20} />
-      </button>
-    </div>
-  </div>
-)}
+      )}
+      
       {/* ArtPostModal for edit/delete */}
       {artPostModal.isOpen && (
         <ArtPostModal
@@ -672,6 +796,17 @@ const ArtPosts = () => {
           onEdit={(postId, updatedData) => {
             handleEdit(postId, updatedData);
           }}
+        />
+      )}
+      
+      {/* ADD THIS: Report Modal */}
+      {reportModal.isOpen && reportModal.post && (
+        <ReportsModal
+          isOpen={reportModal.isOpen}
+          onClose={() => setReportModal({ isOpen: false, post: null })}
+          contentType="artwork"
+          contentId={reportModal.post.id}
+          contentAuthorId={reportModal.post.author_id}
         />
       )}
     </div>
