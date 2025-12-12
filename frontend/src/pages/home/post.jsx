@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { MessageCircle, MoreVertical, Loader, Trash, Pencil, X } from "lucide-react";
+import { MessageCircle, MoreVertical, Loader, Trash, Pencil, X, Globe, Users, Lock, Flag } from "lucide-react";
 import axios from "axios";
 import Comments from "../comments/comments";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import PostLikes from "../likes/postlikes";
-import { formatDistanceToNow } from "date-fns"; // ✅ For posted time
+import { formatDistanceToNow } from "date-fns";
+import ReportsModal from "../../components/modals/reportsmodal"; // ADD THIS IMPORT
 
 const VerifiedBadge = () => (
   <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 ml-2">
@@ -12,20 +13,48 @@ const VerifiedBadge = () => (
   </div>
 );
 
+const VisibilityBadge = ({ visibility }) => {
+  const getVisibilityInfo = () => {
+    switch (visibility) {
+      case 'public':
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+      case 'friends':
+        return { icon: <Users size={14} />, text: 'Friends Only', color: 'text-green-600', bg: 'bg-green-50' };
+      case 'private':
+        return { icon: <Lock size={14} />, text: 'Private', color: 'text-gray-600', bg: 'bg-gray-50' };
+      default:
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+    }
+  };
+
+  const info = getVisibilityInfo();
+
+  return (
+    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${info.bg} ${info.color} ml-2`}>
+      {info.icon}
+      <span>{info.text}</span>
+    </div>
+  );
+};
+
 const Post = ({ post, userId, handleDelete }) => {
   const [showComments, setShowComments] = useState(false);
   const [commentCount, setCommentCount] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(post.title);
+  const [editedVisibility, setEditedVisibility] = useState(post.visibility || 'private');
   const [editedMedia, setEditedMedia] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  
+  // ADD THIS STATE
+  const [showReportModal, setShowReportModal] = useState(false);
 
-  // Scroll lock for modals
+  // Scroll lock for modals - UPDATE THIS
   useEffect(() => {
-    if (confirmDelete || isImageModalOpen || isEditing) {
+    if (confirmDelete || isImageModalOpen || isEditing || showReportModal) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
@@ -33,7 +62,7 @@ const Post = ({ post, userId, handleDelete }) => {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [confirmDelete, isImageModalOpen, isEditing]);
+  }, [confirmDelete, isImageModalOpen, isEditing, showReportModal]); // ADD showReportModal
 
   // Fetch comment count
   const fetchCommentCount = async () => {
@@ -71,6 +100,7 @@ const Post = ({ post, userId, handleDelete }) => {
 
       const formData = new FormData();
       formData.append("title", editedTitle);
+      formData.append("visibility", editedVisibility); // Add visibility
       if (editedMedia) {
         formData.append("media", editedMedia);
       }
@@ -128,45 +158,62 @@ const Post = ({ post, userId, handleDelete }) => {
             <div className="flex items-center">
               <p className="font-bold text-gray-800">{post.author}</p>
               {post.is_verified && <VerifiedBadge />}
+              <VisibilityBadge visibility={post.visibility} />
             </div>
             <p className="text-gray-600 text-sm">{post.fullname}</p>
-
-            
           </div>
         </div>
 
-        {post.author_id === userId && (
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <MoreVertical size={20} />
-            </button>
+        {/* UPDATE THIS SECTION: Make menu visible to everyone */}
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <MoreVertical size={20} />
+          </button>
 
-            {menuOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border transform transition-all duration-200">
+          {menuOpen && (
+            <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border transform transition-all duration-200">
+              {/* Author-only options */}
+              {post.author_id === userId && (
+                <>
+                  <button
+                    onClick={() => {
+                      setIsEditing(true);
+                      setMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition"
+                  >
+                    <Pencil size={16} />
+                    Edit Post
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100 transition"
+                  >
+                    <Trash size={16} />
+                    Delete Post
+                  </button>
+                </>
+              )}
+              
+              {/* ADD THIS: Report button for non-authors */}
+              {post.author_id !== userId && (
                 <button
                   onClick={() => {
-                    setIsEditing(true);
+                    setShowReportModal(true);
                     setMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition"
+                  className="flex items-center gap-2 w-full px-4 py-2 text-left text-orange-500 hover:bg-gray-100 transition"
                 >
-                  <Pencil size={16} />
-                  Edit Post
+                  <Flag size={16} />
+                  Report Post
                 </button>
-                <button
-                  onClick={() => setConfirmDelete(true)}
-                  className="flex items-center gap-2 w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100 transition"
-                >
-                  <Trash size={16} />
-                  Delete Post
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Post Content */}
@@ -219,9 +266,65 @@ const Post = ({ post, userId, handleDelete }) => {
             <textarea
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded resize-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded resize-none focus:ring-2 focus:ring-blue-500 mb-4"
               rows="3"
             />
+
+            {/* Visibility Selector in Edit Modal */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Change Visibility
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditedVisibility("public")}
+                  className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    editedVisibility === "public"
+                      ? "bg-blue-500 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <Globe size={16} />
+                  <div className="text-left">
+                    <div className="font-semibold">Public</div>
+                    <div className="text-xs opacity-80">Everyone</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setEditedVisibility("friends")}
+                  className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    editedVisibility === "friends"
+                      ? "bg-green-500 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <Users size={16} />
+                  <div className="text-left">
+                    <div className="font-semibold">Friends Only</div>
+                    <div className="text-xs opacity-80">Visible to your followers</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setEditedVisibility("private")}
+                  className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    editedVisibility === "private"
+                      ? "bg-gray-600 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <Lock size={16} />
+                  <div className="text-left">
+                    <div className="font-semibold">Private</div>
+                    <div className="text-xs opacity-80">Only you</div>
+                  </div>
+                </button>
+              </div>
+            </div>
 
             <div className="mt-4">
               <label className="block text-sm text-gray-700 mb-1">
@@ -253,7 +356,7 @@ const Post = ({ post, userId, handleDelete }) => {
                 {isLoading ? (
                   <Loader className="animate-spin w-5 h-5 inline" />
                 ) : (
-                  "Confirm"
+                  "Save Changes"
                 )}
               </button>
             </div>
@@ -289,74 +392,84 @@ const Post = ({ post, userId, handleDelete }) => {
       )}
 
       {/* Image Modal */}
-{isImageModalOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-    <div className="relative bg-white rounded-lg max-w-6xl w-full h-[80vh] flex">
-      <div className="flex-[2] overflow-hidden flex items-center justify-center p-4 bg-gray-100">
-        <img
-          src={`http://localhost:5000/uploads/${post.media_path}`}
-          alt={post.title}
-          className="max-h-full max-w-full object-contain"
-        />
-      </div>
-      <div className="flex-1 flex flex-col border-l border-gray-200">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            {post.author_pfp ? (
+      {isImageModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="relative bg-white rounded-lg max-w-6xl w-full h-[80vh] flex">
+            <div className="flex-[2] overflow-hidden flex items-center justify-center p-4 bg-gray-100">
               <img
-                src={`http://localhost:5000/uploads/${post.author_pfp}`}
-                alt={post.author}
-                className="w-10 h-10 rounded-full border border-gray-300"
+                src={`http://localhost:5000/uploads/${post.media_path}`}
+                alt={post.title}
+                className="max-h-full max-w-full object-contain"
               />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                <span className="text-gray-600 text-xs">N/A</span>
-              </div>
-            )}
-            <div>
-              <div className="flex items-center">
-                <p className="font-bold text-gray-800">{post.author}</p>
-                {post.is_verified && <VerifiedBadge />}
-              </div>
-              <p className="text-gray-600 text-sm">{post.fullname}</p>
             </div>
-          </div>
-          <p className="mt-3 text-gray-800">{post.title}</p>
+            <div className="flex-1 flex flex-col border-l border-gray-200">
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  {post.author_pfp ? (
+                    <img
+                      src={`http://localhost:5000/uploads/${post.author_pfp}`}
+                      alt={post.author}
+                      className="w-10 h-10 rounded-full border border-gray-300"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                      <span className="text-gray-600 text-xs">N/A</span>
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center">
+                      <p className="font-bold text-gray-800">{post.author}</p>
+                      {post.is_verified && <VerifiedBadge />}
+                      <VisibilityBadge visibility={post.visibility} />
+                    </div>
+                    <p className="text-gray-600 text-sm">{post.fullname}</p>
+                  </div>
+                </div>
+                <p className="mt-3 text-gray-800">{post.title}</p>
 
-          {/* Likes & Comments with date on the right */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <PostLikes postId={post.id} />
+                {/* Likes & Comments with date on the right */}
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1">
+                      <PostLikes postId={post.id} />
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <MessageCircle size={18} />
+                      <span className="text-sm">{commentCount}</span>
+                    </div>
+                  </div>
+
+                  {/* Date in modal - bottom right */}
+                  {post.created_at && (
+                    <p className="text-xs text-gray-500">
+                      {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-1 text-gray-600">
-                <MessageCircle size={18} />
-                <span className="text-sm">{commentCount}</span>
+              <div className="flex-1 overflow-y-auto">
+                <Comments postId={post.id} userId={userId} />
               </div>
             </div>
 
-            {/* Date in modal - bottom right */}
-            {post.created_at && (
-              <p className="text-xs text-gray-500">
-                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-              </p>
-            )}
+            <button
+              onClick={() => setIsImageModalOpen(false)}
+              className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 transition"
+            >
+              <X size={24} />
+            </button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto">
-          <Comments postId={post.id} userId={userId} />
-        </div>
-      </div>
+      )}
 
-      <button
-        onClick={() => setIsImageModalOpen(false)}
-        className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 transition"
-      >
-        <X size={24} />
-      </button>
-    </div>
-  </div>
-)}
+      {/* ADD THIS: Report Modal */}
+      <ReportsModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        contentType="post"
+        contentId={post.id}
+        contentAuthorId={post.author_id}
+      />
     </div>
   );
 };

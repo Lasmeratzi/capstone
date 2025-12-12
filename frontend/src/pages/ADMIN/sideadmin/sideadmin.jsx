@@ -5,6 +5,7 @@ import {
   Users, 
   Tag, 
   FileText, 
+  Flag, // ADD THIS IMPORT
   Gavel, 
   ShieldCheck, 
   CreditCard,
@@ -39,6 +40,7 @@ const SideAdmin = () => {
   const navItems = [
     { path: "/homeadmin", label: "Dashboard", icon: LayoutDashboard, color: "gray" },
     { path: "/displayprofile", label: "Profiles", icon: Users, color: "gray" },
+    { path: "/displayreports", label: "Reports", icon: Flag, color: "gray" }, // ADDED THIS LINE
     { path: "/tags", label: "Tags", icon: Tag, color: "gray" },
     { path: "/displayposts", label: "Posts", icon: FileText, color: "gray" },
   ];
@@ -46,7 +48,7 @@ const SideAdmin = () => {
   const superAdminItems = [
     { path: "/displayauctions", label: "Manage Auctions", icon: Gavel, color: "green" },
     { path: "/verifyprofile", label: "Verification Requests", icon: ShieldCheck, color: "blue" },
-    { path: "/illuraaccount", label: "Illura Account", icon: CreditCard, color: "purple" }, // NEW
+    { path: "/illuraaccount", label: "Illura Account", icon: CreditCard, color: "purple" },
   ];
 
   const getButtonClass = (color) => {
@@ -55,7 +57,7 @@ const SideAdmin = () => {
       gray: "bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white",
       green: "bg-green-900/50 hover:bg-green-800 text-green-200 hover:text-white border border-green-800/50",
       blue: "bg-blue-900/50 hover:bg-blue-800 text-blue-200 hover:text-white border border-blue-800/50",
-      purple: "bg-purple-900/50 hover:bg-purple-800 text-purple-200 hover:text-white border border-purple-800/50", // NEW
+      purple: "bg-purple-900/50 hover:bg-purple-800 text-purple-200 hover:text-white border border-purple-800/50",
       red: "bg-gray-800 hover:bg-red-600 text-gray-200 hover:text-white border border-red-700/50"
     };
     return `${baseClasses} ${colorClasses[color]}`;
