@@ -1,17 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom"; 
+import { useParams, useNavigate } from "react-router-dom"; 
 import axios from "axios";
 import { motion } from "framer-motion";
-import { UserCircleIcon, XMarkIcon, ChatBubbleLeftRightIcon } from "@heroicons/react/20/solid";
+import { 
+  UserCircleIcon, 
+  XMarkIcon, 
+  ChatBubbleLeftRightIcon,
+  CurrencyDollarIcon,
+  CheckCircleIcon,
+  PhoneIcon
+} from "@heroicons/react/20/solid";
 
 const VisitPortfolio = () => {
   const { id } = useParams(); 
+  const navigate = useNavigate();
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [authorInfo, setAuthorInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     const fetchPortfolioAndUser = async () => {
@@ -61,26 +70,54 @@ const VisitPortfolio = () => {
 
   const closeModal = () => setSelectedItem(null);
 
-  const handleAutoSendMessage = async (portfolioItem) => {
+  // 🔹 Handle different types of inquiries
+  const handleInquiry = async (portfolioItem, type) => {
+    setIsSending(true);
     try {
       const token = localStorage.getItem("token");
+      let message = "";
 
-      // ✅ Send message directly
+      // Custom messages for each inquiry type
+      switch(type) {
+        case 'price':
+          message = `Hi! I'm interested in "${portfolioItem.title}". How much does this cost?`;
+          break;
+        case 'availability':
+          message = `Hi! Is "${portfolioItem.title}" still available?`;
+          break;
+        case 'contact':
+          message = `Hi! Could you share your contact details for "${portfolioItem.title}"?`;
+          break;
+        default:
+          message = `Hi! I'm interested in "${portfolioItem.title}"!`;
+      }
+
+      // ✅ Send message
       await axios.post(
         "http://localhost:5000/api/messages",
         {
           recipientId: portfolioItem.user_id,
           portfolioItemId: portfolioItem.id,
-          message_text: "Hi, I'm interested in this portfolio item!",
+          message_text: message,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert("Message sent successfully!");
+      alert(`${type === 'price' ? 'Price' : type === 'availability' ? 'Availability' : 'Contact'} inquiry sent successfully!`);
       closeModal();
     } catch (err) {
       console.error("Failed to send message:", err);
-      alert("Failed to send message.");
+      alert("Failed to send message. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // 🔹 Handle custom message (opens inbox)
+  const handleCustomMessage = () => {
+    if (selectedItem) {
+      navigate(`/inbox?user=${selectedItem.user_id}&portfolio=${selectedItem.id}`);
+      closeModal();
     }
   };
 
@@ -192,6 +229,7 @@ const VisitPortfolio = () => {
                 <button
                   onClick={closeModal}
                   className="flex items-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300"
+                  disabled={isSending}
                 >
                   <XMarkIcon className="h-5 w-5" />
                 </button>
@@ -209,17 +247,65 @@ const VisitPortfolio = () => {
                 </div>
               </div>
 
-              {/* Message Button */}
+              {/* Inquiry Buttons Section */}
               <div className="mt-8 pt-8 border-t border-gray-200">
-                <button
-                  onClick={() => handleAutoSendMessage(selectedItem)}
-                  className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium text-sm border border-blue-700 shadow-sm w-auto mx-auto"
-                >
-                  <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
-                  Message Seller
-                </button>
-                <p className="text-xs text-gray-500 text-center mt-2">
-                  Send a message to inquire about this portfolio item
+                <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center">
+                  Quick Inquiries
+                </h3>
+                
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  {/* Price Inquiry Button */}
+                  <button
+                    onClick={() => handleInquiry(selectedItem, 'price')}
+                    disabled={isSending}
+                    className={`flex flex-col items-center justify-center px-3 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-all duration-200 font-medium text-sm border border-blue-200 shadow-sm ${
+                      isSending ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-300'
+                    }`}
+                  >
+                    <CurrencyDollarIcon className="h-5 w-5 mb-1" />
+                    <span>How much?</span>
+                  </button>
+                  
+                  {/* Availability Inquiry Button */}
+                  <button
+                    onClick={() => handleInquiry(selectedItem, 'availability')}
+                    disabled={isSending}
+                    className={`flex flex-col items-center justify-center px-3 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-all duration-200 font-medium text-sm border border-green-200 shadow-sm ${
+                      isSending ? 'opacity-50 cursor-not-allowed' : 'hover:border-green-300'
+                    }`}
+                  >
+                    <CheckCircleIcon className="h-5 w-5 mb-1" />
+                    <span>Available?</span>
+                  </button>
+                  
+                  {/* Contact Inquiry Button */}
+                  <button
+                    onClick={() => handleInquiry(selectedItem, 'contact')}
+                    disabled={isSending}
+                    className={`flex flex-col items-center justify-center px-3 py-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-all duration-200 font-medium text-sm border border-purple-200 shadow-sm ${
+                      isSending ? 'opacity-50 cursor-not-allowed' : 'hover:border-purple-300'
+                    }`}
+                  >
+                    <PhoneIcon className="h-5 w-5 mb-1" />
+                    <span>Contact</span>
+                  </button>
+                  
+                  {/* Custom Message Button */}
+                  <button
+                    onClick={handleCustomMessage}
+                    className="flex flex-col items-center justify-center px-3 py-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-all duration-200 font-medium text-sm border border-gray-200 shadow-sm hover:border-gray-300"
+                  >
+                    <ChatBubbleLeftRightIcon className="h-5 w-5 mb-1" />
+                    <span>Message</span>
+                  </button>
+                </div>
+                
+                <p className="text-xs text-gray-500 text-center">
+                  {isSending ? (
+                    <span className="text-blue-600">Sending inquiry...</span>
+                  ) : (
+                    "Click any button to send an inquiry. Auto-reply will be sent instantly."
+                  )}
                 </p>
               </div>
             </div>

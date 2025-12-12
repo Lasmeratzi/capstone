@@ -8,6 +8,7 @@ const MakePost = ({ onClose }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [visibility, setVisibility] = useState("private"); // Default to private
 
   const handleMediaChange = (e) => {
     const file = e.target.files[0];
@@ -38,6 +39,7 @@ const MakePost = ({ onClose }) => {
 
       const formData = new FormData();
       formData.append("title", title);
+      formData.append("visibility", visibility); // Add visibility to form data
       if (media) formData.append("media", media);
 
       await axios.post("http://localhost:5000/api/posts", formData, {
@@ -51,6 +53,7 @@ const MakePost = ({ onClose }) => {
       setTitle("");
       setMedia(null);
       setMediaPreview(null);
+      setVisibility("private"); // Reset to private
 
       if (onClose) onClose(); // close modal on success
     } catch (error) {
@@ -106,6 +109,71 @@ const MakePost = ({ onClose }) => {
               onChange={(e) => setTitle(e.target.value)}
               required
             />
+          </div>
+
+          {/* Visibility Selector */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Who can see this?
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setVisibility("public")}
+                className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  visibility === "public"
+                    ? "bg-blue-500 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                <span className="text-lg">🌍</span>
+                <div className="text-left">
+                  <div className="font-semibold">Public</div>
+                  <div className="text-xs opacity-80">Everyone on Illura</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setVisibility("friends")}
+                className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  visibility === "friends"
+                    ? "bg-green-500 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                <span className="text-lg">👥</span>
+                <div className="text-left">
+                  <div className="font-semibold">Friends Only</div>
+                  <div className="text-xs opacity-80">Mutual followers</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setVisibility("private")}
+                className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  visibility === "private"
+                    ? "bg-gray-600 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                <span className="text-lg">🔒</span>
+                <div className="text-left">
+                  <div className="font-semibold">Private</div>
+                  <div className="text-xs opacity-80">Only you</div>
+                </div>
+              </button>
+            </div>
+            
+            <p className="text-xs text-gray-500 mt-3">
+              {visibility === "public" && 
+                "🌍 Your post will be visible to all users on Illura, including non-followers."}
+              {visibility === "friends" && 
+                "👥 Only users who follow each other (mutual follows) can see this post."}
+              {visibility === "private" && 
+                "🔒 This post is only visible to you. Perfect for drafts or personal notes."}
+            </p>
           </div>
 
           {/* Media Upload */}

@@ -8,6 +8,42 @@ const initSocket = (socketIoInstance) => {
   io = socketIoInstance;
 };
 
+// Helper function to detect inquiry type from message text
+const detectInquiryType = (messageText) => {
+  const msg = messageText.toLowerCase();
+  
+  if (msg.includes('how much') || 
+      msg.includes('price') || 
+      msg.includes('cost') || 
+      msg.includes('rate') ||
+      msg.includes('pricing') ||
+      msg.includes('$$') ||
+      msg.includes('₱') ||
+      msg.includes('php')) {
+    return 'price';
+  } else if (msg.includes('available') || 
+             msg.includes('still have') || 
+             msg.includes('in stock') ||
+             msg.includes('booked') ||
+             msg.includes('slot') ||
+             msg.includes('reserve')) {
+    return 'availability';
+  } else if (msg.includes('contact') || 
+             msg.includes('email') || 
+             msg.includes('phone') || 
+             msg.includes('number') ||
+             msg.includes('telegram') ||
+             msg.includes('whatsapp') ||
+             msg.includes('fb') ||
+             msg.includes('facebook') ||
+             msg.includes('instagram') ||
+             msg.includes('discord')) {
+    return 'contact';
+  } else {
+    return 'price'; // Default to price if no clear match
+  }
+};
+
 // Send a message
 const sendMessage = (req, res) => {
   const senderId = req.user.id;
@@ -22,7 +58,7 @@ const sendMessage = (req, res) => {
     senderId,
     recipientId,
     message_text,
-    portfolioItemId || null, // ✅ include portfolioId if provided
+    portfolioItemId || null,
     (err, result) => {
       if (err) return res.status(500).json({ message: "Database error.", error: err });
 
@@ -43,39 +79,90 @@ const sendMessage = (req, res) => {
 
       // ✅ Auto-reply if portfolioItemId exists
       if (portfolioItemId) {
-        autoReplyModel.getUserAutoReplyForItem(recipientId, portfolioItemId, (err2, results) => {
-          if (!err2 && results.length > 0) {
-            const autoReply = results[0].reply_text;
+        // Detect inquiry type from message
+        const inquiryType = detectInquiryType(message_text);
+        
+        // Fetch appropriate auto-reply based on inquiry type
+        autoReplyModel.getUserAutoReplyForItemAndType(
+          recipientId, 
+          portfolioItemId, 
+          inquiryType, 
+          (err2, results) => {
+            if (!err2 && results.length > 0) {
+              const autoReply = results[0].reply_text;
 
-            // Save auto-reply message (from seller → buyer)
-            messageModel.createMessage(
-              recipientId,
-              senderId,
-              autoReply,
-              portfolioItemId, // ✅ reply linked to same portfolio
-              (err3, result2) => {
-                if (!err3) {
-                  const replyMessage = {
-                    id: result2.insertId,
-                    senderId: recipientId,
-                    recipientId: senderId,
-                    text: autoReply,
-                    portfolioId: portfolioItemId,
-                    timestamp: new Date(),
-                  };
+              // Save auto-reply message (from seller → buyer)
+              messageModel.createMessage(
+                recipientId,
+                senderId,
+                autoReply,
+                portfolioItemId,
+                (err3, result2) => {
+                  if (!err3) {
+                    const replyMessage = {
+                      id: result2.insertId,
+                      senderId: recipientId,
+                      recipientId: senderId,
+                      text: autoReply,
+                      portfolioId: portfolioItemId,
+                      timestamp: new Date(),
+                    };
 
-                  if (io) {
-                    io.to(senderId.toString()).emit("receiveMessage", replyMessage);
-                    io.to(recipientId.toString()).emit("receiveMessage", replyMessage);
+                    if (io) {
+                      io.to(senderId.toString()).emit("receiveMessage", replyMessage);
+                      io.to(recipientId.toString()).emit("receiveMessage", replyMessage);
+                    }
                   }
                 }
+              );
+            } else {
+              // If no specific auto-reply found for this type, try default 'price' type
+              if (inquiryType !== 'price') {
+                autoReplyModel.getUserAutoReplyForItemAndType(
+                  recipientId, 
+                  portfolioItemId, 
+                  'price', 
+                  (err3, priceResults) => {
+                    if (!err3 && priceResults.length > 0) {
+                      const autoReply = priceResults[0].reply_text;
+                      
+                      messageModel.createMessage(
+                        recipientId,
+                        senderId,
+                        autoReply,
+                        portfolioItemId,
+                        (err4, result2) => {
+                          if (!err4) {
+                            const replyMessage = {
+                              id: result2.insertId,
+                              senderId: recipientId,
+                              recipientId: senderId,
+                              text: autoReply,
+                              portfolioId: portfolioItemId,
+                              timestamp: new Date(),
+                            };
+
+                            if (io) {
+                              io.to(senderId.toString()).emit("receiveMessage", replyMessage);
+                              io.to(recipientId.toString()).emit("receiveMessage", replyMessage);
+                            }
+                          }
+                        }
+                      );
+                    }
+                  }
+                );
               }
-            );
+            }
           }
-        });
+        );
       }
 
-      res.status(201).json({ message: "Message sent!", messageId: result.insertId });
+      res.status(201).json({ 
+        message: "Message sent!", 
+        messageId: result.insertId,
+        inquiryType: portfolioItemId ? detectInquiryType(message_text) : null 
+      });
     }
   );
 };
@@ -181,7 +268,7 @@ const getFollowingInbox = (req, res) => {
             pfp: followedUser.pfp,
             lastMessage: lastMessage ? lastMessage.message_text : null,
             lastMessageTime: lastMessage ? lastMessage.created_at : null,
-            lastMessageSenderId: lastMessage ? lastMessage.sender_id : null, // ✅ ADD THIS LINE
+            lastMessageSenderId: lastMessage ? lastMessage.sender_id : null,
             unreadCount,
           });
         });
@@ -203,4 +290,5 @@ module.exports = {
   deleteMessage,
   getFollowingInbox,
   deleteConversation,
+  detectInquiryType, // Export for testing if needed
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { X } from "lucide-react";
+import { X, Globe, Users, Lock } from "lucide-react";
 
 export default function MakeArt({ onClose }) {
   const navigate = useNavigate();
@@ -16,6 +16,7 @@ export default function MakeArt({ onClose }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [visibility, setVisibility] = useState("private"); // Add visibility state
 
   useEffect(() => {
     return () => {
@@ -111,10 +112,15 @@ export default function MakeArt({ onClose }) {
     try {
       setSubmitting(true);
       
-      // Create post with tags
+      // Create post with tags AND visibility
       const postResponse = await axios.post(
         "http://localhost:5000/api/artwork-posts",
-        { title, description, tags }, // ✅ Include tags
+        { 
+          title, 
+          description, 
+          tags,
+          visibility  // Add visibility to request
+        },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
 
@@ -138,6 +144,7 @@ export default function MakeArt({ onClose }) {
       setFiles([]);
       setFilePreviews([]);
       setTags([]);
+      setVisibility("private"); // Reset to default
 
       onClose();
       navigate("/home");
@@ -199,9 +206,74 @@ export default function MakeArt({ onClose }) {
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       required
-                      rows={5}
+                      rows={4}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     ></textarea>
+                  </div>
+
+                  {/* Visibility Selector */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Who can see this artwork?
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setVisibility("public")}
+                        className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                          visibility === "public"
+                            ? "bg-blue-500 text-white shadow-md"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        <Globe size={16} />
+                        <div className="text-left">
+                          <div className="font-semibold">Public</div>
+                          <div className="text-xs opacity-80">Everyone on Illura</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setVisibility("friends")}
+                        className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                          visibility === "friends"
+                            ? "bg-green-500 text-white shadow-md"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        <Users size={16} />
+                        <div className="text-left">
+                          <div className="font-semibold">Friends Only</div>
+                          <div className="text-xs opacity-80">Visible to your followers</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setVisibility("private")}
+                        className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                          visibility === "private"
+                            ? "bg-gray-600 text-white shadow-md"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        <Lock size={16} />
+                        <div className="text-left">
+                          <div className="font-semibold">Private</div>
+                          <div className="text-xs opacity-80">Only you</div>
+                        </div>
+                      </button>
+                    </div>
+                    
+                    <p className="text-xs text-gray-500 mt-3">
+                      {visibility === "public" && 
+                        "🌍 Your artwork will be visible to all users on Illura, including non-followers."}
+                      {visibility === "friends" && 
+                        "👥 Only users who follow you can see this artwork. Perfect for exclusive content for your fans!"}
+                      {visibility === "private" && 
+                        "🔒 This artwork is only visible to you. Great for WIPs, drafts, or personal pieces."}
+                    </p>
                   </div>
 
                   {/* Tags Input */}
