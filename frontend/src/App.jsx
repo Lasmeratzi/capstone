@@ -17,6 +17,7 @@ import Tags from "./pages/ADMIN/tags/tags";
 import DisplayProfile from "./pages/ADMIN/displayprofile/displayprofile";
 import DisplayPosts from "./pages/ADMIN/displayposts/displayposts";
 import DisplayAuctions from "./pages/ADMIN/displayauctions/displayauctions"; 
+import DisplayReports from "./pages/ADMIN/displayreports/displayreports";
 import VerifyProfile from "./pages/ADMIN/verifyprofile/verifyprofile";
 import LandingPage from "./pages/landing/landingpage";
 import MakePost from "./pages/makepost/makepost";
@@ -176,6 +177,11 @@ function App() {
         <Route path="/displayposts" element={
           <AdminProtectedRoute adminOnly={true}>
             <DisplayPosts />
+          </AdminProtectedRoute>
+        } />
+         <Route path="/displayreports" element={
+          <AdminProtectedRoute adminOnly={true}>
+            <DisplayReports />
           </AdminProtectedRoute>
         } />
         <Route path="/displayauctions" element={

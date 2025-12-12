@@ -14,9 +14,11 @@ import CreateModal from "../../components/modals/createmodal";
 const Home = () => {
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
-  const [artPosts, setArtPosts] = useState([]);
+  const [artworks, setArtworks] = useState([]); // NEW: state for artwork posts
   const [accounts, setAccounts] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+  const [isLoadingArtworks, setIsLoadingArtworks] = useState(false); // NEW: loading state for artworks
 
   // modal states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -26,6 +28,43 @@ const Home = () => {
 
   const [activeTab, setActiveTab] = useState("artworks");
   const navigate = useNavigate();
+
+  // Function to fetch artwork posts from followed users
+  const fetchFollowedArtworks = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoadingArtworks(true);
+      const token = localStorage.getItem("token");
+      
+      // Fetch artwork posts from followed users
+      const artworkRes = await axios.get("http://localhost:5000/api/artwork-posts/following", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      setArtworks(artworkRes.data || []);
+    } catch (error) {
+      console.error("Error fetching followed artworks:", error);
+      // If endpoint doesn't exist (404), fallback to all artwork posts
+      if (error.response?.status === 404) {
+        console.log("Following endpoint not found for artworks, falling back to all");
+        try {
+          const token = localStorage.getItem("token");
+          const fallbackRes = await axios.get("http://localhost:5000/api/artwork-posts", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setArtworks(fallbackRes.data || []);
+        } catch (fallbackError) {
+          console.error("Failed to fetch fallback artworks:", fallbackError);
+          setArtworks([]);
+        }
+      } else {
+        setArtworks([]);
+      }
+    } finally {
+      setIsLoadingArtworks(false);
+    }
+  };
 
   // fetch profile + posts
   useEffect(() => {
@@ -46,14 +85,11 @@ const Home = () => {
           return;
         }
 
-        const [userRes, postsRes, artRes, accountsRes] = await Promise.all([
+        setIsLoadingPosts(true);
+
+        // Fetch user profile and accounts
+        const [userRes, accountsRes] = await Promise.all([
           axios.get("http://localhost:5000/api/profile", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("http://localhost:5000/api/posts", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("http://localhost:5000/api/artwork-posts", {
             headers: { Authorization: `Bearer ${token}` },
           }),
           axios.get("http://localhost:5000/api/users", {
@@ -62,9 +98,34 @@ const Home = () => {
         ]);
 
         setUser(userRes.data);
-        setPosts(postsRes.data);
-        setArtPosts(artRes.data);
         setAccounts(accountsRes.data.filter((a) => a.id !== userRes.data.id));
+
+        // Try to fetch posts from followed users
+        try {
+          const postsRes = await axios.get("http://localhost:5000/api/posts/following", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setPosts(postsRes.data || []);
+        } catch (followError) {
+          console.error("Error fetching following posts:", followError);
+          
+          // If endpoint doesn't exist (404), fallback to all posts temporarily
+          if (followError.response?.status === 404) {
+            console.log("Following endpoint not found, falling back to all posts");
+            try {
+              const fallbackRes = await axios.get("http://localhost:5000/api/posts", {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              setPosts(fallbackRes.data || []);
+            } catch (fallbackError) {
+              console.error("Failed to fetch fallback posts:", fallbackError);
+              setPosts([]);
+            }
+          } else {
+            setPosts([]);
+          }
+        }
+
       } catch (error) {
         console.error("Failed to fetch data:", error);
         if (error.response?.status === 403) {
@@ -73,11 +134,27 @@ const Home = () => {
         } else {
           setErrorMessage("Failed to load data. Please try again.");
         }
+      } finally {
+        setIsLoadingPosts(false);
       }
     };
 
     fetchProfileAndPosts();
   }, [navigate]);
+
+  // Fetch artworks when user is loaded and artworks tab is active
+  useEffect(() => {
+    if (user && activeTab === "artworks") {
+      fetchFollowedArtworks();
+    }
+  }, [user, activeTab]);
+
+  // Fetch artworks when switching to artworks tab
+  useEffect(() => {
+    if (activeTab === "artworks" && user) {
+      fetchFollowedArtworks();
+    }
+  }, [activeTab]);
 
   // delete post
   const handleDelete = async (postId) => {
@@ -89,6 +166,19 @@ const Home = () => {
       setPosts(posts.filter((p) => p.id !== postId));
     } catch (error) {
       console.error("Failed to delete post:", error);
+    }
+  };
+
+  // delete artwork post
+  const handleDeleteArtwork = async (artworkId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:5000/api/artwork-posts/${artworkId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setArtworks(artworks.filter((a) => a.id !== artworkId));
+    } catch (error) {
+      console.error("Failed to delete artwork:", error);
     }
   };
 
@@ -172,7 +262,33 @@ const Home = () => {
         {/* Content */}
         {activeTab === "artworks" && (
           <div className="columns-1 md:columns-2 gap-4">
-            <ArtPosts />
+            {isLoadingArtworks ? (
+              <div className="col-span-2 text-center py-10">
+                <p className="text-gray-500">Loading artworks...</p>
+              </div>
+            ) : artworks.length > 0 ? (
+              // Pass artworks as prop to ArtPosts component
+              <ArtPosts 
+                initialArtworks={artworks}
+                userId={user.id}
+                onDeleteArtwork={handleDeleteArtwork}
+              />
+            ) : (
+              <div className="col-span-2 text-center py-10">
+                <p className="text-gray-500 text-lg mb-3">
+                  No artwork posts from followed artists yet.
+                </p>
+                <p className="text-gray-400 mb-4">
+                  Follow some artists to see their artwork here!
+                </p>
+                <button
+                  onClick={() => navigate("/search")}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                >
+                  Discover Artists
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -183,7 +299,12 @@ const Home = () => {
                 {errorMessage}
               </p>
             )}
-            {posts.length > 0 ? (
+            
+            {isLoadingPosts ? (
+              <div className="col-span-2 text-center py-10">
+                <p className="text-gray-500">Loading posts...</p>
+              </div>
+            ) : posts.length > 0 ? (
               posts.map((post) => (
                 <Post
                   key={post.id}
@@ -193,9 +314,20 @@ const Home = () => {
                 />
               ))
             ) : (
-              <p className="col-span-2 text-gray-500 text-center">
-                No posts available.
-              </p>
+              <div className="col-span-2 text-center py-10">
+                <p className="text-gray-500 text-lg mb-3">
+                  No posts from followed artists yet.
+                </p>
+                <p className="text-gray-400 mb-4">
+                  Follow some artists to see their posts here!
+                </p>
+                <button
+                  onClick={() => navigate("/search")}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                >
+                  Discover Artists
+                </button>
+              </div>
             )}
           </div>
         )}

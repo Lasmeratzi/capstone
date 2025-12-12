@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Loader } from "lucide-react";
+import { X, Loader, Globe, Users, Lock } from "lucide-react"; // Add icons
 import axios from "axios";
 
 const API_BASE = "http://localhost:5000";
@@ -7,6 +7,7 @@ const API_BASE = "http://localhost:5000";
 const ArtPostModal = ({ type, post, onClose, onDelete, onEdit }) => {
   const [title, setTitle] = useState(post?.title || "");
   const [description, setDescription] = useState(post?.description || "");
+  const [visibility, setVisibility] = useState(post?.visibility || "private"); // Add visibility state
   const [loading, setLoading] = useState(false);
 
   const [mediaList, setMediaList] = useState([]);
@@ -127,13 +128,14 @@ const ArtPostModal = ({ type, post, onClose, onDelete, onEdit }) => {
     let mainUpdateSuccess = false;
 
     try {
-      // Step 1 — Update title, description, and tags
+      // Step 1 — Update title, description, tags, and visibility
       const res = await axios.patch(
         `${API_BASE}/api/artwork-posts/${post.id}`,
         { 
           title, 
           description,
-          tags // Include the updated tags array
+          tags, // Include the updated tags array
+          visibility // Add visibility
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -246,6 +248,68 @@ const ArtPostModal = ({ type, post, onClose, onDelete, onEdit }) => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
+            </div>
+
+            {/* Visibility Selector */}
+            <div className="mb-4">
+              <label className="block mb-2 font-medium">Visibility</label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setVisibility("public")}
+                  className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    visibility === "public"
+                      ? "bg-blue-500 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <Globe size={16} />
+                  <div className="text-left">
+                    <div className="font-semibold">Public</div>
+                    <div className="text-xs opacity-80">Everyone</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setVisibility("friends")}
+                  className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    visibility === "friends"
+                      ? "bg-green-500 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <Users size={16} />
+                  <div className="text-left">
+                    <div className="font-semibold">Friends Only</div>
+                    <div className="text-xs opacity-80">Visible to followers</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setVisibility("private")}
+                  className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    visibility === "private"
+                      ? "bg-gray-600 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <Lock size={16} />
+                  <div className="text-left">
+                    <div className="font-semibold">Private</div>
+                    <div className="text-xs opacity-80">Only you</div>
+                  </div>
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-3">
+                {visibility === "public" && 
+                  "🌍 Your artwork will be visible to all users on Illura, including non-followers."}
+                {visibility === "friends" && 
+                  "👥 Only users who follow you can see this artwork. Perfect for exclusive content for your fans!"}
+                {visibility === "private" && 
+                  "🔒 This artwork is only visible to you. Great for WIPs, drafts, or personal pieces."}
+              </p>
             </div>
 
             {/* Tags Editing Section */}

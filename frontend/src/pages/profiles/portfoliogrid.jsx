@@ -1,5 +1,5 @@
 // src/pages/profiles/PortfolioGrid.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -9,8 +9,28 @@ import {
   ChatBubbleLeftRightIcon,
   CheckIcon,
   XMarkIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  CurrencyDollarIcon,
+  CheckCircleIcon,
+  PhoneIcon
 } from "@heroicons/react/20/solid";
+
+// Custom debounce hook
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -20,11 +40,22 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
   const [image, setImage] = useState(null);
   const [authorInfo, setAuthorInfo] = useState(null);
 
-  // Auto-reply states
-  const [autoReplyText, setAutoReplyText] = useState("");
-  const [hasAutoReply, setHasAutoReply] = useState(false);
-  const [isEditingAutoReply, setIsEditingAutoReply] = useState(false);
-  const [autoReplyLoading, setAutoReplyLoading] = useState(false);
+  // Auto-reply states for 3 types
+  const [priceReply, setPriceReply] = useState("");
+  const [availabilityReply, setAvailabilityReply] = useState("");
+  const [contactReply, setContactReply] = useState("");
+  
+  const [hasPriceReply, setHasPriceReply] = useState(false);
+  const [hasAvailabilityReply, setHasAvailabilityReply] = useState(false);
+  const [hasContactReply, setHasContactReply] = useState(false);
+  
+  const [isEditingPrice, setIsEditingPrice] = useState(false);
+  const [isEditingAvailability, setIsEditingAvailability] = useState(false);
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [contactLoading, setContactLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -45,16 +76,20 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
     setTitle(item.title);
     setDescription(item.description);
     setImage(null);
-    setIsEditingAutoReply(false);
+    
+    // Reset all editing states
+    setIsEditingPrice(false);
+    setIsEditingAvailability(false);
+    setIsEditingContact(false);
 
     // Fetch author information
     await fetchAuthorInfo(item.user_id);
 
-    // 🔹 Fetch auto-reply for this portfolio item WITH AUTHENTICATION
+    // 🔹 Fetch ALL auto-replies for this portfolio item
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `http://localhost:5000/api/auto-replies/${item.id}`,
+        `http://localhost:5000/api/auto-replies/item/${item.id}/all`,
         {
           headers: { 
             Authorization: `Bearer ${token}` 
@@ -62,29 +97,68 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
         }
       );
       
-      if (res.data && res.data.reply_text) {
-        setAutoReplyText(res.data.reply_text);
-        setHasAutoReply(true);
-      } else {
-        setAutoReplyText("");
-        setHasAutoReply(false);
+      // Initialize all reply types
+      let priceText = "";
+      let availabilityText = "";
+      let contactText = "";
+      let hasPrice = false;
+      let hasAvailability = false;
+      let hasContact = false;
+      
+      // Process the fetched auto-replies
+      if (res.data && Array.isArray(res.data)) {
+        res.data.forEach(reply => {
+          switch(reply.inquiry_type) {
+            case 'price':
+              priceText = reply.reply_text;
+              hasPrice = true;
+              break;
+            case 'availability':
+              availabilityText = reply.reply_text;
+              hasAvailability = true;
+              break;
+            case 'contact':
+              contactText = reply.reply_text;
+              hasContact = true;
+              break;
+          }
+        });
       }
+      
+      setPriceReply(priceText);
+      setAvailabilityReply(availabilityText);
+      setContactReply(contactText);
+      setHasPriceReply(hasPrice);
+      setHasAvailabilityReply(hasAvailability);
+      setHasContactReply(hasContact);
+      
     } catch (error) {
-      console.error("Failed to fetch auto-reply:", error);
-      setAutoReplyText("");
-      setHasAutoReply(false);
+      console.error("Failed to fetch auto-replies:", error);
+      // Reset all states on error
+      setPriceReply("");
+      setAvailabilityReply("");
+      setContactReply("");
+      setHasPriceReply(false);
+      setHasAvailabilityReply(false);
+      setHasContactReply(false);
     }
   };
 
   const closeModal = () => {
     setSelectedItem(null);
     setIsEditing(false);
-    setIsEditingAutoReply(false);
+    setIsEditingPrice(false);
+    setIsEditingAvailability(false);
+    setIsEditingContact(false);
     setTitle("");
     setDescription("");
     setImage(null);
-    setAutoReplyText("");
-    setHasAutoReply(false);
+    setPriceReply("");
+    setAvailabilityReply("");
+    setContactReply("");
+    setHasPriceReply(false);
+    setHasAvailabilityReply(false);
+    setHasContactReply(false);
     setAuthorInfo(null);
   };
 
@@ -143,56 +217,62 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
     }
   };
 
-  // 🔹 Auto-reply handlers
-  const handleSaveAutoReply = async () => {
-    if (!autoReplyText.trim()) {
-      alert("Please enter an auto-reply message.");
+  // 🔹 FIXED Auto-reply handler with better error handling
+  const handleSaveAutoReply = async (type, text) => {
+    if (!text.trim()) {
+      alert(`Please enter a ${type} auto-reply message.`);
       return;
     }
 
-    setAutoReplyLoading(true);
+    // Set loading state based on type
+    if (type === 'price') setPriceLoading(true);
+    else if (type === 'availability') setAvailabilityLoading(true);
+    else if (type === 'contact') setContactLoading(true);
+
     const token = localStorage.getItem("token");
 
     try {
-      if (hasAutoReply) {
-        // Update existing auto-reply
-        await axios.put(
-          `http://localhost:5000/api/auto-replies/${selectedItem.id}`,
-          { reply_text: autoReplyText },
-          { 
-            headers: { 
-              Authorization: `Bearer ${token}` 
-            } 
-          }
-        );
-      } else {
-        // Create new auto-reply
-        await axios.post(
-          "http://localhost:5000/api/auto-replies",
-          { portfolioItemId: selectedItem.id, reply_text: autoReplyText },
-          { 
-            headers: { 
-              Authorization: `Bearer ${token}` 
-            } 
-          }
-        );
-        setHasAutoReply(true);
+      // Use batch update endpoint - it handles both create and update
+      const autoReplies = {
+        price: type === 'price' ? text : priceReply,
+        availability: type === 'availability' ? text : availabilityReply,
+        contact: type === 'contact' ? text : contactReply
+      };
+
+      await axios.put(
+        `http://localhost:5000/api/auto-replies/item/${selectedItem.id}/batch`,
+        { autoReplies },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Update local states
+      if (type === 'price') {
+        setHasPriceReply(true);
+        setIsEditingPrice(false);
+      } else if (type === 'availability') {
+        setHasAvailabilityReply(true);
+        setIsEditingAvailability(false);
+      } else if (type === 'contact') {
+        setHasContactReply(true);
+        setIsEditingContact(false);
       }
       
-      setIsEditingAutoReply(false);
+      // Refresh data
+      await handleImageClick(selectedItem);
+      
     } catch (error) {
-      console.error(
-        "Failed to save auto-reply:",
-        error.response?.data || error.message
-      );
-      alert("Failed to save auto-reply. Please try again.");
+      console.error(`Failed to save ${type} auto-reply:`, error);
+      alert(`Failed to save ${type} auto-reply: ${error.response?.data?.message || error.message}`);
     } finally {
-      setAutoReplyLoading(false);
+      // Reset loading state
+      if (type === 'price') setPriceLoading(false);
+      else if (type === 'availability') setAvailabilityLoading(false);
+      else if (type === 'contact') setContactLoading(false);
     }
   };
 
-  const handleDeleteAutoReply = async () => {
-    if (!confirm("Are you sure you want to delete this auto-reply?")) return;
+  const handleDeleteAutoReply = async (type) => {
+    if (!confirm(`Are you sure you want to delete the ${type} auto-reply?`)) return;
 
     const token = localStorage.getItem("token");
     try {
@@ -202,32 +282,211 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
           headers: { 
             Authorization: `Bearer ${token}` 
           },
+          data: { inquiry_type: type }
         }
       );
-      setAutoReplyText("");
-      setHasAutoReply(false);
-      setIsEditingAutoReply(false);
+      
+      // Update local state
+      if (type === 'price') {
+        setPriceReply("");
+        setHasPriceReply(false);
+      } else if (type === 'availability') {
+        setAvailabilityReply("");
+        setHasAvailabilityReply(false);
+      } else if (type === 'contact') {
+        setContactReply("");
+        setHasContactReply(false);
+      }
+      
+      alert(`${type} auto-reply deleted successfully!`);
     } catch (error) {
-      console.error(
-        "Failed to delete auto-reply:",
-        error.response?.data || error.message
-      );
+      console.error(`Failed to delete ${type} auto-reply:`, error);
+      alert(`Failed to delete ${type} auto-reply.`);
     }
   };
 
-  const startEditingAutoReply = () => {
-    setIsEditingAutoReply(true);
-  };
+  // 🔹 Batch update all auto-replies at once
+  const handleBatchUpdate = async () => {
+    const token = localStorage.getItem("token");
+    const autoReplies = {
+      price: priceReply.trim(),
+      availability: availabilityReply.trim(),
+      contact: contactReply.trim()
+    };
 
-  const cancelEditingAutoReply = () => {
-    setIsEditingAutoReply(false);
-    // Reset to original auto-reply text
-    if (selectedItem) {
-      handleImageClick(selectedItem); // Refetch the current state
+    try {
+      await axios.put(
+        `http://localhost:5000/api/auto-replies/item/${selectedItem.id}/batch`,
+        { autoReplies },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Update local states
+      setHasPriceReply(!!autoReplies.price);
+      setHasAvailabilityReply(!!autoReplies.availability);
+      setHasContactReply(!!autoReplies.contact);
+      
+      setIsEditingPrice(false);
+      setIsEditingAvailability(false);
+      setIsEditingContact(false);
+      
+      alert("All auto-replies updated successfully!");
+    } catch (error) {
+      console.error("Failed to batch update auto-replies:", error);
+      alert("Failed to update auto-replies. Please try again.");
     }
   };
 
   const isOwner = selectedItem && Number(selectedItem.user_id) === Number(loggedInUserId);
+
+  // Auto-reply section component for each type - FIXED FLICKERING
+  const AutoReplySection = ({ 
+    type, 
+    icon: Icon, 
+    title, 
+    color, 
+    replyText, 
+    setReplyText,
+    hasReply,
+    isEditing,
+    setIsEditing,
+    loading,
+    placeholder
+  }) => {
+    const textareaRef = useRef(null);
+    const [localText, setLocalText] = useState(replyText);
+    
+    // Debounce the text to prevent too many re-renders
+    const debouncedText = useDebounce(localText, 300);
+    
+    // Update parent state only after debounce
+    useEffect(() => {
+      if (debouncedText !== replyText) {
+        setReplyText(debouncedText);
+      }
+    }, [debouncedText, replyText, setReplyText]);
+
+    // Focus the textarea when editing starts
+    useEffect(() => {
+      if (isEditing && textareaRef.current) {
+        textareaRef.current.focus();
+        setLocalText(replyText); // Initialize with current value
+        // Move cursor to end
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.selectionStart = textareaRef.current.value.length;
+            textareaRef.current.selectionEnd = textareaRef.current.value.length;
+          }
+        }, 10);
+      }
+    }, [isEditing, replyText]);
+
+    const handleCancel = () => {
+      setIsEditing(false);
+      setLocalText(replyText); // Reset to original text
+    };
+
+    return (
+      <div className={`bg-${color}-50 rounded-lg p-4 border border-${color}-200`}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <Icon className={`h-4 w-4 text-${color}-600`} />
+            <h3 className="text-sm font-semibold text-gray-800">
+              {title} Auto-Reply
+            </h3>
+          </div>
+          {hasReply && !isEditing && (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-${color}-100 text-${color}-800 border border-${color}-200`}>
+              Active
+            </span>
+          )}
+        </div>
+
+        {isEditing ? (
+          <div className="space-y-3">
+            <div>
+              <textarea
+                ref={textareaRef}
+                key={`textarea-${type}-${isEditing}`}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200 bg-white text-sm"
+                rows="2"
+                placeholder={placeholder}
+                value={localText}
+                onChange={(e) => setLocalText(e.target.value)}
+                disabled={loading}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    handleCancel();
+                  }
+                }}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => handleSaveAutoReply(type, localText)}
+                disabled={loading}
+                className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm border border-green-700 shadow-sm"
+              >
+                <CheckIcon className="h-4 w-4 mr-2" />
+                {loading ? "Saving..." : "Save"}
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={loading}
+                className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 disabled:opacity-50 font-medium text-sm border border-gray-300 shadow-sm"
+              >
+                <XMarkIcon className="h-4 w-4 mr-2" />
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            {hasReply ? (
+              <>
+                <div className="flex-1 bg-white rounded-lg border border-gray-300 p-3 mr-4">
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {replyText}
+                  </p>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center px-3 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-gray-400"
+                  >
+                    <PencilSquareIcon className="h-4 w-4 mr-2" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteAutoReply(type)}
+                    className="flex items-center px-3 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-red-300"
+                  >
+                    <TrashIcon className="h-4 w-4 mr-2" />
+                    Delete
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex-1">
+                  <p className="text-gray-500 text-sm">
+                    Set an automatic reply for {title.toLowerCase()} inquiries
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className={`flex items-center px-3 py-2 bg-${color}-600 text-white rounded-lg hover:bg-${color}-700 transition-all duration-200 font-medium text-sm border border-${color}-700 shadow-sm`}
+                >
+                  <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
+                  Add {title}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="relative">
@@ -429,105 +688,70 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                     </div>
                   </div>
 
-                  {/* Owner-only actions */}
+                  {/* Owner-only actions - 3 Auto-reply Sections */}
                   {isOwner && (
-                    <div className="mt-8 pt-8 border-t border-gray-200">
-                      {/* Auto-reply Section */}
-                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center space-x-2">
-                            <ChatBubbleLeftRightIcon className="h-4 w-4 text-gray-600" />
-                            <h3 className="text-sm font-semibold text-gray-800">
-                              Auto Reply
-                            </h3>
-                          </div>
-                          {hasAutoReply && !isEditingAutoReply && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                              Active
-                            </span>
-                          )}
+                    <div className="mt-8 pt-8 border-t border-gray-200 space-y-4">
+                      <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center">
+                        <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2 text-gray-600" />
+                        Auto-Reply Settings
+                      </h3>
+                      
+                      {/* Price Auto-Reply */}
+                      <AutoReplySection
+                        type="price"
+                        icon={CurrencyDollarIcon}
+                        title="Price"
+                        color="blue"
+                        replyText={priceReply}
+                        setReplyText={setPriceReply}
+                        hasReply={hasPriceReply}
+                        isEditing={isEditingPrice}
+                        setIsEditing={setIsEditingPrice}
+                        loading={priceLoading}
+                        placeholder="e.g., My rate for this work starts at $XXX. Would you like a custom quote?"
+                      />
+                      
+                      {/* Availability Auto-Reply */}
+                      <AutoReplySection
+                        type="availability"
+                        icon={CheckCircleIcon}
+                        title="Availability"
+                        color="green"
+                        replyText={availabilityReply}
+                        setReplyText={setAvailabilityReply}
+                        hasReply={hasAvailabilityReply}
+                        isEditing={isEditingAvailability}
+                        setIsEditing={setIsEditingAvailability}
+                        loading={availabilityLoading}
+                        placeholder="e.g., Yes, I'm currently available! My lead time is X days/weeks."
+                      />
+                      
+                      {/* Contact Auto-Reply */}
+                      <AutoReplySection
+                        type="contact"
+                        icon={PhoneIcon}
+                        title="Contact"
+                        color="purple"
+                        replyText={contactReply}
+                        setReplyText={setContactReply}
+                        hasReply={hasContactReply}
+                        isEditing={isEditingContact}
+                        setIsEditing={setIsEditingContact}
+                        loading={contactLoading}
+                        placeholder="e.g., You can contact me at email@example.com or 0912-345-6789."
+                      />
+                      
+                      {/* Batch Update Button */}
+                      {(isEditingPrice || isEditingAvailability || isEditingContact) && (
+                        <div className="pt-2">
+                          <button
+                            onClick={handleBatchUpdate}
+                            className="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 font-medium text-sm"
+                          >
+                            Save All Auto-Replies
+                          </button>
                         </div>
-
-                        {isEditingAutoReply ? (
-                          <div className="space-y-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">
-                                Auto Reply Message
-                              </label>
-                              <textarea
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200 bg-white text-sm"
-                                rows="3"
-                                placeholder="Enter your automated response message..."
-                                value={autoReplyText}
-                                onChange={(e) => setAutoReplyText(e.target.value)}
-                                disabled={autoReplyLoading}
-                              />
-                            </div>
-                            <div className="flex justify-end space-x-2">
-                              <button
-                                onClick={handleSaveAutoReply}
-                                disabled={autoReplyLoading}
-                                className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm border border-green-700 shadow-sm"
-                              >
-                                <CheckIcon className="h-4 w-4 mr-2" />
-                                {autoReplyLoading ? "Saving..." : "Save"}
-                              </button>
-                              <button
-                                onClick={cancelEditingAutoReply}
-                                disabled={autoReplyLoading}
-                                className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 disabled:opacity-50 font-medium text-sm border border-gray-300 shadow-sm"
-                              >
-                                <XMarkIcon className="h-4 w-4 mr-2" />
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-between">
-                            {hasAutoReply ? (
-                              <>
-                                {/* Auto-reply message with shorter width */}
-                                <div className="flex-1 bg-white rounded-lg border border-gray-300 p-3 mr-4">
-                                  <p className="text-gray-700 text-sm leading-relaxed">
-                                    {autoReplyText}
-                                  </p>
-                                </div>
-                                <div className="flex space-x-2">
-                                  <button
-                                    onClick={startEditingAutoReply}
-                                    className="flex items-center px-3 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-gray-400"
-                                  >
-                                    <PencilSquareIcon className="h-4 w-4 mr-2" />
-                                    Edit
-                                  </button>
-                                  <button
-                                    onClick={handleDeleteAutoReply}
-                                    className="flex items-center px-3 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-red-300"
-                                  >
-                                    <TrashIcon className="h-4 w-4 mr-2" />
-                                    Delete
-                                  </button>
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div className="flex-1">
-                                  <p className="text-gray-500 text-sm">
-                                    Set an automatic reply for inquiries about this item
-                                  </p>
-                                </div>
-                                <button
-                                  onClick={startEditingAutoReply}
-                                  className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium text-sm border border-blue-700 shadow-sm"
-                                >
-                                  <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
-                                  Add Auto Reply
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
                   )}
                 </>
