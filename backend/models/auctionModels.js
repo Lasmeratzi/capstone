@@ -308,6 +308,55 @@ const getAuctionWithPaymentDetails = (auctionId, callback) => {
   db.query(sql, [auctionId], callback);
 };
 
+// NEW: Update payment receipt path when buyer uploads receipt
+const updatePaymentReceipt = (auctionId, receiptPath, callback) => {
+  const sql = `
+    UPDATE auctions 
+    SET payment_receipt_path = ?, payment_receipt_verified = FALSE 
+    WHERE id = ?
+  `;
+  db.query(sql, [receiptPath, auctionId], callback);
+};
+
+// NEW: Update release receipt path when admin pays seller
+const updateReleaseReceipt = (auctionId, receiptPath, callback) => {
+  const sql = `
+    UPDATE auctions 
+    SET release_receipt_path = ?, release_receipt_uploaded = TRUE 
+    WHERE id = ?
+  `;
+  db.query(sql, [receiptPath, auctionId], callback);
+};
+
+// NEW: Verify payment receipt (admin marks as verified)
+const verifyPaymentReceipt = (auctionId, callback) => {
+  const sql = `
+    UPDATE auctions 
+    SET payment_receipt_verified = TRUE 
+    WHERE id = ?
+  `;
+  db.query(sql, [auctionId], callback);
+};
+
+// NEW: Get auction with receipt details
+const getAuctionWithReceipts = (auctionId, callback) => {
+  const sql = `
+    SELECT 
+      a.*,
+      u.username AS author_username,
+      u.fullname AS author_fullname,
+      u.gcash_number AS author_gcash,
+      w.username AS winner_username,
+      w.fullname AS winner_fullname,
+      w.gcash_number AS winner_gcash
+    FROM auctions a
+    LEFT JOIN users u ON a.author_id = u.id
+    LEFT JOIN users w ON a.winner_id = w.id
+    WHERE a.id = ?
+  `;
+  db.query(sql, [auctionId], callback);
+};
+
 module.exports = {
   createAuction,
   getAllAuctions,
@@ -326,5 +375,9 @@ module.exports = {
   activateScheduledAuctions,
   getAuctionsToActivate,
   updateAuctionSchedule,
-  getAuctionWithPaymentDetails
+  getAuctionWithPaymentDetails,
+   updatePaymentReceipt,
+  updateReleaseReceipt,
+  verifyPaymentReceipt,
+  getAuctionWithReceipts,
 };
