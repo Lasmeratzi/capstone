@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import SideAdmin from "../sideadmin/sideadmin";
-import { CheckIcon, XMarkIcon, PlayIcon, StopIcon } from "@heroicons/react/24/outline";
+import { 
+  CheckIcon, 
+  XMarkIcon, 
+  PlayIcon, 
+  StopIcon,
+  EyeIcon,
+  PhotoIcon,
+  DocumentArrowUpIcon
+} from "@heroicons/react/24/outline";
 
 const DisplayAuctions = () => {
   const [auctions, setAuctions] = useState([]);
@@ -9,31 +17,35 @@ const DisplayAuctions = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [auctionsPerPage] = useState(5);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptType, setReceiptType] = useState('');
+  const [uploadingReleaseReceipt, setUploadingReleaseReceipt] = useState(false);
 
   // Fetch auctions on mount
   useEffect(() => {
     const fetchAuctions = async () => {
-  try {
-    const token = sessionStorage.getItem("adminToken");
-    if (!token) {
-      console.error("No admin token found.");
-      return;
-    }
-    console.log("🔍 Fetching auctions with token:", token.substring(0, 20) + "...");
-    
-    const res = await axios.get("http://localhost:5000/api/admin/auctions", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("✅ Auctions fetched:", res.data.length, "auctions");
-    setAuctions(res.data);
-  } catch (error) {
-    console.error("❌ Error fetching auctions:");
-    console.error("Full error object:", error);
-    console.error("Response data:", error.response?.data);
-    console.error("Status:", error.response?.status);
-    console.error("Headers:", error.response?.headers);
-  }
-};
+      try {
+        const token = sessionStorage.getItem("adminToken");
+        if (!token) {
+          console.error("No admin token found.");
+          return;
+        }
+        console.log("🔍 Fetching auctions with token:", token.substring(0, 20) + "...");
+        
+        const res = await axios.get("http://localhost:5000/api/admin/auctions", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log("✅ Auctions fetched:", res.data.length, "auctions");
+        setAuctions(res.data);
+      } catch (error) {
+        console.error("❌ Error fetching auctions:");
+        console.error("Full error object:", error);
+        console.error("Response data:", error.response?.data);
+        console.error("Status:", error.response?.status);
+        console.error("Headers:", error.response?.headers);
+      }
+    };
     fetchAuctions();
   }, []);
 
@@ -87,55 +99,134 @@ const DisplayAuctions = () => {
   const stopAuction = (id, title) =>
     updateAuctionStatus(id, "stopped", "Auction stopped!", "Failed to stop auction.", title);
 
-  // Payment verification function
-  const verifyPayment = async (auctionId, status, auctionTitle) => {
-    if (window.confirm(`Are you sure you want to mark payment as ${status} for auction "${auctionTitle}"?`)) {
+  // View receipt modal
+  const viewReceipt = (receiptPath, type) => {
+    setSelectedReceipt(`http://localhost:5000/uploads/${receiptPath}`);
+    setReceiptType(type);
+    setShowReceiptModal(true);
+  };
+
+  // Verify payment receipt
+  const verifyPaymentReceipt = async (auctionId, auctionTitle) => {
+    if (window.confirm(`Are you sure you want to verify the payment receipt for "${auctionTitle}"?`)) {
       try {
         const token = sessionStorage.getItem("adminToken");
-        
-        // Get payment details for this auction
-        const paymentRes = await axios.get(
-          `http://localhost:5000/api/payments/auction/${auctionId}`,
+        await axios.put(
+          `http://localhost:5000/api/admin/auction/${auctionId}/verify-receipt`,
+          {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
         
-        if (paymentRes.data.payment) {
-          const paymentId = paymentRes.data.payment.id;
-          
-          // Update payment status
-          await axios.put(
-            `http://localhost:5000/api/payments/admin/verify/${paymentId}`,
-            { status },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          
-          // Refresh auctions list
-          const res = await axios.get("http://localhost:5000/api/admin/auctions", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setAuctions(res.data);
-          
-          alert(`Payment marked as ${status} successfully.`);
-        } else {
-          alert("No payment record found for this auction.");
-        }
+        // Refresh auctions list
+        const res = await axios.get("http://localhost:5000/api/admin/auctions", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAuctions(res.data);
+        
+        alert("Payment receipt verified successfully!");
       } catch (error) {
-        console.error("Error verifying payment:", error);
-        alert("Failed to verify payment. Please try again.");
+        console.error("Error verifying receipt:", error);
+        alert("Failed to verify receipt. Please try again.");
       }
     }
   };
 
-  // Release payment to seller (Admin only)
-  const releasePaymentToSeller = async (auctionId, auctionTitle) => {
+  // Reject payment receipt
+  const rejectPaymentReceipt = async (auctionId, auctionTitle) => {
+    const reason = prompt("Please enter the reason for rejecting this receipt:");
+    if (!reason) {
+      alert("Rejection reason is required.");
+      return;
+    }
+    
+    if (window.confirm(`Are you sure you want to reject the payment receipt for "${auctionTitle}"?`)) {
+      try {
+        const token = sessionStorage.getItem("adminToken");
+        await axios.put(
+          `http://localhost:5000/api/admin/auction/${auctionId}/reject-receipt`,
+          { reason },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        // Refresh auctions list
+        const res = await axios.get("http://localhost:5000/api/admin/auctions", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAuctions(res.data);
+        
+        alert("Payment receipt rejected successfully!");
+      } catch (error) {
+        console.error("Error rejecting receipt:", error);
+        alert("Failed to reject receipt. Please try again.");
+      }
+    }
+  };
+
+  // Upload release receipt (when paying seller)
+  const uploadReleaseReceipt = async (auctionId, file) => {
+    if (!file) {
+      alert("Please select a receipt file to upload.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("releaseReceipt", file);
+
+    try {
+      setUploadingReleaseReceipt(true);
+      await axios.post(
+        `http://localhost:5000/api/admin/auction/${auctionId}/upload-release-receipt`,
+        formData,
+        {
+          headers: { 
+            Authorization: `Bearer ${sessionStorage.getItem("adminToken")}`,
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      );
+      
+      alert("Release receipt uploaded successfully!");
+      
+      // Refresh auctions list
+      const res = await axios.get("http://localhost:5000/api/admin/auctions", {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("adminToken")}` },
+      });
+      setAuctions(res.data);
+    } catch (error) {
+      console.error("Failed to upload release receipt:", error);
+      alert(error.response?.data?.message || "Failed to upload release receipt. Please try again.");
+    } finally {
+      setUploadingReleaseReceipt(false);
+    }
+  };
+
+  // Release payment to seller with receipt upload option
+  const releasePaymentToSeller = async (auctionId, auctionTitle, file = null) => {
     if (window.confirm(`Are you sure you want to release payment to the seller for "${auctionTitle}"?`)) {
       try {
         const token = sessionStorage.getItem("adminToken");
-        await axios.post(
-          `http://localhost:5000/api/admin/auction/${auctionId}/release-payment`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        
+        if (file) {
+          const formData = new FormData();
+          formData.append("releaseReceipt", file);
+          
+          await axios.post(
+            `http://localhost:5000/api/admin/auction/${auctionId}/release-payment`,
+            formData,
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data"
+              }
+            }
+          );
+        } else {
+          await axios.post(
+            `http://localhost:5000/api/admin/auction/${auctionId}/release-payment`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
         
         // Refresh the auctions list to update the status
         const res = await axios.get("http://localhost:5000/api/admin/auctions", {
@@ -189,6 +280,55 @@ const DisplayAuctions = () => {
   // Get auctions with pending payments (status is 'pending' and has payment_id)
   const pendingPayments = auctions.filter(a => a.status === 'pending' && a.payment_id).length;
   const escrowAuctions = auctions.filter(a => a.escrow_status && a.escrow_status !== 'completed').length;
+  
+  // New stats for receipts
+  const pendingReceipts = auctions.filter(a => a.payment_receipt_path && !a.payment_receipt_verified).length;
+  const completedWithReceipt = auctions.filter(a => a.release_receipt_path).length;
+
+  // Receipt Modal Component
+  const ReceiptModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-md p-6 max-w-4xl w-full border border-gray-300">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {receiptType === 'payment' ? 'Payment Receipt' : 'Release Receipt'}
+          </h3>
+          <button
+            onClick={() => setShowReceiptModal(false)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {selectedReceipt ? (
+          <div className="space-y-4">
+            <div className="bg-gray-100 p-4 rounded border border-gray-200">
+              <img 
+                src={selectedReceipt} 
+                alt="Receipt" 
+                className="w-full h-auto max-h-[60vh] object-contain mx-auto rounded"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://via.placeholder.com/400x600?text=Receipt+Not+Found";
+                }}
+              />
+            </div>
+            
+            <div className="text-sm text-gray-600 text-center">
+              {receiptType === 'payment' 
+                ? 'Buyer\'s GCash payment receipt to Illura'
+                : 'Illura\'s payment receipt to Seller'}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-red-600">Receipt not found</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex bg-gray-100 min-h-screen">
@@ -202,8 +342,8 @@ const DisplayAuctions = () => {
         <h1 className="text-lg font-bold text-gray-800">Illura Database &gt; Auctions</h1>
         <hr className="border-t border-gray-300 mt-2 mb-6" />
 
-        {/* Stats Cards - Updated to 6 columns */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+        {/* Stats Cards - Updated to 8 columns */}
+        <div className="grid grid-cols-1 md:grid-cols-8 gap-4 mb-6">
           <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
             <div className="flex items-center">
               <div className="bg-blue-100 p-3 rounded-lg">
@@ -260,17 +400,28 @@ const DisplayAuctions = () => {
             </div>
           </div>
 
-          {/* NEW: Payment Stats Card */}
+          {/* NEW: Pending Receipts Card */}
           <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
             <div className="flex items-center">
-              <div className="bg-indigo-100 p-3 rounded-lg">
-                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+              <div className="bg-orange-100 p-3 rounded-lg">
+                <PhotoIcon className="w-6 h-6 text-orange-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending Payments</p>
-                <p className="text-2xl font-bold text-gray-900">{pendingPayments}</p>
+                <p className="text-sm font-medium text-gray-600">Pending Receipts</p>
+                <p className="text-2xl font-bold text-gray-900">{pendingReceipts}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* NEW: Completed with Receipt Card */}
+          <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
+            <div className="flex items-center">
+              <div className="bg-teal-100 p-3 rounded-lg">
+                <DocumentArrowUpIcon className="w-6 h-6 text-teal-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Receipts Uploaded</p>
+                <p className="text-2xl font-bold text-gray-900">{completedWithReceipt}</p>
               </div>
             </div>
           </div>
@@ -311,7 +462,7 @@ const DisplayAuctions = () => {
           </div>
         </div>
 
-        {/* Auctions Table */}
+        {/* Auctions Table - Updated with Receipt Columns */}
         <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex justify-between items-center">
@@ -333,8 +484,8 @@ const DisplayAuctions = () => {
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Winner Info</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Receipt</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Release Receipt</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Escrow</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Time</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -385,6 +536,9 @@ const DisplayAuctions = () => {
                     
                     <td className="px-6 py-4">
                       <div className="text-sm font-semibold text-green-600">₱{auction.current_price}</div>
+                      {auction.final_price && auction.current_price !== auction.final_price && (
+                        <div className="text-xs text-gray-500">Final: ₱{auction.final_price}</div>
+                      )}
                     </td>
                     
                     {/* Winner Info Column */}
@@ -444,55 +598,88 @@ const DisplayAuctions = () => {
                       </span>
                     </td>
                     
-                    {/* Payment Status Column - Now checks payment record */}
+                    {/* Payment Receipt Column */}
                     <td className="px-6 py-4">
-                      {auction.payment_id ? (
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                          auction.payment_status === 'pending' 
-                            ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                            : auction.payment_status === 'completed'
-                            ? "bg-green-100 text-green-800 border border-green-200"
-                            : auction.payment_status === 'failed'
-                            ? "bg-red-100 text-red-800 border border-red-200"
-                            : "bg-gray-100 text-gray-600 border border-gray-200"
-                        }`}>
-                          {auction.payment_status || 'pending'}
-                        </span>
+                      {auction.payment_receipt_path ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => viewReceipt(auction.payment_receipt_path, 'payment')}
+                              className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
+                            >
+                              <EyeIcon className="w-3 h-3 mr-1" />
+                              View
+                            </button>
+                            <span className={`text-xs px-2 py-1 rounded ${auction.payment_receipt_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                              {auction.payment_receipt_verified ? 'Verified' : 'Pending'}
+                            </span>
+                          </div>
+                          
+                          {auction.escrow_status === 'pending_payment' && !auction.payment_receipt_verified && (
+                            <div className="flex flex-col space-y-1">
+                              <button
+                                onClick={() => verifyPaymentReceipt(auction.id, auction.title)}
+                                className="inline-flex items-center px-2 py-1 bg-transparent text-green-600 border border-green-600 rounded-lg font-semibold text-xs hover:bg-green-600 hover:text-white transition-colors"
+                              >
+                                <CheckIcon className="w-3 h-3 mr-1" />
+                                Verify
+                              </button>
+                              <button
+                                onClick={() => rejectPaymentReceipt(auction.id, auction.title)}
+                                className="inline-flex items-center px-2 py-1 bg-transparent text-red-600 border border-red-600 rounded-lg font-semibold text-xs hover:bg-red-600 hover:text-white transition-colors"
+                              >
+                                <XMarkIcon className="w-3 h-3 mr-1" />
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                          {auction.status === 'draft' ? 'Awaiting payment' : 'No payment'}
-                        </span>
+                        <div className="text-xs text-gray-500">
+                          {auction.escrow_status === 'pending_payment' ? 'Waiting for receipt' : 'No receipt'}
+                        </div>
                       )}
                     </td>
                     
-                    {/* Payment Actions Column */}
+                    {/* Release Receipt Column */}
                     <td className="px-6 py-4">
-                      {auction.payment_id && auction.status === 'pending' && auction.payment_status === 'pending' && (
-                        <div className="flex flex-col space-y-1">
-                          <button
-                            onClick={() => verifyPayment(auction.id, 'completed', auction.title)}
-                            className="inline-flex items-center px-3 py-1 bg-transparent text-green-600 border border-green-600 rounded-lg font-semibold text-xs hover:bg-green-600 hover:text-white transition-colors"
-                          >
-                            <CheckIcon className="w-3 h-3 mr-1" />
-                            Verify
-                          </button>
-                          <button
-                            onClick={() => verifyPayment(auction.id, 'failed', auction.title)}
-                            className="inline-flex items-center px-3 py-1 bg-transparent text-red-600 border border-red-600 rounded-lg font-semibold text-xs hover:bg-red-600 hover:text-white transition-colors"
-                          >
-                            <XMarkIcon className="w-3 h-3 mr-1" />
-                            Reject
-                          </button>
+                      {auction.release_receipt_path ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => viewReceipt(auction.release_receipt_path, 'release')}
+                              className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
+                            >
+                              <EyeIcon className="w-3 h-3 mr-1" />
+                              View
+                            </button>
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                              Uploaded
+                            </span>
+                          </div>
                         </div>
-                      )}
-                      {auction.payment_status === 'completed' && (
-                        <span className="text-xs text-green-600 font-medium">✓ Verified</span>
-                      )}
-                      {auction.payment_status === 'failed' && (
-                        <span className="text-xs text-red-600 font-medium">✗ Rejected</span>
-                      )}
-                      {auction.status === 'draft' && !auction.payment_id && (
-                        <span className="text-xs text-gray-500">Waiting for user payment</span>
+                      ) : (
+                        <div className="space-y-2">
+                          {auction.escrow_status === 'item_received' || auction.escrow_status === 'completed' ? (
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Upload Receipt
+                              </label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => uploadReleaseReceipt(auction.id, e.target.files[0])}
+                                className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                disabled={uploadingReleaseReceipt}
+                              />
+                              {uploadingReleaseReceipt && (
+                                <p className="text-xs text-gray-500 mt-1">Uploading...</p>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-gray-500">Not available yet</div>
+                          )}
+                        </div>
                       )}
                     </td>
                     
@@ -584,19 +771,42 @@ const DisplayAuctions = () => {
 
                         {/* Escrow Management Buttons */}
                         {auction.escrow_status === 'item_received' && (
-                          <div className="mt-2">
-                            <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded mb-1">
+                          <div className="mt-2 space-y-2">
+                            <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
                               <span className="font-medium">Send to:</span> {auction.author_gcash || 'No GCash'}
                             </div>
-                            <button
-                              onClick={() => releasePaymentToSeller(auction.id, auction.title)}
-                              className="inline-flex items-center w-full justify-center px-3 py-1.5 bg-transparent text-purple-600 border border-purple-600 rounded-lg font-semibold text-xs hover:bg-purple-600 hover:text-white transition-colors"
-                            >
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                              </svg>
-                              Release Payment
-                            </button>
+                            
+                            <div className="space-y-1">
+                              <label className="block text-xs font-medium text-gray-700">
+                                Upload Receipt & Release
+                              </label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                id={`release-receipt-${auction.id}`}
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files[0]) {
+                                    releasePaymentToSeller(auction.id, auction.title, e.target.files[0]);
+                                  }
+                                }}
+                              />
+                              <div className="flex space-x-1">
+                                <button
+                                  onClick={() => releasePaymentToSeller(auction.id, auction.title)}
+                                  className="inline-flex items-center justify-center px-3 py-1.5 flex-1 bg-transparent text-purple-600 border border-purple-600 rounded-lg font-semibold text-xs hover:bg-purple-600 hover:text-white transition-colors"
+                                >
+                                  Release Payment
+                                </button>
+                                <label
+                                  htmlFor={`release-receipt-${auction.id}`}
+                                  className="inline-flex items-center justify-center px-3 py-1.5 flex-1 bg-transparent text-blue-600 border border-blue-600 rounded-lg font-semibold text-xs hover:bg-blue-600 hover:text-white transition-colors cursor-pointer"
+                                >
+                                  <DocumentArrowUpIcon className="w-3 h-3 mr-1" />
+                                  With Receipt
+                                </label>
+                              </div>
+                            </div>
                           </div>
                         )}
 
@@ -684,6 +894,9 @@ const DisplayAuctions = () => {
             </div>
           </div>
         )}
+
+        {/* Receipt Modal */}
+        {showReceiptModal && <ReceiptModal />}
       </div>
     </div>
   );
