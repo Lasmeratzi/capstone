@@ -413,53 +413,6 @@ const confirmItemReceived = (req, res) => {
   });
 };
 
-// Admin releases payment to seller (manual trigger for now)
-const releasePaymentToSeller = (req, res) => {
-  const { auctionId } = req.params;
-
-  if (!req.admin || req.admin.role !== "super_admin") {
-    return res.status(403).json({ message: "Forbidden: Admin privileges required." });
-  }
-
-  auctionModels.getAuctionById(auctionId, (err, results) => {
-    if (err) {
-      return res.status(500).json({ message: "Database error.", error: err });
-    }
-
-    if (results.length === 0) {
-      return res.status(404).json({ message: "Auction not found." });
-    }
-
-    const auction = results[0];
-
-    // Check if item has been received by buyer
-    if (auction.escrow_status !== 'item_received') {
-      return res.status(400).json({ message: "Cannot release payment until buyer confirms item receipt." });
-    }
-
-    // Update escrow status to 'completed'
-    auctionModels.updateEscrowStatus(auctionId, 'completed', (err) => {
-      if (err) {
-        return res.status(500).json({ message: "Database error.", error: err });
-      }
-
-      // Notify seller that payment has been released
-      sendNotification(
-        auction.author_id,
-        `Payment of ₱${auction.final_price} for your auction "${auction.title}" has been released to your GCash account.`
-      );
-
-      // Notify buyer that transaction is complete
-      sendNotification(
-        auction.winner_id,
-        `Transaction completed for "${auction.title}". Thank you for using Illura!`
-      );
-
-      res.status(200).json({ message: "Payment released to seller successfully." });
-    });
-  });
-};
-
 // Admin rejects payment claim
 const rejectPayment = (req, res) => {
   const { auctionId } = req.params;
@@ -587,6 +540,306 @@ const checkAndEndAuctions = () => {
   });
 };
 
+// NEW: Upload payment receipt (Buyer uploads GCash receipt)
+const uploadPaymentReceipt = (req, res) => {
+  const { auctionId } = req.params;
+  const buyerId = req.user.id;
+
+  if (!req.file) {
+    return res.status(400).json({ message: "No receipt file uploaded." });
+  }
+
+  // Verify that this user is the winner of this auction
+  auctionModels.getAuctionById(auctionId, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Auction not found." });
+    }
+
+    const auction = results[0];
+
+    // Check if the current user is the winner
+    if (auction.winner_id !== buyerId) {
+      return res.status(403).json({ message: "You are not the winner of this auction." });
+    }
+
+    // Check if auction is in the right status for receipt upload
+    if (auction.escrow_status !== 'pending_payment') {
+      return res.status(400).json({ 
+        message: "Receipt cannot be uploaded at this time. Current status: " + auction.escrow_status 
+      });
+    }
+
+    const receiptPath = req.file.filename;
+
+    // Update auction with receipt path
+    auctionModels.updatePaymentReceipt(auctionId, receiptPath, (err) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+
+      // Notify admin that receipt has been uploaded
+      console.log(`🟡 ADMIN ALERT: Payment receipt uploaded for auction ${auctionId} by user ${buyerId}`);
+      console.log(`🟡 Receipt path: ${receiptPath}`);
+
+      // Notify the buyer
+      sendNotification(
+        buyerId,
+        `Your payment receipt for "${auction.title}" has been uploaded successfully. Please wait for Illura to verify.`
+      );
+
+      res.status(200).json({ 
+        message: "Payment receipt uploaded successfully. Please wait for Illura verification.",
+        receiptPath: receiptPath
+      });
+    });
+  });
+};
+
+// NEW: Admin verifies payment receipt
+const verifyPaymentReceipt = (req, res) => {
+  const { auctionId } = req.params;
+
+  if (!req.admin || req.admin.role !== "super_admin") {
+    return res.status(403).json({ message: "Forbidden: Super Admin privileges required." });
+  }
+
+  // Verify auction exists and has receipt
+  auctionModels.getAuctionById(auctionId, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Auction not found." });
+    }
+
+    const auction = results[0];
+
+    if (!auction.payment_receipt_path) {
+      return res.status(400).json({ message: "No payment receipt found for this auction." });
+    }
+
+    // Mark receipt as verified and update escrow status to 'paid'
+    auctionModels.verifyPaymentReceipt(auctionId, (err) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+
+      // Update escrow status to 'paid'
+      auctionModels.updateEscrowStatus(auctionId, 'paid', (err) => {
+        if (err) {
+          console.error("Error updating escrow status:", err);
+        }
+
+        // Notify seller that payment has been verified
+        sendNotification(
+          auction.author_id,
+          `Payment receipt for your auction "${auction.title}" has been verified by Illura. Please ship the item to the buyer.`
+        );
+
+        // Notify buyer
+        sendNotification(
+          auction.winner_id,
+          `Your payment receipt for "${auction.title}" has been verified! The seller will now ship your item.`
+        );
+
+        res.status(200).json({ 
+          message: "Payment receipt verified successfully. Escrow status updated to 'paid'.",
+          receiptVerified: true
+        });
+      });
+    });
+  });
+};
+
+// NEW: Admin rejects payment receipt
+const rejectPaymentReceipt = (req, res) => {
+  const { auctionId } = req.params;
+  const { reason } = req.body;
+
+  if (!req.admin || req.admin.role !== "super_admin") {
+    return res.status(403).json({ message: "Forbidden: Super Admin privileges required." });
+  }
+
+  if (!reason) {
+    return res.status(400).json({ message: "Rejection reason is required." });
+  }
+
+  auctionModels.getAuctionById(auctionId, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Auction not found." });
+    }
+
+    const auction = results[0];
+
+    // Update escrow status to 'payment_rejected'
+    auctionModels.updateEscrowStatus(auctionId, 'payment_rejected', (err) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+
+      // Notify buyer with rejection reason
+      sendNotification(
+        auction.winner_id,
+        `Your payment receipt for "${auction.title}" was rejected. Reason: ${reason}. Please upload a valid receipt.`
+      );
+
+      res.status(200).json({ 
+        message: "Payment receipt rejected. Buyer has been notified.",
+        rejectionReason: reason
+      });
+    });
+  });
+};
+
+// NEW: Admin uploads release receipt (when paying seller)
+const uploadReleaseReceipt = (req, res) => {
+  const { auctionId } = req.params;
+
+  if (!req.admin || req.admin.role !== "super_admin") {
+    return res.status(403).json({ message: "Forbidden: Super Admin privileges required." });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: "No release receipt file uploaded." });
+  }
+
+  auctionModels.getAuctionById(auctionId, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Auction not found." });
+    }
+
+    const auction = results[0];
+
+    // Check if escrow is in 'item_received' or 'completed' status
+    if (auction.escrow_status !== 'item_received' && auction.escrow_status !== 'completed') {
+      return res.status(400).json({ 
+        message: "Cannot upload release receipt. Current escrow status: " + auction.escrow_status 
+      });
+    }
+
+    const receiptPath = req.file.filename;
+
+    // Update auction with release receipt
+    auctionModels.updateReleaseReceipt(auctionId, receiptPath, (err) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error.", error: err });
+      }
+
+      // If escrow is not yet completed, mark it as completed
+      if (auction.escrow_status !== 'completed') {
+        auctionModels.updateEscrowStatus(auctionId, 'completed', (err) => {
+          if (err) {
+            console.error("Error updating escrow status:", err);
+          }
+        });
+      }
+
+      // Notify seller
+      sendNotification(
+        auction.author_id,
+        `Payment of ₱${auction.final_price} for your auction "${auction.title}" has been released. Check your sold auctions for the receipt.`
+      );
+
+      console.log(`✅ Release receipt uploaded for auction ${auctionId}: ${receiptPath}`);
+
+      res.status(200).json({ 
+        message: "Release receipt uploaded successfully. Seller has been notified.",
+        receiptPath: receiptPath
+      });
+    });
+  });
+};
+
+// MODIFIED: Update releasePaymentToSeller to optionally accept receipt
+const releasePaymentToSeller = (req, res) => {
+  const { auctionId } = req.params;
+
+  if (!req.admin || req.admin.role !== "super_admin") {
+    return res.status(403).json({ message: "Forbidden: Admin privileges required." });
+  }
+
+  auctionModels.getAuctionById(auctionId, (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Auction not found." });
+    }
+
+    const auction = results[0];
+
+    // Check if item has been received by buyer
+    if (auction.escrow_status !== 'item_received') {
+      return res.status(400).json({ message: "Cannot release payment until buyer confirms item receipt." });
+    }
+
+    // Check if receipt was uploaded with the request
+    if (req.file) {
+      const receiptPath = req.file.filename;
+      
+      // Update with release receipt
+      auctionModels.updateReleaseReceipt(auctionId, receiptPath, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Database error.", error: err });
+        }
+        
+        completePaymentRelease(auctionId, auction, receiptPath, res);
+      });
+    } else {
+      // No receipt uploaded, just complete payment
+      completePaymentRelease(auctionId, auction, null, res);
+    }
+  });
+};
+
+// Helper function for payment release
+const completePaymentRelease = (auctionId, auction, receiptPath, res) => {
+  // Update escrow status to 'completed'
+  auctionModels.updateEscrowStatus(auctionId, 'completed', (err) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    // Notify seller that payment has been released
+    const sellerMessage = receiptPath 
+      ? `Payment of ₱${auction.final_price} for your auction "${auction.title}" has been released. Check your sold auctions for the receipt.`
+      : `Payment of ₱${auction.final_price} for your auction "${auction.title}" has been released to your GCash account.`;
+    
+    sendNotification(auction.author_id, sellerMessage);
+
+    // Notify buyer that transaction is complete
+    sendNotification(
+      auction.winner_id,
+      `Transaction completed for "${auction.title}". Thank you for using Illura!`
+    );
+
+    const response = {
+      message: "Payment released to seller successfully.",
+      receiptUploaded: !!receiptPath
+    };
+
+    if (receiptPath) {
+      response.receiptPath = receiptPath;
+    }
+
+    res.status(200).json(response);
+  });
+};
+
 module.exports = {
   createAuction,
   getAllAuctions,
@@ -605,4 +858,8 @@ module.exports = {
   checkAndEndAuctions,
   activateScheduledAuctions,
   getAuctionsByUserId,
+  uploadPaymentReceipt,
+  verifyPaymentReceipt,
+  rejectPaymentReceipt,
+  uploadReleaseReceipt,
 };
