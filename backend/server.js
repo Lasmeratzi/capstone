@@ -33,6 +33,7 @@ const searchRoutes = require("./routes/searchRoutes");
 const illuraAccountRoutes = require("./routes/illuraAccountRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const reportsRoutes = require("./routes/reportsRoutes");
+const adminPostsRoutes = require("./routes/adminPostsRoutes");
 
 // Auction cron job
 const checkAndEndAuctions = require("./jobs/auctionJobs");
@@ -118,6 +119,7 @@ app.use("/api/locations", locationRoutes);
 app.use("/api", searchRoutes); 
 app.use("/api", illuraAccountRoutes);
 app.use("/api", reportsRoutes);
+app.use("/api", adminPostsRoutes);
 
 
 

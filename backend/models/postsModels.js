@@ -22,22 +22,35 @@ const getAllPosts = (authorId, viewerId, callback) => {
   console.log("  - viewerId:", viewerId);
   
   // Convert string IDs to numbers for consistent comparison
-  const authorIdNum = parseInt(authorId);
+  const authorIdNum = authorId ? parseInt(authorId) : null;
   const viewerIdNum = parseInt(viewerId);
   
+  // DEFAULT QUERY: Show all posts visible to the viewer (home feed)
+  // This runs when NO authorId is provided (home page)
   let sql = `
-    SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
+    SELECT DISTINCT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
            users.id AS author_id, users.username AS author, users.fullname, users.pfp AS author_pfp, 
            posts.post_status, posts.visibility, users.verified AS is_verified
     FROM posts
     JOIN users ON posts.author_id = users.id
-    WHERE posts.visibility = 'public'
-    AND posts.post_status = 'active'
+    LEFT JOIN follows ON follows.following_id = posts.author_id AND follows.follower_id = ?
+    WHERE posts.post_status = 'active'
     AND users.account_status = 'active'
+    AND (
+      -- Public posts from anyone
+      posts.visibility = 'public'
+      OR 
+      -- Friends-only posts from users the viewer follows OR from the viewer themselves
+      (posts.visibility = 'friends' AND (follows.follower_id IS NOT NULL OR posts.author_id = ?))
+      OR
+      -- Private posts only from the viewer themselves
+      (posts.visibility = 'private' AND posts.author_id = ?)
+    )
     ORDER BY posts.created_at DESC
   `;
-  const params = [];
+  let params = [viewerIdNum, viewerIdNum, viewerIdNum];
 
+  // If an authorId IS provided (viewing someone's profile)
   if (authorId) {
     if (authorIdNum === viewerIdNum) {
       console.log("👤 Viewer is the author - showing ALL posts");
@@ -52,7 +65,7 @@ const getAllPosts = (authorId, viewerId, callback) => {
         AND users.account_status = 'active'
         ORDER BY posts.created_at DESC
       `;
-      params.push(authorIdNum);
+      params = [authorIdNum];
     } else {
       console.log("👥 Viewer is NOT the author - checking if viewer follows author");
       sql = `
@@ -70,19 +83,19 @@ const getAllPosts = (authorId, viewerId, callback) => {
             posts.visibility = 'friends' 
             AND EXISTS (
               SELECT 1 FROM follows f1 
-              WHERE f1.follower_id = ?  -- Viewer follows author
+              WHERE f1.follower_id = ?
               AND f1.following_id = posts.author_id
             )
           )
         )
         ORDER BY posts.created_at DESC
       `;
-      params.push(authorIdNum, viewerIdNum); // Only need viewerId once now
+      params = [authorIdNum, viewerIdNum];
     }
   }
 
   console.log("📝 SQL being executed:", sql);
-  console.log("🔢 Parameters (converted):", params);
+  console.log("🔢 Parameters:", params);
 
   db.query(sql, params, (err, results) => {
     if (err) {
@@ -171,8 +184,6 @@ const updatePostById = (id, postData, callback) => {
   `;
   db.query(sql, [title, media_path, visibility, id], callback); // Add visibility
 }
-
-
 
 // Update post status (Admin moderation feature)
 const updatePostStatus = (postId, status, callback) => {
