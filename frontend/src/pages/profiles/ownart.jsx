@@ -348,9 +348,9 @@ const OwnArt = ({ userId }) => {
                         <button
                           className="w-full px-4 py-2 hover:bg-gray-100 text-left text-red-600"
                           onClick={() => {
-                            setConfirmDeleteFor(post.id);
-                            setDropdownOpen(null);
-                          }}
+  setArtPostModal({ isOpen: true, type: "delete", post: post });
+  setDropdownOpen(null);
+}}
                         >
                           Delete
                         </button>
@@ -669,10 +669,37 @@ const OwnArt = ({ userId }) => {
           type={artPostModal.type}
           post={artPostModal.post}
           onClose={() => setArtPostModal({ isOpen: false, type: "", post: null })}
-          onDelete={(postId) => {
-            setConfirmDeleteFor(postId);
-            setArtPostModal({ isOpen: false, type: "", post: null });
-          }}
+          onDelete={async (postId) => {
+  try {
+    await axios.delete(`${API_BASE}/api/artwork-posts/${postId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    
+    // Update state
+    setArtPosts((prev) => prev.filter((p) => p.id !== postId));
+    setArtPostModal({ isOpen: false, type: "", post: null });
+    
+    // Clear related data
+    setShowCommentsMap((prev) => {
+      const copy = { ...prev };
+      delete copy[postId];
+      return copy;
+    });
+    setCommentCounts((prev) => {
+      const copy = { ...prev };
+      delete copy[postId];
+      return copy;
+    });
+    setPostTags((prev) => {
+      const copy = { ...prev };
+      delete copy[postId];
+      return copy;
+    });
+  } catch (err) {
+    console.error("Failed to delete post:", err);
+    alert("Failed to delete post.");
+  }
+}}
           onEdit={(postId, updatedData) => {
             handleEdit(postId, updatedData);
           }}

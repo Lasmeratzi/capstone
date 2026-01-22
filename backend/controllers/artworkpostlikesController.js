@@ -28,7 +28,16 @@ const likeArtworkPost = (req, res) => {
           const username = userResults[0].username;
           const message = `${username} liked your artwork`;
 
-          notificationsModels.createNotification(authorId, message);
+          // Create notification WITH NEW FORMAT
+          notificationsModels.createNotification(
+  authorId,          // user_id
+  userId,            // sender_id
+  'artwork_like',    // type
+  message,           // message
+  (err) => {
+    if (err) console.error("Failed to create notification:", err);
+  }
+);
 
           res.status(200).json({ message: "Artwork liked successfully!" });
         });
