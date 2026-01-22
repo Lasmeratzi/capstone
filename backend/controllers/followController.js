@@ -1,7 +1,6 @@
 const followModels = require("../models/followModels");
-const notificationsController = require("./notificationsController");
+const notificationsModels = require("../models/notificationsModels");
 const db = require("../config/database");
-
 
 // Follow a user
 const followUser = (req, res) => {
@@ -27,12 +26,15 @@ const followUser = (req, res) => {
       const followerUsername = results?.[0]?.username || "Someone";
       const message = `${followerUsername} followed you`;
 
-      notificationsController.createNotification(followingId, message, (err) => {
-        if (err) {
-          console.error("Failed to create notification:", err);
-        }
-      });
-
+      notificationsModels.createNotification(
+  followingId,   // user_id
+  followerId,    // sender_id
+  'follow',      // type
+  message,       // message
+  (err) => {
+    if (err) console.error("Failed to create notification:", err);
+  }
+);
       res.json({ message: "Successfully followed user" });
     });
   });
@@ -40,7 +42,7 @@ const followUser = (req, res) => {
 
 const unfollowUser = (req, res) => {
   const followerId = req.user.id;
-  const { targetUserId } = req.body; // changed from followingId
+  const { targetUserId } = req.body;
 
   followModels.unfollowUser(followerId, targetUserId, (err, result) => {
     if (err) return res.status(500).json({ message: "Database error.", error: err });
@@ -50,7 +52,6 @@ const unfollowUser = (req, res) => {
     res.status(200).json({ message: "Unfollowed successfully." });
   });
 };
-
 
 // Get followers count
 const getFollowersCount = (req, res) => {
@@ -92,7 +93,6 @@ const getFollowing = (req, res) => {
   });
 };
 
-
 // Get both followers and following count
 const getFollowStats = (req, res) => {
   const { userId } = req.params;
@@ -123,7 +123,6 @@ const checkFollowStatus = (req, res) => {
     res.status(200).json({ isFollowing });
   });
 };
-
 
 module.exports = {
   followUser,
