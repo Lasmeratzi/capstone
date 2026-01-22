@@ -29,38 +29,23 @@ const Home = () => {
   const [activeTab, setActiveTab] = useState("artworks");
   const navigate = useNavigate();
 
-  // Function to fetch artwork posts from followed users
-  const fetchFollowedArtworks = async () => {
+  // Function to fetch artwork posts (public + followed friends + own private)
+  const fetchArtworkPosts = async () => {
     if (!user) return;
     
     try {
       setIsLoadingArtworks(true);
       const token = localStorage.getItem("token");
       
-      // Fetch artwork posts from followed users
-      const artworkRes = await axios.get("http://localhost:5000/api/artwork-posts/following", {
+      // Fetch all artwork posts visible to user
+      const artworkRes = await axios.get("http://localhost:5000/api/artwork-posts", {
         headers: { Authorization: `Bearer ${token}` },
       });
       
       setArtworks(artworkRes.data || []);
     } catch (error) {
-      console.error("Error fetching followed artworks:", error);
-      // If endpoint doesn't exist (404), fallback to all artwork posts
-      if (error.response?.status === 404) {
-        console.log("Following endpoint not found for artworks, falling back to all");
-        try {
-          const token = localStorage.getItem("token");
-          const fallbackRes = await axios.get("http://localhost:5000/api/artwork-posts", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setArtworks(fallbackRes.data || []);
-        } catch (fallbackError) {
-          console.error("Failed to fetch fallback artworks:", fallbackError);
-          setArtworks([]);
-        }
-      } else {
-        setArtworks([]);
-      }
+      console.error("Error fetching artwork posts:", error);
+      setArtworks([]);
     } finally {
       setIsLoadingArtworks(false);
     }
@@ -100,30 +85,15 @@ const Home = () => {
         setUser(userRes.data);
         setAccounts(accountsRes.data.filter((a) => a.id !== userRes.data.id));
 
-        // Try to fetch posts from followed users
+        // Fetch all posts visible to user (public + followed friends + own private)
         try {
-          const postsRes = await axios.get("http://localhost:5000/api/posts/following", {
+          const postsRes = await axios.get("http://localhost:5000/api/posts", {
             headers: { Authorization: `Bearer ${token}` },
           });
           setPosts(postsRes.data || []);
-        } catch (followError) {
-          console.error("Error fetching following posts:", followError);
-          
-          // If endpoint doesn't exist (404), fallback to all posts temporarily
-          if (followError.response?.status === 404) {
-            console.log("Following endpoint not found, falling back to all posts");
-            try {
-              const fallbackRes = await axios.get("http://localhost:5000/api/posts", {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              setPosts(fallbackRes.data || []);
-            } catch (fallbackError) {
-              console.error("Failed to fetch fallback posts:", fallbackError);
-              setPosts([]);
-            }
-          } else {
-            setPosts([]);
-          }
+        } catch (postsError) {
+          console.error("Error fetching posts:", postsError);
+          setPosts([]);
         }
 
       } catch (error) {
@@ -145,14 +115,14 @@ const Home = () => {
   // Fetch artworks when user is loaded and artworks tab is active
   useEffect(() => {
     if (user && activeTab === "artworks") {
-      fetchFollowedArtworks();
+      fetchArtworkPosts();
     }
   }, [user, activeTab]);
 
   // Fetch artworks when switching to artworks tab
   useEffect(() => {
     if (activeTab === "artworks" && user) {
-      fetchFollowedArtworks();
+      fetchArtworkPosts();
     }
   }, [activeTab]);
 
@@ -276,10 +246,10 @@ const Home = () => {
             ) : (
               <div className="col-span-2 text-center py-10">
                 <p className="text-gray-500 text-lg mb-3">
-                  No artwork posts from followed artists yet.
+                  No artwork posts yet.
                 </p>
                 <p className="text-gray-400 mb-4">
-                  Follow some artists to see their artwork here!
+                  Be the first to post artwork, or follow artists to see their posts!
                 </p>
                 <button
                   onClick={() => navigate("/search")}
@@ -316,16 +286,16 @@ const Home = () => {
             ) : (
               <div className="col-span-2 text-center py-10">
                 <p className="text-gray-500 text-lg mb-3">
-                  No posts from followed artists yet.
+                  No posts yet.
                 </p>
                 <p className="text-gray-400 mb-4">
-                  Follow some artists to see their posts here!
+                  Be the first to post, or follow users to see their posts!
                 </p>
                 <button
                   onClick={() => navigate("/search")}
                   className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
                 >
-                  Discover Artists
+                  Discover Users
                 </button>
               </div>
             )}

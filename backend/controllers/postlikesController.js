@@ -39,8 +39,16 @@ const likePost = (req, res) => {
           const username = userResults[0].username;
           const message = `${username} liked your post`;
 
-          // Create notification
-          notificationsModels.createNotification(authorId, message);
+          // Create notification WITH NEW FORMAT
+          notificationsModels.createNotification(
+  authorId,      // user_id
+  userId,        // sender_id
+  'post_like',   // type
+  message,       // message
+  (err) => {
+    if (err) console.error("Failed to create notification:", err);
+  }
+);
 
           res.status(200).json({ message: "Post liked successfully!" });
         });
@@ -48,7 +56,6 @@ const likePost = (req, res) => {
     });
   });
 };
-
 
 // Unlike a post
 const unlikePost = (req, res) => {

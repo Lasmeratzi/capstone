@@ -15,25 +15,38 @@ const createArtworkPost = (postData, callback) => {
   db.query(sql, params, callback);
 };
 
-// Get all artwork posts
 const getAllArtworkPosts = (authorId, viewerId, callback) => {
+  // Convert string IDs to numbers
+  const authorIdNum = authorId ? parseInt(authorId) : null;
+  const viewerIdNum = parseInt(viewerId);
+  
+  // DEFAULT QUERY: Show all artwork posts visible to the viewer (home feed)
+  // This runs when NO authorId is provided (home page)
   let sql = `
-    SELECT artwork_posts.id, artwork_posts.title, artwork_posts.description, 
+    SELECT DISTINCT artwork_posts.id, artwork_posts.title, artwork_posts.description, 
            artwork_posts.created_at, artwork_posts.visibility,
            users.id AS author_id, users.username AS author, users.fullname, 
            users.pfp AS author_pfp, users.verified AS is_verified
     FROM artwork_posts
     JOIN users ON artwork_posts.author_id = users.id
-    WHERE artwork_posts.visibility = 'public'
-    AND users.account_status = 'active'
+    LEFT JOIN follows ON follows.following_id = artwork_posts.author_id AND follows.follower_id = ?
+    WHERE users.account_status = 'active'
+    AND (
+      -- Public artwork posts from anyone
+      artwork_posts.visibility = 'public'
+      OR 
+      -- Friends-only artwork posts from users the viewer follows OR from the viewer themselves
+      (artwork_posts.visibility = 'friends' AND (follows.follower_id IS NOT NULL OR artwork_posts.author_id = ?))
+      OR
+      -- Private artwork posts only from the viewer themselves
+      (artwork_posts.visibility = 'private' AND artwork_posts.author_id = ?)
+    )
     ORDER BY artwork_posts.created_at DESC
   `;
-  const params = [];
+  let params = [viewerIdNum, viewerIdNum, viewerIdNum];
 
+  // If an authorId IS provided (viewing someone's profile page)
   if (authorId) {
-    const authorIdNum = parseInt(authorId);
-    const viewerIdNum = parseInt(viewerId);
-    
     if (authorIdNum === viewerIdNum) {
       // Viewer is the author - show all posts
       sql = `
@@ -47,7 +60,7 @@ const getAllArtworkPosts = (authorId, viewerId, callback) => {
         AND users.account_status = 'active'
         ORDER BY artwork_posts.created_at DESC
       `;
-      params.push(authorIdNum);
+      params = [authorIdNum];
     } else {
       // Viewer is NOT the author - apply visibility rules
       sql = `
@@ -65,14 +78,14 @@ const getAllArtworkPosts = (authorId, viewerId, callback) => {
             artwork_posts.visibility = 'friends' 
             AND EXISTS (
               SELECT 1 FROM follows f1 
-              WHERE f1.follower_id = ?  -- Viewer follows author
+              WHERE f1.follower_id = ?
               AND f1.following_id = artwork_posts.author_id
             )
           )
         )
         ORDER BY artwork_posts.created_at DESC
       `;
-      params.push(authorIdNum, viewerIdNum);
+      params = [authorIdNum, viewerIdNum];
     }
   }
 
@@ -118,7 +131,6 @@ const updateArtworkPostById = (id, postData, callback) => {
   db.query(sql, [postData.title, postData.description, postData.visibility, id], callback);
 };
 
-
 // Delete an artwork post
 const deleteArtworkPost = (id, callback) => {
   const sql = `
@@ -129,7 +141,6 @@ const deleteArtworkPost = (id, callback) => {
 };
 
 // Get artwork posts from followed users
-// In artworkpostsModels.js - update getFollowingArtworkPosts function
 const getFollowingArtworkPosts = (viewerId, callback) => {
   const sql = `
     SELECT artwork_posts.id, artwork_posts.title, artwork_posts.description, 
@@ -162,7 +173,6 @@ const getFollowingArtworkPosts = (viewerId, callback) => {
   `;
   db.query(sql, [viewerId, viewerId, viewerId], callback);
 };
-
 
 module.exports = {
   createArtworkPost,
