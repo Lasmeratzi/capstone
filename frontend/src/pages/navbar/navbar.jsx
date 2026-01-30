@@ -138,7 +138,7 @@ const Navbar = () => {
 
           <nav className="flex items-center space-x-4 ml-4">
             <button
-              onClick={() => navigate("/explore")}
+              onClick={() => navigate("/")}
               className="flex items-center text-white hover:text-[#5E66FF] text-sm font-light"
             >
               <FontAwesomeIcon icon={faCompass} className="mr-1" />

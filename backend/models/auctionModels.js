@@ -2,29 +2,35 @@ const db = require("../config/database");
 
 // Create a new auction (Starts as 'pending')
 const createAuction = (auctionData, callback) => {
-  const sql = `
-    INSERT INTO auctions (
-      author_id, title, description, starting_price, current_price, 
-      end_time, auction_start_time, auction_duration_hours, 
-      status, payment_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
+ const sql = `
+  INSERT INTO auctions (
+    author_id, title, description, starting_price, 
+    use_increment, bid_increment,  
+    current_price, end_time, auction_start_time, 
+    auction_duration_hours, status, payment_id,
+    portfolio_item_id
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`;
   
   const { 
-    author_id, title, description, starting_price, current_price, 
-    end_time, auction_start_time, auction_duration_hours,
-    status, payment_id 
-  } = auctionData;
+  author_id, title, description, starting_price, 
+  use_increment, bid_increment,  // ADD THESE 2
+  current_price, end_time, auction_start_time, auction_duration_hours,
+  status, payment_id,
+  portfolio_item_id
+} = auctionData;
   
   console.log("🟡 [MODEL] Inserting auction with:", {
     status, auction_start_time, auction_duration_hours, payment_id
   });
   
-  db.query(sql, [
-    author_id, title, description, starting_price, current_price,
-    end_time, auction_start_time, auction_duration_hours,
-    status, payment_id || null
-  ], callback);
+db.query(sql, [
+  author_id, title, description, starting_price, 
+  use_increment || 0, bid_increment || 100.00,  // ADD THESE 2
+  current_price, end_time, auction_start_time, auction_duration_hours,
+  status, payment_id || null,
+  portfolio_item_id || null
+], callback);
 };
 
 // Get all auctions (statuses handled by controller filter)
@@ -357,6 +363,146 @@ const getAuctionWithReceipts = (auctionId, callback) => {
   db.query(sql, [auctionId], callback);
 };
 
+/// Get auctions user has participated in (placed bids)
+const getAuctionsUserParticipatedIn = (userId, callback) => {
+  const sql = `
+    SELECT 
+      a.*,
+      u.username AS author_username,
+      u.fullname AS author_fullname,
+      u.pfp AS author_pfp,
+      w.id AS winner_id,
+      w.username AS winner_username,
+      w.fullname AS winner_fullname,
+      -- Get user's max bid for this auction
+      (SELECT MAX(b2.bid_amount) 
+       FROM auction_bids b2 
+       WHERE b2.auction_id = a.id 
+       AND b2.bidder_id = ?) AS user_bid_amount,
+      -- Get current highest bid (any bidder)
+      (SELECT MAX(b3.bid_amount) 
+       FROM auction_bids b3 
+       WHERE b3.auction_id = a.id) AS current_highest_bid,
+      -- Get total bids count
+      (SELECT COUNT(*) 
+       FROM auction_bids b4 
+       WHERE b4.auction_id = a.id) AS total_bids
+    FROM auctions a
+    INNER JOIN auction_bids b ON a.id = b.auction_id
+    INNER JOIN users u ON a.author_id = u.id
+    LEFT JOIN users w ON a.winner_id = w.id
+    WHERE b.bidder_id = ?
+    GROUP BY a.id, a.title, a.description, a.starting_price, a.current_bid, 
+             a.current_price, a.start_date, a.end_date, a.status, a.art_image, 
+             a.created_at, a.escrow_status, a.winner_id, u.username, u.fullname, 
+             u.id, u.pfp, w.id, w.username, w.fullname
+    ORDER BY a.end_date ASC
+  `;
+  
+  console.log("🔍 [MODEL] Fetching auctions participated in by user:", userId);
+  
+  db.query(sql, [userId, userId], (err, results) => {
+    if (err) {
+      console.error("❌ [MODEL] Database error in getAuctionsUserParticipatedIn:", err);
+      console.error("❌ [MODEL] SQL Message:", err.sqlMessage);
+    } else {
+      console.log("✅ [MODEL] Found", results.length, "auctions participated in by user", userId);
+      if (results.length > 0) {
+        console.log("✅ [MODEL] Sample data:", {
+          id: results[0].id,
+          title: results[0].title,
+          user_bid_amount: results[0].user_bid_amount,
+          current_highest_bid: results[0].current_highest_bid
+        });
+      }
+    }
+    callback(err, results);
+  });
+};
+
+const getAuctionStats = (callback) => {
+  const sql = `
+    SELECT 
+      -- Total counts
+      COUNT(*) as totalAuctions,
+      SUM(CASE WHEN status = 'active' AND end_time > NOW() THEN 1 ELSE 0 END) as activeAuctions,
+      SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approvedAuctions,
+      SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draftAuctions,
+      SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingAuctions,
+      SUM(CASE WHEN status = 'ended' THEN 1 ELSE 0 END) as endedAuctions,
+      SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejectedAuctions,
+      
+      -- Escrow status counts
+      SUM(CASE WHEN escrow_status = 'pending_payment' THEN 1 ELSE 0 END) as pendingPayment,
+      SUM(CASE WHEN escrow_status = 'paid' THEN 1 ELSE 0 END) as paidAuctions,
+      SUM(CASE WHEN escrow_status = 'item_received' THEN 1 ELSE 0 END) as itemReceived,
+      SUM(CASE WHEN escrow_status = 'completed' THEN 1 ELSE 0 END) as completedAuctions,
+      
+      -- Financial stats (only for completed auctions)
+      SUM(CASE WHEN status = 'ended' AND final_price IS NOT NULL THEN final_price ELSE 0 END) as totalRevenue,
+      AVG(CASE WHEN status = 'ended' AND final_price IS NOT NULL THEN final_price ELSE NULL END) as avgFinalPrice,
+      
+      -- Recent activity
+      SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as recentAuctions,
+      
+      -- Auctions ending soon (within 24 hours)
+      SUM(CASE WHEN status = 'active' AND end_time BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 24 HOUR) THEN 1 ELSE 0 END) as endingSoon
+      
+    FROM auctions
+  `;
+  
+  console.log("🔍 [MODEL] Fetching auction statistics");
+  console.log("🔍 [MODEL] SQL Query:", sql);
+  
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("❌ [MODEL] Error fetching auction stats:", err);
+      console.error("❌ [MODEL] SQL Message:", err.sqlMessage);
+      console.error("❌ [MODEL] SQL Code:", err.code);
+      console.error("❌ [MODEL] Full error object:", err);
+    } else {
+      console.log("✅ [MODEL] Auction stats query successful");
+      console.log("📊 [MODEL] Results length:", results.length);
+      if (results.length > 0) {
+        console.log("📊 [MODEL] First result:", results[0]);
+      } else {
+        console.log("📊 [MODEL] No results returned from query");
+      }
+    }
+    callback(err, results);
+  });
+};
+
+// Get recent auctions for activity feed
+const getRecentAuctions = (limit = 10, callback) => {
+  const sql = `
+    SELECT 
+      a.*,
+      u.username as author_username,
+      u.fullname as author_fullname,
+      u.pfp as author_pfp,
+      w.username as winner_username,
+      w.fullname as winner_fullname
+    FROM auctions a
+    LEFT JOIN users u ON a.author_id = u.id
+    LEFT JOIN users w ON a.winner_id = w.id
+    ORDER BY a.created_at DESC
+    LIMIT ?
+  `;
+  
+  db.query(sql, [limit], callback);
+};
+
+const updatePortfolioAuctionId = (portfolioItemId, auctionId, callback) => {
+  const sql = `
+    UPDATE portfolio_items 
+    SET auction_id = ? 
+    WHERE id = ?
+  `;
+  db.query(sql, [auctionId, portfolioItemId], callback);
+};
+
+
 module.exports = {
   createAuction,
   getAllAuctions,
@@ -380,4 +526,8 @@ module.exports = {
   updateReleaseReceipt,
   verifyPaymentReceipt,
   getAuctionWithReceipts,
+  getAuctionsUserParticipatedIn,
+  getAuctionStats,
+  getRecentAuctions,
+  updatePortfolioAuctionId,
 };

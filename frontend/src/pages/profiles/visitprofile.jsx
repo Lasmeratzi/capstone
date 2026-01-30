@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom"; // UPDATED: Added useSearchParams
 import axios from "axios";
 import Sidebar from "../sidebar/sidebar";
 import VisitPortfolio from "./visitportfolio";
@@ -61,10 +61,16 @@ const ProtectedWatermarkImage = ({ src, alt, className, onError }) => {
 
 const VisitProfile = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams(); // ADDED: Get URL parameters
+  
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("posts");
+  
+  // Get tab from URL or default to "posts"
+  const tabFromURL = searchParams.get("tab") || "posts";
+  const [activeTab, setActiveTab] = useState(tabFromURL); // UPDATED: Use URL tab
+  
   const [refreshStats, setRefreshStats] = useState(false);
   const [locations, setLocations] = useState([]);
   const [coverImageLoadError, setCoverImageLoadError] = useState(false);
@@ -318,8 +324,8 @@ const VisitProfile = () => {
         <div className="flex border-b border-gray-300 mb-6 text-sm">
           {[
             { key: "posts", icon: NewspaperIcon, label: "Posts" },
-            { key: "visitart", icon: PhotoIcon, label: "Art" },
-            { key: "portfolio", icon: Squares2X2Icon, label: "Portfolio" },
+            { key: "visitart", icon: PhotoIcon, label: "Art Posts" },
+            { key: "portfolio", icon: Squares2X2Icon, label: "Gallery" },
             { key: "visitauct", icon: TagIcon, label: "Auctions" },
           ].map((tab) => (
             <button

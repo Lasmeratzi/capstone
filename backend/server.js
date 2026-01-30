@@ -34,10 +34,15 @@ const illuraAccountRoutes = require("./routes/illuraAccountRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const reportsRoutes = require("./routes/reportsRoutes");
 const adminPostsRoutes = require("./routes/adminPostsRoutes");
+const auctionRemindersRoutes = require("./routes/auctionRemindersRoutes");
+const adminProfileRoutes = require("./routes/adminProfileRoutes");
+const reviewsRoutes = require('./routes/reviewsRoutes');
 
 // Auction cron job
 const checkAndEndAuctions = require("./jobs/auctionJobs");
 const activateScheduledAuctions = require("./jobs/auctionActivationJobs");
+const checkAuctionStartReminders = require("./jobs/auctionStartReminders");
+const checkAuctionEndReminders = require("./jobs/auctionEndReminders");
 
 const app = express();
 const cors = require("cors");
@@ -80,6 +85,13 @@ console.log("🟢 Type of paymentRoutes:", typeof paymentRoutes);
 console.log("🟢 Is function?", typeof paymentRoutes === 'function');
 console.log("🟢 Is object?", typeof paymentRoutes === 'object');
 
+console.log("\n📋 REGISTERED ROUTES:");
+console.log("✅ /api/auctions/test-public");
+console.log("✅ /api/auctions/participated");
+console.log("✅ /api/auctions/sold");
+console.log("✅ /api/won/auctions");
+console.log("\n");
+
 // Remove this entire try-catch block or change it to:
 console.log("🟢 paymentRoutes will be mounted at /api/payments below");
 
@@ -89,7 +101,7 @@ app.use("/api/v2/payments", paymentRoutes);
 console.log("✅ Test mount complete");
 
 
-
+app.use("/api", auctionRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api", signupRoutes);
 app.use("/api", loginRoutes);
@@ -101,7 +113,6 @@ app.use("/api", chatRoutes);
 app.use("/api", commentsRoutes);
 app.use("/api", artworkpostsRoutes);
 app.use("/api", artmediaRoutes);
-app.use("/api", auctionRoutes);
 app.use("/api", auctionMediaRoutes); 
 app.use("/api/auctionbids", auctionbidsRoutes);
 app.use("/api", adminLoginRoutes); 
@@ -120,7 +131,9 @@ app.use("/api", searchRoutes);
 app.use("/api", illuraAccountRoutes);
 app.use("/api", reportsRoutes);
 app.use("/api", adminPostsRoutes);
-
+app.use("/api/auctionreminders", auctionRemindersRoutes);
+app.use("/api", adminProfileRoutes);
+app.use('/api/reviews', reviewsRoutes);
 
 
 
@@ -164,6 +177,8 @@ io.on("connection", (socket) => {
 
 checkAndEndAuctions();
 activateScheduledAuctions();
+checkAuctionStartReminders();
+checkAuctionEndReminders();
 
 // Add this right before server.listen:
 

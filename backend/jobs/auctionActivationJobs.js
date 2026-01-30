@@ -2,11 +2,23 @@ const cron = require('node-cron');
 const db = require('../config/database2');
 const notificationsModels = require('../models/notificationsModels');
 
-const sendNotification = async (userId, message) => {
+// Updated sendNotification function
+const sendNotification = async (userId, type, message) => {
   try {
-    console.log("🔔 [ACTIVATION] Sending notification to:", userId, message);
-    await notificationsModels.createNotification(userId, message);
-    console.log("✅ [ACTIVATION] Notification sent");
+    console.log("🔔 [ACTIVATION] Sending notification to:", userId, type, message);
+    
+    await new Promise((resolve, reject) => {
+      // Format: (userId, senderId, type, message, callback)
+      notificationsModels.createNotification(userId, null, type, message, (err) => {
+        if (err) {
+          console.error("❌ [ACTIVATION] Notification error:", err);
+          reject(err);
+        } else {
+          console.log("✅ [ACTIVATION] Notification sent");
+          resolve();
+        }
+      });
+    });
   } catch (err) {
     console.error("❌ [ACTIVATION] Notification error:", err);
   }
@@ -53,6 +65,7 @@ const activateScheduledAuctions = () => {
         // Notify the auction creator
         await sendNotification(
           auction.author_id,
+          'auction_start', // Add type
           `🎉 Your auction "${auction.title}" is now LIVE! The bidding has started and will end on ${auction.end_time || 'the scheduled end time'}.`
         );
 

@@ -434,9 +434,9 @@ const Profile = () => {
         <div className="flex border-b border-gray-300 mb-6 text-sm">
           {[
             { key: "posts", icon: NewspaperIcon, label: "Posts" },
-            { key: "ownart", icon: PhotoIcon, label: "Own Art" },
-            { key: "portfolio", icon: Squares2X2Icon, label: "Portfolio" },
-            { key: "ownauct", icon: TagIcon, label: "Own Auction" },
+            { key: "ownart", icon: PhotoIcon, label: "Art Posts" },
+            { key: "portfolio", icon: Squares2X2Icon, label: "Gallery" },
+            { key: "ownauct", icon: TagIcon, label: "Auctions" },
           ].map((tab) => (
             <button
               key={tab.key}

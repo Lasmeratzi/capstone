@@ -72,7 +72,7 @@ const Sidebar = ({ onOpenCreate }) => {
   const navItems = [
     { label: "Home", icon: HomeIcon, path: "/home" },
     { label: "Search", icon: MagnifyingGlassIcon, path: "/searchprofile" },
-    { label: "Explore", icon: GlobeAltIcon, path: "/explore" },
+    
     {
       label: "Notifications",
       icon: BellIcon,
