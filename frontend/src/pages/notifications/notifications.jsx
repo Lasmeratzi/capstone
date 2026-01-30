@@ -7,11 +7,13 @@ import {
   HeartIcon, 
   UserPlusIcon,
   ChatBubbleLeftIcon,
-  ScaleIcon,
+  ScaleIcon, // Using ScaleIcon for auctions
   ExclamationTriangleIcon,
   PhotoIcon,
   ShoppingBagIcon,
-  DocumentCheckIcon
+  DocumentCheckIcon,
+  ClockIcon
+  // REMOVED: GavelIcon (not in @heroicons/react/24/outline)
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import Sidebar from "../sidebar/sidebar";
@@ -19,6 +21,8 @@ import Sidebar from "../sidebar/sidebar";
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true); // Added loading state
+  const [error, setError] = useState(null); // Added error state
   const pageSize = 5;
 
   const userId = localStorage.getItem("id");
@@ -28,65 +32,77 @@ const Notifications = () => {
   const getNotificationIcon = (type, isRead) => {
     const customPurple = '#970FFA';
     
-    switch(type) {
-      case 'post_like':
-      case 'artwork_like':
-        return (
-          <div className="p-1.5 rounded-full bg-white border-2 border-purple-100 shadow-sm">
-            <HeartIconSolid className="h-4 w-4" style={{ color: customPurple }} />
-          </div>
-        );
-      case 'follow':
-        return (
-          <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-green-500'}`}>
-            <UserPlusIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
-          </div>
-        );
-      case 'comment':
-      case 'artwork_comment':
-        return (
-          <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-blue-500'}`}>
-            <ChatBubbleLeftIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
-          </div>
-        );
-      case 'auction_bid':
-      case 'auction_win':
-        return (
-          <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-purple-500'}`}>
-            <ScaleIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
-          </div>
-        );
-      case 'artwork_post':
-      case 'post':
-        return (
-          <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-yellow-500'}`}>
-            <PhotoIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
-          </div>
-        );
-      case 'commission':
-        return (
-          <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-orange-500'}`}>
-            <ShoppingBagIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
-          </div>
-        );
-      case 'verification':
-        return (
-          <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-teal-500'}`}>
-            <DocumentCheckIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
-          </div>
-        );
-      case 'report':
-        return (
-          <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-red-500'}`}>
-            <ExclamationTriangleIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
-          </div>
-        );
-      default:
-        return (
-          <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-blue-500'}`}>
-            <BellIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
-          </div>
-        );
+    try {
+      switch(type) {
+        case 'post_like':
+        case 'artwork_like':
+          return (
+            <div className="p-1.5 rounded-full bg-white border-2 border-purple-100 shadow-sm">
+              <HeartIconSolid className="h-4 w-4" style={{ color: customPurple }} />
+            </div>
+          );
+        case 'follow':
+          return (
+            <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-green-500'}`}>
+              <UserPlusIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
+            </div>
+          );
+        case 'comment':
+        case 'artwork_comment':
+          return (
+            <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-blue-500'}`}>
+              <ChatBubbleLeftIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
+            </div>
+          );
+        case 'auction_bid':
+        case 'auction_win':
+        case 'auction_start': // Use same icon for all auction types
+        case 'auction_end':
+          return (
+            <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-purple-500'}`}>
+              <ScaleIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
+            </div>
+          );
+        case 'artwork_post':
+        case 'post':
+          return (
+            <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-yellow-500'}`}>
+              <PhotoIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
+            </div>
+          );
+        case 'commission':
+          return (
+            <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-orange-500'}`}>
+              <ShoppingBagIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
+            </div>
+          );
+        case 'verification':
+          return (
+            <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-teal-500'}`}>
+              <DocumentCheckIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
+            </div>
+          );
+        case 'report':
+          return (
+            <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-red-500'}`}>
+              <ExclamationTriangleIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
+            </div>
+          );
+        default:
+          return (
+            <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-blue-500'}`}>
+              <BellIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
+            </div>
+          );
+      }
+    } catch (error) {
+      console.error("Error getting notification icon:", error);
+      // Fallback icon
+      return (
+        <div className={`p-1.5 rounded-full ${isRead ? 'bg-gray-200' : 'bg-gray-500'}`}>
+          <BellIcon className={`h-4 w-4 ${isRead ? 'text-gray-400' : 'text-white'}`} />
+        </div>
+      );
     }
   };
 
@@ -95,7 +111,7 @@ const Notifications = () => {
     switch(type) {
       case 'post_like':
       case 'artwork_like':
-        return 'bg-purple-50 border-purple-100'; // Changed to purple
+        return 'bg-purple-50 border-purple-100';
       case 'follow':
         return 'bg-green-50 border-green-100';
       case 'comment':
@@ -103,10 +119,18 @@ const Notifications = () => {
         return 'bg-blue-50 border-blue-100';
       case 'auction_bid':
       case 'auction_win':
+      case 'auction_start':
+      case 'auction_end':
         return 'bg-purple-50 border-purple-100';
       case 'artwork_post':
       case 'post':
         return 'bg-yellow-50 border-yellow-100';
+      case 'commission':
+        return 'bg-orange-50 border-orange-100';
+      case 'verification':
+        return 'bg-teal-50 border-teal-100';
+      case 'report':
+        return 'bg-red-50 border-red-100';
       default:
         return 'bg-gray-50 border-gray-100';
     }
@@ -115,6 +139,9 @@ const Notifications = () => {
   // Fetch notifications
   const fetchNotifications = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
       const response = await axios.get(
         `http://localhost:5000/api/notifications/${userId}`,
         {
@@ -124,6 +151,9 @@ const Notifications = () => {
       setNotifications(response.data);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
+      setError("Failed to load notifications. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -153,8 +183,13 @@ const Notifications = () => {
   };
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    if (userId && token) {
+      fetchNotifications();
+    } else {
+      setError("Please log in to view notifications");
+      setLoading(false);
+    }
+  }, [userId, token]);
 
   // Pagination logic
   const totalPages = Math.ceil(notifications.length / pageSize);
@@ -166,18 +201,63 @@ const Notifications = () => {
 
   // Format date
   const formatDate = (dateString) => {
-    const options = { year: "numeric", month: "short", day: "numeric" };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    try {
+      const now = new Date();
+      const notificationDate = new Date(dateString);
+      const diffInHours = Math.floor((now - notificationDate) / (1000 * 60 * 60));
+      
+      if (diffInHours < 1) {
+        const diffInMinutes = Math.floor((now - notificationDate) / (1000 * 60));
+        if (diffInMinutes < 1) {
+          return 'Just now';
+        }
+        return `${diffInMinutes}m ago`;
+      } else if (diffInHours < 24) {
+        return `${diffInHours}h ago`;
+      } else {
+        const options = { month: 'short', day: 'numeric' };
+        return notificationDate.toLocaleDateString('en-US', options);
+      }
+    } catch (error) {
+      return 'Recently';
+    }
+  };
+
+  // Format time for detailed view
+  const formatDetailedDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Unknown date';
+    }
   };
 
   // Mark all as read
   const markAllAsRead = async () => {
     try {
-      await axios.put(
-        `http://localhost:5000/api/notifications/${userId}/read-all`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // Check if markAllAsRead route exists, if not, mark each individually
+      try {
+        await axios.put(
+          `http://localhost:5000/api/notifications/${userId}/read-all`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (error) {
+        console.log("Mark all as read route not available, marking individually");
+        // Mark each unread notification individually
+        const unreadNotifications = notifications.filter(n => !n.is_read);
+        for (const notif of unreadNotifications) {
+          await markAsRead(notif.id);
+        }
+      }
       fetchNotifications();
     } catch (error) {
       console.error("Failed to mark all as read:", error);
@@ -185,6 +265,44 @@ const Notifications = () => {
   };
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  if (loading) {
+    return (
+      <div className="flex bg-gray-50 min-h-screen">
+        <div className="fixed h-full">
+          <Sidebar />
+        </div>
+        <div className="flex-1 p-8 text-gray-800 ml-64 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading notifications...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex bg-gray-50 min-h-screen">
+        <div className="fixed h-full">
+          <Sidebar />
+        </div>
+        <div className="flex-1 p-8 text-gray-800 ml-64 flex items-center justify-center">
+          <div className="text-center">
+            <BellIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-red-500 text-lg mb-2">{error}</p>
+            <button 
+              onClick={fetchNotifications}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
@@ -230,7 +348,7 @@ const Notifications = () => {
             <BellIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 text-lg">No notifications yet</p>
             <p className="text-gray-400 text-sm mt-2">
-              You'll see notifications here when you get likes, comments, or follows.
+              You'll see notifications here when you get likes, comments, or auction updates.
             </p>
           </div>
         ) : (
@@ -245,10 +363,11 @@ const Notifications = () => {
                     } ${!notif.is_read ? getNotificationColor(notif.type) : ''} 
                     hover:bg-gray-50 border-b border-gray-100 last:border-b-0`}
                     onClick={() => !notif.is_read && markAsRead(notif.id)}
+                    title={formatDetailedDate(notif.created_at)}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex items-start gap-3 flex-1">
-                        {/* Profile picture */}
+                        {/* Profile picture or system icon */}
                         <div className="relative flex-shrink-0">
                           {notif.sender_pfp ? (
                             <div className="relative">
@@ -268,10 +387,9 @@ const Notifications = () => {
                             </div>
                           ) : (
                             <div className="relative">
-                              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center border-2 border-white shadow-sm">
-                                <span className="text-white font-bold text-lg">
-                                  {notif.sender_username?.charAt(0).toUpperCase() || 'U'}
-                                </span>
+                              {/* System notification (no sender) */}
+                              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center border-2 border-white shadow-sm">
+                                <BellIcon className="h-6 w-6 text-white" />
                               </div>
                               <div className="absolute -bottom-1 -right-1">
                                 {getNotificationIcon(notif.type, notif.is_read)}
@@ -287,7 +405,7 @@ const Notifications = () => {
                               <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                             )}
                             <p className="font-semibold text-gray-900 truncate">
-                              {notif.sender_username || 'User'}
+                              {notif.sender_username || 'Illura System'}
                             </p>
                           </div>
                           
@@ -299,6 +417,13 @@ const Notifications = () => {
                             <p className="text-xs text-gray-500">
                               {formatDate(notif.created_at)}
                             </p>
+                            
+                            {/* Show auction-specific tags */}
+                            {(notif.type === 'auction_start' || notif.type === 'auction_end' || notif.type === 'auction_win' || notif.type === 'auction_bid') && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
+                                Auction
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -347,7 +472,7 @@ const Notifications = () => {
               </ul>
             </div>
 
-            {/* Pagination */}
+            {/* Pagination - only show if we have multiple pages */}
             {totalPages > 1 && (
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <div className="flex items-center justify-center space-x-2">

@@ -18,9 +18,28 @@ const createPortfolioItem = (portfolioData, callback) => {
 // Get all portfolio items for a user
 const getPortfolioItemsByUser = (userId, callback) => {
   const sql = `
-    SELECT id, user_id, title, description, image_path, created_at, updated_at
-    FROM portfolio_items
-    WHERE user_id = ?
+    SELECT 
+      p.id, 
+      p.user_id, 
+      p.title, 
+      p.description, 
+      p.image_path, 
+      p.created_at, 
+      p.updated_at, 
+      p.is_sold,
+      p.auction_id,
+      a.final_price,
+      a.current_price,
+      a.starting_price,
+      a.status AS auction_status,
+      a.winner_id,
+      w.username AS winner_username,
+      w.fullname AS winner_fullname
+    FROM portfolio_items p
+    LEFT JOIN auctions a ON p.auction_id = a.id
+    LEFT JOIN users w ON a.winner_id = w.id
+    WHERE p.user_id = ?
+    ORDER BY p.created_at DESC
   `;
   db.query(sql, [userId], callback);
 };
@@ -28,9 +47,25 @@ const getPortfolioItemsByUser = (userId, callback) => {
 // Get a portfolio item by ID
 const getPortfolioItemById = (id, callback) => {
   const sql = `
-    SELECT id, user_id, title, description, image_path
-    FROM portfolio_items
-    WHERE id = ?
+    SELECT 
+      p.id, 
+      p.user_id, 
+      p.title, 
+      p.description, 
+      p.image_path,
+      p.is_sold,
+      p.auction_id,
+      a.final_price,
+      a.current_price,
+      a.starting_price,
+      a.status AS auction_status,
+      a.winner_id,
+      w.username AS winner_username,
+      w.fullname AS winner_fullname
+    FROM portfolio_items p
+    LEFT JOIN auctions a ON p.auction_id = a.id
+    LEFT JOIN users w ON a.winner_id = w.id
+    WHERE p.id = ?
   `;
   db.query(sql, [id], callback);
 };
@@ -70,10 +105,20 @@ const deletePortfolioItem = (id, userId, callback) => {
   });
 };
 
+const updatePortfolioAuctionId = (portfolioItemId, auctionId, callback) => {
+  const sql = `
+    UPDATE portfolio_items 
+    SET auction_id = ? 
+    WHERE id = ?
+  `;
+  db.query(sql, [auctionId, portfolioItemId], callback);
+};
+
 module.exports = {
   createPortfolioItem,
   getPortfolioItemsByUser,
   getPortfolioItemById,
   updatePortfolioItem,
   deletePortfolioItem,
+  updatePortfolioAuctionId
 };

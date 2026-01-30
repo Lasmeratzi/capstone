@@ -40,7 +40,7 @@ const SideAdmin = () => {
   const navItems = [
     { path: "/homeadmin", label: "Dashboard", icon: LayoutDashboard, color: "gray" },
     { path: "/displayprofile", label: "Profiles", icon: Users, color: "gray" },
-    { path: "/displayreports", label: "Reports", icon: Flag, color: "gray" }, // ADDED THIS LINE
+    { path: "/displayreports", label: "Violations", icon: Flag, color: "gray" }, // ADDED THIS LINE
     { path: "/tags", label: "Tags", icon: Tag, color: "gray" },
     { path: "/displayposts", label: "Posts", icon: FileText, color: "gray" },
   ];

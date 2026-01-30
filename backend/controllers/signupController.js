@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt"); // For password hashing
 const jwt = require("jsonwebtoken"); // For token generation
 const signupModels = require("../models/signupModels"); // Import signupModels
+const passwordValidator = require("../utils/passwordValidator"); // Import password validator
 require("dotenv").config(); // Load environment variables
 
 // Create a new user (Sign-up)
@@ -8,6 +9,15 @@ const createUser = async (req, res) => {
   try {
     const { fullname, username, email, password, bio, birthdate } = req.body;
     const pfp = req.file ? req.file.filename : null; // If profile picture is uploaded
+
+    // Validate password complexity
+    const passwordValidation = passwordValidator.validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ 
+        message: "Password does not meet complexity requirements.",
+        errors: passwordValidation.errors 
+      });
+    }
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -21,7 +31,11 @@ const createUser = async (req, res) => {
         }
         return res.status(500).json({ message: "Database error.", error: err });
       }
-      res.status(201).json({ message: "User created successfully!", userId: result.insertId });
+      res.status(201).json({ 
+        message: "User created successfully!", 
+        userId: result.insertId,
+        passwordStrength: passwordValidator.getStrengthScore(password) // Optional
+      });
     });
   } catch (error) {
     res.status(500).json({ message: "Server error during sign-up.", error });

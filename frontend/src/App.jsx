@@ -31,6 +31,7 @@ import Message from "./pages/message/message";
 import TagPostsPage from "./pages/search/TagsPostsPage";
 import ArtworkPostPage from "./pages/search/ArtWorkPostPage";
 import LocationPostsPage from "./pages/search/LocationPostsPage";
+import PortfolioPostsPage from "./pages/search/PortfolioPostsPage";
 import IlluraAccount from "./pages/ADMIN/illuraaccount/illuraaccount";
 
 function App() {
@@ -46,7 +47,7 @@ function App() {
         <Route path="/terms" element={<Terms/>} />
         <Route path="/makepost" element={<MakePost/>} />
         <Route path="/makeart" element={<MakeArt/>} />
-        <Route path="/makeauction" element={<MakeAuction/>} />
+       
 
         {/* Protected Routes */}
         <Route
@@ -98,22 +99,39 @@ function App() {
           }
         />
         <Route
-          path="/searchprofile"
-          element={
+         path="/makeauction"
+        element={
             <ProtectedRoute>
-              <SearchProfile /> 
+              <MakeAuction onClose={() => window.history.back()} />
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/tags/:tagName"
-          element={
-            <ProtectedRoute>
-              <TagPostsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
+      {/* Search Routes */}
+<Route
+  path="/searchprofile"
+  element={
+    <ProtectedRoute>
+      <SearchProfile /> 
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/search/portfolio"
+  element={
+    <ProtectedRoute>
+      <PortfolioPostsPage />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/tags/:tagName"
+  element={
+    <ProtectedRoute>
+      <TagPostsPage />
+    </ProtectedRoute>
+  }
+/>
+<Route
   path="/artwork/:postId"
   element={
     <ProtectedRoute>
@@ -121,7 +139,6 @@ function App() {
     </ProtectedRoute>
   }
 />
-
 <Route
   path="/location/:locationId"
   element={

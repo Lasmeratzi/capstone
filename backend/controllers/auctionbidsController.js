@@ -38,15 +38,44 @@ const placeBid = (req, res) => {
 
     const currentPrice = parseFloat(auction.current_price);
     const startingPrice = parseFloat(auction.starting_price);
+    const useIncrement = auction.use_increment === 1; // NEW: Check if increments are enabled
+    const bidIncrement = parseFloat(auction.bid_increment) || 0; // NEW: Get increment amount
 
     console.log(`🔹 Current price: ${currentPrice}, Starting price: ${startingPrice}, Bid: ${bidValue}`);
+    console.log(`🔹 Use increment: ${useIncrement}, Bid increment: ${bidIncrement}`); // NEW: Log increment info
+
+    // ✅ Step 1.5: Check if user is bidding on their own auction
+    if (auction.author_id === bidder_id) {
+      return res.status(400).json({ message: "You cannot bid on your own auction." });
+    }
 
     // ✅ Ensure bid amount is valid
     if (bidValue <= startingPrice) {
-      return res.status(400).json({ message: `Bid must be higher than starting price: ${startingPrice}` });
+      return res.status(400).json({ message: `Bid must be higher than starting price: ₱${startingPrice}` });
     }
     if (bidValue <= currentPrice) {
-      return res.status(400).json({ message: `Bid must be higher than current price: ${currentPrice}` });
+      return res.status(400).json({ message: `Bid must be higher than current price: ₱${currentPrice}` });
+    }
+
+    // ✅ NEW: Validate bid increment if enabled
+    if (useIncrement && bidIncrement > 0) {
+      const minimumBid = currentPrice + bidIncrement;
+      
+      // Check if bid meets the increment requirement
+      if (bidValue < minimumBid) {
+        return res.status(400).json({ 
+          message: `Bid must increase by exactly ₱${bidIncrement}. Minimum bid is ₱${minimumBid.toFixed(2)}` 
+        });
+      }
+      
+      // Check if bid is exactly on the increment (e.g., ₱100, ₱200, ₱300)
+      // Allow bids that are multiples of the increment above current price
+      const incrementCheck = (bidValue - currentPrice) % bidIncrement;
+      if (Math.abs(incrementCheck) > 0.01) { // Allow small floating point differences
+        return res.status(400).json({ 
+          message: `Bid must increase by exactly ₱${bidIncrement} increments (e.g., ₱${(currentPrice + bidIncrement).toFixed(2)}, ₱${(currentPrice + (bidIncrement * 2)).toFixed(2)}, etc.)` 
+        });
+      }
     }
 
     console.log("🔹 Placing bid...");
@@ -68,7 +97,12 @@ const placeBid = (req, res) => {
           return res.status(500).json({ message: "Failed to update auction current price.", error: err2 });
         }
 
-        res.status(201).json({ message: "Bid placed successfully.", bidAmount: bidValue });
+        res.status(201).json({ 
+          message: "Bid placed successfully.", 
+          bidAmount: bidValue,
+          useIncrement: useIncrement, // NEW: Include in response
+          bidIncrement: bidIncrement // NEW: Include in response
+        });
       });
     });
   });

@@ -120,11 +120,12 @@ const universalSearch = (query, callback) => {
       users: [],
       tags: [],
       locations: [],
+      portfolio: [],  // ADD THIS
       suggestions: []
     });
   }
 
-  // Use Promise.all for parallel execution
+  // ADD PORTFOLIO TO Promise.all
   Promise.all([
     new Promise((resolve, reject) => {
       searchUsers(query, (err, results) => err ? reject(err) : resolve(results));
@@ -134,19 +135,24 @@ const universalSearch = (query, callback) => {
     }),
     new Promise((resolve, reject) => {
       searchLocations(query, (err, results) => err ? reject(err) : resolve(results));
+    }),
+    new Promise((resolve, reject) => {  // ADD THIS
+      searchPortfolio(query, (err, results) => err ? reject(err) : resolve(results));
     })
   ])
-  .then(([users, tags, locations]) => {
+  .then(([users, tags, locations, portfolio]) => {
     callback(null, {
       users: users || [],
       tags: tags || [],
-      locations: locations || []
+      locations: locations || [],
+      portfolio: portfolio || []  // ADD THIS
     });
   })
   .catch(err => {
     callback(err);
   });
 };
+
 
 // Quick search for real-time suggestions - prioritizing starts with
 const quickSearch = (query, callback) => {
@@ -160,7 +166,7 @@ const quickSearch = (query, callback) => {
      FROM users 
      WHERE (username LIKE ? OR username LIKE ?) AND account_status = 'active'
      ORDER BY match_priority ASC, username ASC
-     LIMIT 3)
+     LIMIT 2)  -- Reduced from 3 to 2 to make room
     
     UNION ALL
     
@@ -173,7 +179,7 @@ const quickSearch = (query, callback) => {
      GROUP BY tags.id
      HAVING COUNT(artwork_tags.id) > 0
      ORDER BY match_priority ASC, COUNT(artwork_tags.id) DESC
-     LIMIT 3)
+     LIMIT 2)  -- Reduced from 3 to 2
     
     UNION ALL
     
@@ -186,7 +192,19 @@ const quickSearch = (query, callback) => {
      GROUP BY locations.id
      HAVING COUNT(users.id) > 0
      ORDER BY match_priority ASC, COUNT(users.id) DESC
-     LIMIT 3)
+     LIMIT 2)  -- Reduced from 3 to 2
+    
+    UNION ALL
+    
+    (SELECT pi.id, pi.title as name, pi.image_path as image, 'portfolio' as type,
+            u.username as subtitle,
+            CASE WHEN pi.title LIKE ? THEN 1 ELSE 2 END as match_priority
+     FROM portfolio_items pi
+     JOIN users u ON pi.user_id = u.id
+     WHERE u.account_status = 'active'
+       AND (pi.title LIKE ? OR pi.title LIKE ?)
+     ORDER BY match_priority ASC, pi.created_at DESC
+     LIMIT 2)  -- ADD PORTFOLIO ITEMS
     
     ORDER BY match_priority ASC, type
     LIMIT 10
@@ -201,7 +219,49 @@ const quickSearch = (query, callback) => {
     // Tags
     startsWithPattern, startsWithPattern, containsPattern,
     // Locations
+    startsWithPattern, startsWithPattern, containsPattern,
+    // Portfolio
     startsWithPattern, startsWithPattern, containsPattern
+  ], callback);
+};
+
+// Search portfolio items by title or description - prioritizing starts with
+const searchPortfolio = (query, callback) => {
+  const sql = `
+    SELECT 
+      pi.id, 
+      pi.title,
+      pi.description,
+      pi.image_path,
+      pi.user_id,
+      pi.created_at,
+      u.username,
+      u.pfp,
+      u.fullname,
+      'portfolio' as type,
+      CASE 
+        WHEN pi.title LIKE ? THEN 1  -- Title starts with query (highest priority)
+        WHEN pi.description LIKE ? THEN 2  -- Description starts with query
+        WHEN pi.title LIKE ? THEN 3  -- Title contains query
+        WHEN pi.description LIKE ? THEN 4  -- Description contains query
+        ELSE 5
+      END as match_priority
+    FROM portfolio_items pi
+    JOIN users u ON pi.user_id = u.id
+    WHERE u.account_status = 'active'
+      AND (pi.title LIKE ? OR pi.description LIKE ? OR pi.title LIKE ? OR pi.description LIKE ?)
+    ORDER BY 
+      match_priority ASC,
+      pi.created_at DESC
+    LIMIT 10
+  `;
+  
+  const startsWithPattern = `${query}%`;
+  const containsPattern = `%${query}%`;
+  
+  db.query(sql, [
+    startsWithPattern, startsWithPattern, containsPattern, containsPattern,  // for CASE priority
+    startsWithPattern, startsWithPattern, containsPattern, containsPattern   // for WHERE clause
   ], callback);
 };
 
@@ -210,5 +270,6 @@ module.exports = {
   searchTags,
   searchLocations,
   universalSearch,
-  quickSearch
+  quickSearch,
+  searchPortfolio,
 };
