@@ -139,6 +139,12 @@ const Home = () => {
     }
   };
 
+  const handleSwitchToAuctions = () => {
+  setActiveTab('auctions');
+  // Optional: scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
   // delete artwork post
   const handleDeleteArtwork = async (artworkId) => {
     try {
@@ -312,8 +318,13 @@ const Home = () => {
         )}
       </div>
 
+     
       {/* Right Sidebar */}
-      <RSideHome user={user} accounts={accounts} />
+<RSideHome 
+  user={user} 
+  accounts={accounts} 
+  onSwitchToAuctions={handleSwitchToAuctions}
+/>
 
       {/* Create Modal */}
       {isCreateOpen && (

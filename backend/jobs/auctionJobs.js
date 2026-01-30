@@ -2,11 +2,25 @@ const cron = require('node-cron');
 const db = require('../config/database2');
 const notificationsModels = require('../models/notificationsModels');
 
-const sendNotification = async (userId, message) => {
+// Updated sendNotification function to include type
+const sendNotification = async (userId, type, message) => {
   try {
-    console.log("🔔 Sending notification to:", userId, message);
-    await notificationsModels.createNotification(userId, message);
-    console.log("✅ Notification sent");
+    console.log("🔔 Sending notification to:", userId, type, message);
+    
+    // Using the createNotification function with type
+    await new Promise((resolve, reject) => {
+      // Format: (userId, senderId, type, message, callback)
+      // senderId is null for system notifications
+      notificationsModels.createNotification(userId, null, type, message, (err) => {
+        if (err) {
+          console.error("❌ Notification error:", err);
+          reject(err);
+        } else {
+          console.log("✅ Notification sent");
+          resolve();
+        }
+      });
+    });
   } catch (err) {
     console.error("❌ Notification error:", err);
   }
@@ -50,22 +64,33 @@ const checkAndEndAuctions = () => {
           // ✅ FIXED: Use promise-based query
           await db.query(
             `UPDATE auctions 
-             SET winner_id = ?, final_price = ?, escrow_status = 'pending_payment' 
-             WHERE id = ?`,
-            [bidder_id, bid_amount, auctionId]
-          );
+     SET winner_id = ?, final_price = ?, escrow_status = 'pending_payment' 
+     WHERE id = ?`,
+    [bidder_id, bid_amount, auctionId]
+  );
 
-          console.log(`✅ Winner set for auction ${auctionId}: ${username} with ₱${bid_amount}`);
+  console.log(`✅ Winner set for auction ${auctionId}: ${username} with ₱${bid_amount}`);
+  if (auction.portfolio_item_id) {
+    await db.query(
+      `UPDATE portfolio_items 
+       SET is_sold = TRUE 
+       WHERE id = ?`,
+      [auction.portfolio_item_id]
+    );
+    console.log(`✅ Portfolio item ${auction.portfolio_item_id} marked as SOLD`);
+  }
 
           // Notify auction author
           await sendNotification(
             auction.author_id,
+            'auction_win', // Add type
             `Your auction "${auction.title}" has ended. Highest bidder: @${username} with ₱${bid_amount}. Check your auctions.`
           );
 
           // Notify top bidder
           await sendNotification(
             bidder_id,
+            'auction_win', // Add type
             `You won the auction "${auction.title}" with ₱${bid_amount}. Check your Auction Wins section to proceed with payment.`
           );
 
@@ -73,6 +98,7 @@ const checkAndEndAuctions = () => {
           // No bids
           await sendNotification(
             auction.author_id,
+            'auction_end', // Add type
             `Your auction "${auction.title}" has ended with no bids placed.`
           );
         }

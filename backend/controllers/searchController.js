@@ -10,12 +10,14 @@ const universalSearch = (req, res) => {
       results: {
         users: [],
         tags: [],
-        locations: []
+        locations: [],
+        portfolio: []  // ADD THIS
       },
       counts: {
         users: 0,
         tags: 0,
         locations: 0,
+        portfolio: 0,  // ADD THIS
         total: 0
       },
       message: "Search query is required"
@@ -24,19 +26,20 @@ const universalSearch = (req, res) => {
 
   const trimmedQuery = query.trim();
   
-  // If query is too short, return empty results with suggestion
   if (trimmedQuery.length < 1) {
     return res.status(200).json({
       query: trimmedQuery,
       results: {
         users: [],
         tags: [],
-        locations: []
+        locations: [],
+        portfolio: []  // ADD THIS
       },
       counts: {
         users: 0,
         tags: 0,
         locations: 0,
+        portfolio: 0,  // ADD THIS
         total: 0
       },
       message: "Type at least 1 character to search"
@@ -52,25 +55,30 @@ const universalSearch = (req, res) => {
     const users = results.users || [];
     const tags = results.tags || [];
     const locations = results.locations || [];
-    const totalCount = users.length + tags.length + locations.length;
+    const portfolio = results.portfolio || [];  // ADD THIS
+    
+    const totalCount = users.length + tags.length + locations.length + portfolio.length;  // UPDATE THIS
 
     res.status(200).json({
       query: trimmedQuery,
       results: {
         users: users,
         tags: tags,
-        locations: locations
+        locations: locations,
+        portfolio: portfolio  // ADD THIS
       },
       counts: {
         users: users.length,
         tags: tags.length,
         locations: locations.length,
+        portfolio: portfolio.length,  // ADD THIS
         total: totalCount
       },
       ...(totalCount === 0 && { message: "No results found" })
     });
   });
 };
+
 
 // Quick search for real-time suggestions
 const quickSearch = (req, res) => {
@@ -196,10 +204,41 @@ const searchLocationsOnly = (req, res) => {
   });
 };
 
+const searchPortfolioOnly = (req, res) => {
+  const { query } = req.query;
+
+  if (!query || query.trim().length === 0) {
+    return res.status(400).json({ 
+      message: "Search query is required.",
+      results: [],
+      count: 0
+    });
+  }
+
+  const trimmedQuery = query.trim();
+
+  searchModels.searchPortfolio(trimmedQuery, (err, results) => {
+    if (err) {
+      console.error("Portfolio search error:", err);
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+
+    const portfolioItems = results || [];
+
+    res.status(200).json({
+      query: trimmedQuery,
+      results: portfolioItems,
+      count: portfolioItems.length,
+      ...(portfolioItems.length === 0 && { message: "No portfolio items found" })
+    });
+  });
+};
+
 module.exports = {
   universalSearch,
   quickSearch,
   searchUsersOnly,
   searchTagsOnly,
   searchLocationsOnly,
+  searchPortfolioOnly,
 };

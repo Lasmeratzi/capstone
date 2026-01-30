@@ -12,12 +12,18 @@ import {
   ChevronRightIcon,
   PhotoIcon,
   EyeIcon,
-  DocumentArrowUpIcon
+  DocumentArrowUpIcon,
+  ClipboardDocumentListIcon,
+  ClockIcon,
+  TrophyIcon,
+  XCircleIcon,
+  UserCircleIcon
 } from "@heroicons/react/24/outline";
 
 const AuctionWins = () => {
   const [auctionWins, setAuctionWins] = useState([]);
   const [sellerAuctions, setSellerAuctions] = useState([]);
+  const [participatedAuctions, setParticipatedAuctions] = useState([]);
   const [activeTab, setActiveTab] = useState("won");
   const [loading, setLoading] = useState(true);
   const [illuraGCash, setIlluraGCash] = useState(null);
@@ -68,10 +74,56 @@ const AuctionWins = () => {
       setSellerAuctions(response.data);
     } catch (error) {
       console.error("Failed to fetch seller auctions:", error);
-    } finally {
-      setLoading(false);
     }
   };
+
+
+
+const fetchParticipatedAuctions = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    console.log("🔍 [FRONTEND] Token from localStorage:", token);
+    console.log("🔍 [FRONTEND] Token exists:", !!token);
+    
+    if (!token) {
+      console.error("❌ [FRONTEND] No token found in localStorage!");
+      setParticipatedAuctions([]);
+      setLoading(false);
+      return;
+    }
+    
+    // Call the actual route directly
+    const response = await fetch(
+      `http://localhost:5000/api/auctions/participated`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    console.log("🔍 [FRONTEND] Response status:", response.status);
+    console.log("🔍 [FRONTEND] Response headers:", Object.fromEntries(response.headers.entries()));
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("❌ [FRONTEND] Fetch failed:", errorData);
+      setParticipatedAuctions([]);
+      return;
+    }
+    
+    const data = await response.json();
+    console.log("🔍 [FRONTEND] Actual route data:", data);
+    setParticipatedAuctions(data);
+    
+  } catch (error) {
+    console.error("❌ [FRONTEND] Fetch failed:", error);
+    setParticipatedAuctions([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const confirmPayment = async (auctionId) => {
     try {
@@ -576,15 +628,39 @@ const AuctionWins = () => {
 
   // Pagination logic
   const getCurrentItems = () => {
-    const items = activeTab === "won" ? auctionWins : sellerAuctions;
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    return items.slice(indexOfFirstItem, indexOfLastItem);
+  let items = [];
+  switch (activeTab) {
+    case "won":
+      items = Array.isArray(auctionWins) ? auctionWins : [];
+      break;
+    case "sold":
+      items = Array.isArray(sellerAuctions) ? sellerAuctions : [];
+      break;
+    case "participated":
+      items = Array.isArray(participatedAuctions) ? participatedAuctions : [];
+      break;
+    default:
+      items = [];
+  }
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  return items.slice(indexOfFirstItem, indexOfLastItem);
+};
+
+  const totalItems = () => {
+    switch (activeTab) {
+      case "won":
+        return auctionWins.length;
+      case "sold":
+        return sellerAuctions.length;
+      case "participated":
+        return participatedAuctions.length;
+      default:
+        return 0;
+    }
   };
 
-  const totalPages = Math.ceil(
-    (activeTab === "won" ? auctionWins.length : sellerAuctions.length) / itemsPerPage
-  );
+  const totalPages = Math.ceil(totalItems() / itemsPerPage);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -594,6 +670,7 @@ const AuctionWins = () => {
   useEffect(() => {
     fetchAuctionWins();
     fetchSellerAuctions();
+    fetchParticipatedAuctions();
     fetchIlluraGCash();
   }, []);
 
@@ -627,7 +704,7 @@ const AuctionWins = () => {
         <div className="max-w-6xl mx-auto">
           <div className="mb-6">
             <h1 className="text-xl font-semibold text-gray-900">Auction Transactions</h1>
-            <p className="text-sm text-gray-600 mt-1">Manage your auction purchases and sales</p>
+            <p className="text-sm text-gray-600 mt-1">Manage your auction purchases, sales, and participation</p>
           </div>
 
           {/* Always Visible Illura GCash Info */}
@@ -654,6 +731,16 @@ const AuctionWins = () => {
               }`}
             >
               Your Sold Auctions ({sellerAuctions.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("participated")}
+              className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                activeTab === "participated"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Participated Auctions ({participatedAuctions.length})
             </button>
           </div>
 
@@ -866,6 +953,184 @@ const AuctionWins = () => {
                     <div className="flex justify-between items-center border-t border-gray-300 pt-4">
                       <div className="text-sm text-gray-600">
                         Page {currentPage} of {totalPages}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className={`p-2 rounded border ${
+                            currentPage === 1
+                              ? 'text-gray-400 border-gray-300 cursor-not-allowed'
+                              : 'text-gray-700 border-gray-300 hover:bg-gray-100'
+                          }`}
+                        >
+                          <ChevronLeftIcon className="w-4 h-4" />
+                        </button>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`w-8 h-8 rounded text-sm ${
+                              currentPage === page
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-700 border border-gray-300 hover:bg-gray-100'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                        
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className={`p-2 rounded border ${
+                            currentPage === totalPages
+                              ? 'text-gray-400 border-gray-300 cursor-not-allowed'
+                              : 'text-gray-700 border-gray-300 hover:bg-gray-100'
+                          }`}
+                        >
+                          <ChevronRightIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {/* Participated Auctions Tab */}
+          {activeTab === "participated" && (
+            <>
+              {participatedAuctions.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="bg-gray-50 rounded border border-gray-300 p-8 max-w-md mx-auto">
+                    <ClipboardDocumentListIcon className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                    <h3 className="text-sm font-medium text-gray-900 mb-1">No auction participation yet</h3>
+                    <p className="text-xs text-gray-600">Start bidding on auctions to see them here!</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-4 mb-6">
+                    {currentItems.map((auction) => (
+                      <div
+                        key={auction.id}
+                        className="bg-white border border-gray-300 rounded p-4 hover:border-gray-400 transition-colors"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="text-sm font-semibold text-gray-900">{auction.title}</h3>
+                              <div className="ml-auto">
+                                {/* Status Badge */}
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                  auction.status === 'active' 
+                                    ? 'bg-green-100 text-green-800 border border-green-200'
+                                    : auction.status === 'ended'
+                                    ? 'bg-gray-100 text-gray-800 border border-gray-200'
+                                    : 'bg-blue-100 text-blue-800 border border-blue-200'
+                                }`}>
+                                  {auction.status === 'active' ? 'Active' : 'Ended'}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="text-xs text-gray-600 mb-3 line-clamp-2">{auction.description}</div>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-gray-700">
+                              <div className="bg-blue-50 p-2 rounded border border-blue-100">
+                                <div className="font-medium text-blue-800">Your Bid</div>
+                                <div className="text-sm font-bold text-blue-600">₱{auction.user_bid_amount}</div>
+                              </div>
+                              <div className="bg-green-50 p-2 rounded border border-green-100">
+                                <div className="font-medium text-green-800">Current Highest</div>
+                                <div className="text-sm font-bold text-green-600">₱{auction.current_highest_bid}</div>
+                              </div>
+                              <div className="bg-purple-50 p-2 rounded border border-purple-100">
+                                <div className="font-medium text-purple-800">Total Bids</div>
+                                <div className="text-sm font-bold text-purple-600">{auction.total_bids}</div>
+                              </div>
+                              <div className="bg-gray-50 p-2 rounded border border-gray-100">
+                                <div className="font-medium text-gray-800">Seller</div>
+                                <div className="flex items-center">
+                                  <UserCircleIcon className="w-3 h-3 mr-1 text-gray-500" />
+                                  <span className="text-sm">{auction.author_fullname || auction.author_username}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Status indicators */}
+                            <div className="mt-3">
+                              {auction.status === 'active' ? (
+                                <div className="flex items-center text-xs text-green-600 bg-green-50 p-2 rounded border border-green-200">
+                                  <ClockIcon className="w-3 h-3 mr-1" />
+                                  <span className="font-medium">Auction is still active!</span>
+                                  <span className="ml-2 text-green-700">
+                                    {auction.current_highest_bid > auction.user_bid_amount 
+                                      ? `You're currently outbid by ₱${(auction.current_highest_bid - auction.user_bid_amount).toFixed(2)}`
+                                      : "You're currently the highest bidder! 🎉"}
+                                  </span>
+                                </div>
+                              ) : auction.winner_id === parseInt(localStorage.getItem("userId")) ? (
+                                <div className="flex items-center text-xs text-green-600 bg-green-50 p-2 rounded border border-green-200">
+                                  <TrophyIcon className="w-3 h-3 mr-1" />
+                                  <span className="font-medium">🎉 You won this auction!</span>
+                                  <button
+                                    onClick={() => setActiveTab("won")}
+                                    className="ml-auto text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200 transition"
+                                  >
+                                    View in Auction Wins
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center text-xs text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
+                                 
+                                  {auction.winner_id && (
+                                    <span className="ml-auto text-gray-500">
+                                      Winner: {auction.winner_username || `User #${auction.winner_id}`}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Action buttons for active auctions */}
+                        {auction.status === 'active' && (
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => window.location.href = `/home`}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded font-medium transition text-sm"
+                              >
+                                View Auction & Bid Again
+                              </button>
+                              <button
+                                onClick={() => setShowGCashModal(true)}
+                                className="px-3 py-2 text-blue-600 border border-blue-300 rounded text-sm hover:bg-blue-50 transition"
+                              >
+                                View GCash Info
+                              </button>
+                            </div>
+                            {auction.current_highest_bid > auction.user_bid_amount && (
+                              <p className="text-xs text-red-600 mt-2">
+                                💡 You need to bid at least ₱{auction.current_highest_bid} to become the highest bidder
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-between items-center border-t border-gray-300 pt-4">
+                      <div className="text-sm text-gray-600">
+                        Page {currentPage} of {totalPages} • Showing {currentItems.length} of {participatedAuctions.length} participated auctions
                       </div>
                       <div className="flex items-center space-x-2">
                         <button

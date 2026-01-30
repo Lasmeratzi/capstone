@@ -11,7 +11,10 @@ console.log("✅ postsRoutes.js is loaded");
 
 // Log all requests to posts routes
 router.use((req, res, next) => {
-  console.log(`📝 Posts route accessed: ${req.method} ${req.originalUrl}`);
+  // Only log if it's actually a posts route
+  if (req.path.startsWith("/posts") || req.path.includes("post")) {
+    console.log("📝 Posts route accessed:", req.method, req.originalUrl);
+  }
   next();
 });
 

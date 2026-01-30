@@ -23,7 +23,7 @@ const createUser = (userData, callback) => {
 // Get all users
 const getAllUsers = (callback) => {
   const sql = `
-    SELECT id, fullname, username, email, bio, birthdate, pfp, watermark_path, account_status, commissions, created_at, updated_at
+    SELECT id, fullname, username, email, bio, birthdate, pfp, watermark_path, account_status, commissions, created_at, updated_at, gcash_number, verified, location_id
     FROM users
   `;
   db.query(sql, callback);

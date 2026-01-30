@@ -14,7 +14,10 @@ import {
   Calendar as CalendarIcon,
   Tag,
   Image,
-  User
+  User,
+  Calculator,
+  Bell,
+  BellOff
 } from "lucide-react";
 import AuctionBids from "../comments/auctionbids";
 
@@ -30,6 +33,29 @@ const VisitAuct = ({ userId }) => {
   const [yearFilter, setYearFilter] = useState("all");
   const [availableYears, setAvailableYears] = useState([]);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
+  
+  // New states for reminders
+  const [reminders, setReminders] = useState({}); // { auctionId: true/false }
+  const [loadingReminders, setLoadingReminders] = useState({}); // { auctionId: true/false }
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  // Get current user ID from token
+  const getCurrentUserIdFromToken = () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.id;
+    } catch (error) {
+      console.error("Error parsing token:", error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const userId = getCurrentUserIdFromToken();
+    setCurrentUserId(userId);
+  }, []);
 
   const fetchUserAuctions = async () => {
     try {
@@ -56,41 +82,45 @@ const VisitAuct = ({ userId }) => {
         console.log("🔍 First auction object structure:", Object.keys(auctionsData[0]));
         console.log("🔍 First auction data:", auctionsData[0]);
         
-        // Check for winner-related fields
+        // Check for increment fields
         const auction = auctionsData[0];
-        console.log("🔍 Winner check for first auction:");
+        console.log("🔍 Increment check for first auction:");
+        console.log("   - use_increment:", auction.use_increment);
+        console.log("   - bid_increment:", auction.bid_increment);
         console.log("   - winner_id:", auction.winner_id);
         console.log("   - winner_username:", auction.winner_username);
-        console.log("   - winner_pfp:", auction.winner_pfp);
-        console.log("   - winner_fullname:", auction.winner_fullname);
-        console.log("   - status:", auction.status);
       }
 
       const mediaRequests = auctionsData.map((auction) =>
-  axios.get(`${API_BASE}/api/auction-media/${auction.id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-);
+        axios.get(`${API_BASE}/api/auction-media/${auction.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      );
 
-const mediaResponses = await Promise.all(mediaRequests);
+      const mediaResponses = await Promise.all(mediaRequests);
 
-// DEBUG: Log media data
-mediaResponses.forEach((response, index) => {
-  console.log(`🔍 Media for auction ${auctionsData[index].id}:`, response.data);
-  if (response.data && response.data.length > 0) {
-    console.log(`🔍 First media path:`, response.data[0].media_path);
-    console.log(`🔍 Constructed URL:`, getImageUrl(response.data[0].media_path));
-  }
-});
+      // DEBUG: Log media data
+      mediaResponses.forEach((response, index) => {
+        console.log(`🔍 Media for auction ${auctionsData[index].id}:`, response.data);
+        if (response.data && response.data.length > 0) {
+          console.log(`🔍 First media path:`, response.data[0].media_path);
+          console.log(`🔍 Constructed URL:`, getImageUrl(response.data[0].media_path));
+        }
+      });
 
-const auctionsWithMedia = auctionsData.map((auction, index) => ({
-  ...auction,
-  media: mediaResponses[index].data || [],
-  createdAt: new Date(auction.created_at)
-}));
+      const auctionsWithMedia = auctionsData.map((auction, index) => ({
+        ...auction,
+        media: mediaResponses[index].data || [],
+        createdAt: new Date(auction.created_at)
+      }));
 
       console.log("🔍 Fetched auctions with media:", auctionsWithMedia);
       setAuctions(auctionsWithMedia);
+
+      // Check reminders for each auction
+      if (currentUserId) {
+        checkAllReminders(auctionsWithMedia, token);
+      }
 
       const years = [...new Set(auctionsWithMedia.map(auction => 
         new Date(auction.created_at).getFullYear()
@@ -107,7 +137,7 @@ const auctionsWithMedia = auctionsData.map((auction, index) => ({
 
   useEffect(() => {
     fetchUserAuctions();
-  }, [userId]);
+  }, [userId, currentUserId]);
 
   useEffect(() => {
     let result = [...auctions];
@@ -131,8 +161,89 @@ const auctionsWithMedia = auctionsData.map((auction, index) => ({
     setFilteredAuctions(result);
   }, [auctions, sortOption, yearFilter]);
 
+  // Function to check reminder status for all auctions
+  const checkAllReminders = async (auctionsList, token) => {
+    const newReminders = {};
+    const newLoading = {};
+
+    for (const auction of auctionsList) {
+      // Only check for auctions that are not active and not by current user
+      if (canSetReminder(auction) && String(auction.author_id) !== String(currentUserId)) {
+        newLoading[auction.id] = true;
+        try {
+          const response = await axios.get(
+            `${API_BASE}/api/auctionreminders/check/${auction.id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          newReminders[auction.id] = response.data.hasReminder;
+        } catch (error) {
+          console.error(`Error checking reminder for auction ${auction.id}:`, error);
+          newReminders[auction.id] = false;
+        }
+        newLoading[auction.id] = false;
+      }
+    }
+
+    setReminders(newReminders);
+    setLoadingReminders(newLoading);
+  };
+
+  // Toggle reminder for an auction
+  const toggleReminder = async (auctionId) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in to set reminders");
+        return;
+      }
+
+      setLoadingReminders(prev => ({ ...prev, [auctionId]: true }));
+
+      const response = await axios.post(
+        `${API_BASE}/api/auctionreminders/toggle`,
+        { auctionId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success) {
+        setReminders(prev => ({
+          ...prev,
+          [auctionId]: response.data.hasReminder
+        }));
+        
+        // Show success message
+        if (response.data.hasReminder) {
+          alert("✅ Reminder set! You'll be notified when this auction goes live.");
+        } else {
+          alert("ℹ️ Reminder removed.");
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling reminder:", error);
+      alert("Failed to update reminder. Please try again.");
+    } finally {
+      setLoadingReminders(prev => ({ ...prev, [auctionId]: false }));
+    }
+  };
+
   const refreshAuctions = async () => {
     await fetchUserAuctions();
+  };
+
+  // Check if auction is not yet active (can set reminder)
+  const canSetReminder = (auction) => {
+    return (auction.status === 'pending' || auction.status === 'approved' || auction.status === 'draft');
+  };
+
+  // Check if current user can set reminder for this auction
+  const canUserSetReminder = (auction) => {
+    if (!currentUserId) return false;
+    if (String(auction.author_id) === String(currentUserId)) return false; // Can't set reminder for own auction
+    return canSetReminder(auction);
   };
 
   const getStatusBadge = (status) => {
@@ -213,37 +324,37 @@ const auctionsWithMedia = auctionsData.map((auction, index) => ({
   };
 
   const getImageUrl = (path) => {
-  if (!path) return '';
-  
-  console.log("🔍 getImageUrl called with path:", path);
-  
-  // Check if it's already a full URL
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
-  }
-  
-  // For profile pictures and other images, they might already have 'uploads/' prefix
-  // But for auction media, the path is stored as 'auctions/filename.jpg'
-  // So we need to prepend 'uploads/' to all relative paths
-  
-  let cleanPath = path;
-  
-  // Remove leading slash if present
-  if (cleanPath.startsWith('/')) {
-    cleanPath = cleanPath.substring(1);
-  }
-  
-  console.log("🔍 Clean path:", cleanPath);
-  
-  // If it doesn't already start with 'uploads/', add it
-  if (!cleanPath.startsWith('uploads/')) {
-    cleanPath = `uploads/${cleanPath}`;
-  }
-  
-  const url = `${API_BASE}/${cleanPath}`;
-  console.log("🔍 Constructed URL:", url);
-  return url;
-};
+    if (!path) return '';
+    
+    console.log("🔍 getImageUrl called with path:", path);
+    
+    // Check if it's already a full URL
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    
+    // For profile pictures and other images, they might already have 'uploads/' prefix
+    // But for auction media, the path is stored as 'auctions/filename.jpg'
+    // So we need to prepend 'uploads/' to all relative paths
+    
+    let cleanPath = path;
+    
+    // Remove leading slash if present
+    if (cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1);
+    }
+    
+    console.log("🔍 Clean path:", cleanPath);
+    
+    // If it doesn't already start with 'uploads/', add it
+    if (!cleanPath.startsWith('uploads/')) {
+      cleanPath = `uploads/${cleanPath}`;
+    }
+    
+    const url = `${API_BASE}/${cleanPath}`;
+    console.log("🔍 Constructed URL:", url);
+    return url;
+  };
 
   return (
     <div className="w-full">
@@ -282,13 +393,13 @@ const auctionsWithMedia = auctionsData.map((auction, index) => ({
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Ended Auctions</p>
+                  <p className="text-sm text-gray-600">With Increments</p>
                   <p className="text-2xl font-bold text-purple-600">
-                    {filteredAuctions.filter(a => a.status === 'ended').length}
+                    {filteredAuctions.filter(a => a.use_increment === 1).length}
                   </p>
                 </div>
                 <div className="p-2 bg-purple-100 rounded-lg">
-                  <Trophy className="h-6 w-6 text-purple-600" />
+                  <Calculator className="h-6 w-6 text-purple-600" />
                 </div>
               </div>
             </div>
@@ -331,14 +442,25 @@ const auctionsWithMedia = auctionsData.map((auction, index) => ({
                 const winnerUsername = auction.winner_username;
                 const winnerPfp = auction.winner_pfp;
                 const winnerFullname = auction.winner_fullname;
+                const useIncrement = auction.use_increment === 1;
+                const bidIncrement = auction.bid_increment || 100;
+                
+                // Reminder state for this auction
+                const hasReminder = reminders[auction.id] || false;
+                const isLoadingReminder = loadingReminders[auction.id] || false;
+                const showReminderButton = canUserSetReminder(auction);
                 
                 console.log(`🔍 Rendering auction ${auction.id}:`, {
                   status: auction.status,
                   hasWinner,
+                  use_increment: useIncrement,
+                  bid_increment: bidIncrement,
                   winner_id: auction.winner_id,
                   winner_username: winnerUsername,
-                  winner_pfp: winnerPfp,
-                  winner_fullname: winnerFullname
+                  showReminderButton,
+                  hasReminder,
+                  author_id: auction.author_id,
+                  currentUserId
                 });
                 
                 return (
@@ -375,10 +497,38 @@ const auctionsWithMedia = auctionsData.map((auction, index) => ({
                         </div>
                         
                         <div className="flex items-center gap-3">
-                          {/* "Winner declared" text - only show if we have a winner */}
-                          {hasWinner && (
-                            <div className="text-sm text-gray-600">
-                              Winner declared
+                          {/* Reminder Button - Only show for non-active auctions and non-authors */}
+                          {showReminderButton && (
+                            <button
+                              onClick={() => toggleReminder(auction.id)}
+                              disabled={isLoadingReminder}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                hasReminder
+                                  ? "bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200"
+                                  : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                              } ${isLoadingReminder ? "opacity-50 cursor-not-allowed" : "hover:shadow-sm"}`}
+                            >
+                              {isLoadingReminder ? (
+                                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                              ) : hasReminder ? (
+                                <>
+                                  <BellOff size={14} />
+                                  <span>Remove Reminder</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Bell size={14} />
+                                  <span>Remind Me</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                          
+                          {/* Increment badge */}
+                          {useIncrement && auction.status === 'active' && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold border border-purple-200">
+                              <Calculator size={14} />
+                              <span>₱{formatPrice(bidIncrement)} Increment</span>
                             </div>
                           )}
                           
@@ -401,8 +551,8 @@ const auctionsWithMedia = auctionsData.map((auction, index) => ({
                             <p className="text-gray-600">{auction.description}</p>
                           </div>
 
-                          {/* Price Cards */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Price Cards - Updated to 3 columns */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
                               <div className="flex items-center gap-2 mb-2">
                                 <DollarSign className="h-5 w-5 text-blue-600" />
@@ -414,9 +564,38 @@ const auctionsWithMedia = auctionsData.map((auction, index) => ({
                             <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
                               <div className="flex items-center gap-2 mb-2">
                                 <ArrowRight className="h-5 w-5 text-green-600" />
-                                <p className="text-sm font-medium text-green-800">Last Price</p>
+                                <p className="text-sm font-medium text-green-800">Current Price</p>
                               </div>
                               <p className="text-2xl font-bold text-green-900">₱{formatPrice(auction.current_price || auction.starting_price)}</p>
+                            </div>
+
+                            {/* NEW: Bid Increment Card */}
+                            <div className={`p-4 rounded-xl border ${
+                              useIncrement 
+                                ? 'bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200'
+                                : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
+                            }`}>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Calculator className={`h-5 w-5 ${useIncrement ? 'text-purple-600' : 'text-gray-500'}`} />
+                                <p className={`text-sm font-medium ${useIncrement ? 'text-purple-800' : 'text-gray-700'}`}>
+                                  {useIncrement ? 'Bid Increment' : 'Bidding Rules'}
+                                </p>
+                              </div>
+                              {useIncrement ? (
+                                <>
+                                  <p className="text-2xl font-bold text-purple-900">₱{formatPrice(bidIncrement)}</p>
+                                  <p className="text-xs text-purple-700 mt-1">
+                                    Bids increase by ₱{formatPrice(bidIncrement)}
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="text-xl font-bold text-gray-900">Free Bidding</p>
+                                  <p className="text-xs text-gray-600 mt-1">
+                                    Bid any amount above current
+                                  </p>
+                                </>
+                              )}
                             </div>
                           </div>
 
@@ -489,6 +668,18 @@ const auctionsWithMedia = auctionsData.map((auction, index) => ({
                                   <p className="text-sm font-medium text-gray-800">AUCTION ENDED</p>
                                   <p className="text-xs text-gray-600">No bids were placed on this auction</p>
                                 </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Show start time for pending/approved auctions */}
+                          {(auction.status === 'pending' || auction.status === 'approved') && auction.auction_start_time && (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-yellow-600" />
+                                <span className="text-sm font-medium text-yellow-700">
+                                  Scheduled to start: {new Date(auction.auction_start_time).toLocaleString()}
+                                </span>
                               </div>
                             </div>
                           )}

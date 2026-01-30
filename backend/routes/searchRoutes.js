@@ -22,4 +22,6 @@ router.get("/search/tags", authenticateToken, searchController.searchTagsOnly);
 // GET /api/search/locations?query=bacolod
 router.get("/search/locations", authenticateToken, searchController.searchLocationsOnly);
 
+router.get("/search/portfolio", authenticateToken, searchController.searchPortfolioOnly);
+
 module.exports = router;

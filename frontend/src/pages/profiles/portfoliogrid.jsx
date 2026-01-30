@@ -305,6 +305,36 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
     }
   };
 
+  const handleAuctionIt = async (portfolioItem) => {
+    console.log('🎯 Auction It clicked for:', portfolioItem);
+    
+    // Close the modal first
+    closeModal();
+    
+    // Prepare portfolio data
+    const portfolioData = {
+      id: portfolioItem.id,
+      title: portfolioItem.title,
+      description: portfolioItem.description,
+      image_path: portfolioItem.image_path,
+      user_id: portfolioItem.user_id,
+      timestamp: Date.now() // Add timestamp to make it unique
+    };
+    
+    // Save to localStorage with a unique key
+    const storageKey = `portfolioForAuction_${portfolioItem.id}_${Date.now()}`;
+    localStorage.setItem(storageKey, JSON.stringify(portfolioData));
+    
+    // Also save the key reference
+    localStorage.setItem('currentPortfolioKey', storageKey);
+    
+    console.log('💾 Saved portfolio data with key:', storageKey);
+    console.log('📁 Data saved:', portfolioData);
+    
+    // Navigate to makeauction page
+    navigate('/makeauction');
+  };
+
   // 🔹 Batch update all auto-replies at once
   const handleBatchUpdate = async () => {
     const token = localStorage.getItem("token");
@@ -509,12 +539,32 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                 alt={item.title}
                 className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
-              {/* Subtle overlay on hover */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-start p-4">
-                <h3 className="text-white text-lg font-semibold drop-shadow-lg">
-                  {item.title}
-                </h3>
-              </div>
+
+              {/* SOLD Overlay */}
+              {item.is_sold && (
+                <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10">
+                  <div className="text-center p-4">
+                    <div className="bg-red-600 text-white font-bold text-xl px-6 py-3 rounded-lg mb-2 transform rotate-[-5deg] shadow-lg">
+                      🏆 SOLD 🏆
+                    </div>
+                    <p className="text-white text-sm font-medium">Auction Completed</p>
+                    {item.final_price && (
+                      <p className="text-yellow-300 text-lg font-bold mt-2">
+                        Sold for: ₱{Number(item.final_price).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Subtle overlay on hover (only show if not sold) */}
+              {!item.is_sold && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-start p-4">
+                  <h3 className="text-white text-lg font-semibold drop-shadow-lg">
+                    {item.title}
+                  </h3>
+                </div>
+              )}
             </div>
           ))
         )}
@@ -576,8 +626,16 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                 )}
 
                 {/* Portfolio Management Buttons */}
-                {isOwner && !isEditing && (
+                {isOwner && !isEditing && !selectedItem.is_sold && (
                   <div className="flex items-center space-x-2">
+                    {/* "Auction It" Button - Only show if NOT sold */}
+                    <button
+                      onClick={() => handleAuctionIt(selectedItem)}
+                      className="flex items-center px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all duration-200 font-medium text-sm border border-orange-600 shadow-sm"
+                    >
+                      <CurrencyDollarIcon className="h-4 w-4 mr-2" />
+                      Auction It
+                    </button>
                     <button
                       onClick={() => setIsEditing(true)}
                       className="flex items-center px-3 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-gray-400"
@@ -599,6 +657,16 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                       <XMarkIcon className="h-5 w-5" />
                     </button>
                   </div>
+                )}
+
+                {/* Show only close button if item is sold */}
+                {isOwner && selectedItem.is_sold && (
+                  <button
+                    onClick={closeModal}
+                    className="flex items-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
                 )}
 
                 {/* Close Button Only (when no management buttons) */}
@@ -688,8 +756,50 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                     </div>
                   </div>
 
-                  {/* Owner-only actions - 3 Auto-reply Sections */}
-                  {isOwner && (
+                  {/* Auction Information - Show if sold */}
+                  {selectedItem.is_sold && selectedItem.auction_id && (
+                    <div className="mt-6 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border-2 border-yellow-300 shadow-md">
+                      <div className="flex items-center mb-4">
+                        <CurrencyDollarIcon className="h-6 w-6 text-yellow-600 mr-2" />
+                        <h3 className="text-lg font-bold text-gray-900">Auction Results</h3>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 font-medium">Starting Price:</span>
+                          <span className="text-gray-900 font-semibold">
+                            ₱{Number(selectedItem.starting_price).toLocaleString()}
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 font-medium">Final Price:</span>
+                          <span className="text-green-600 font-bold text-xl">
+                            ₱{Number(selectedItem.final_price || selectedItem.current_price).toLocaleString()}
+                          </span>
+                        </div>
+                        
+                        {selectedItem.winner_username && (
+                          <div className="flex justify-between items-center pt-2 border-t border-yellow-200">
+                            <span className="text-gray-600 font-medium">Winner:</span>
+                            <span className="text-gray-900 font-semibold">
+                              @{selectedItem.winner_username}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div className="mt-4 pt-3 border-t border-yellow-200">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-300">
+                            <CheckCircleIcon className="h-4 w-4 mr-1" />
+                            Auction Completed
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Owner-only actions - 3 Auto-reply Sections - Only show if NOT sold */}
+                  {isOwner && !selectedItem.is_sold && (
                     <div className="mt-8 pt-8 border-t border-gray-200 space-y-4">
                       <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center">
                         <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2 text-gray-600" />
