@@ -14,9 +14,11 @@ const sendNotification = (userId, message) => {
   });
 };
 
+
+
 // Create auction (Starts as 'draft' - requires payment first)
 const createAuction = (req, res) => {
-  const { title, description, starting_price, auction_start_time, auction_duration_hours } = req.body;
+  const { title, description, starting_price, use_increment, bid_increment, auction_start_time, auction_duration_hours, portfolio_item_id } = req.body;
   const author_id = req.user.id;
   
   // DEBUG: Log what we're receiving
@@ -50,16 +52,30 @@ const createAuction = (req, res) => {
 
   // Validate duration (minimum 0.25 hours = 15 minutes)
   const durationHours = auction_duration_hours || 24;
-if (durationHours < 0.0833) {  // Changed from 0.25 to 0.0833
-  return res.status(400).json({ 
-    message: "Minimum auction duration is 5 minutes (0.0833 hours)." 
-  });
-}
+  if (durationHours < 0.0833) {  // Changed from 0.25 to 0.0833
+    return res.status(400).json({ 
+      message: "Minimum auction duration is 5 minutes (0.0833 hours)." 
+    });
+  }
   if (durationHours > 720) {
-  return res.status(400).json({ 
-    message: "Maximum auction duration is 720 hours (30 days)." 
-  });
-}
+    return res.status(400).json({ 
+      message: "Maximum auction duration is 720 hours (30 days)." 
+    });
+  }
+
+  // Validate bid increment if use_increment is ON
+  if (use_increment == 1 && bid_increment) {
+    if (bid_increment <= 0) {
+      return res.status(400).json({ 
+        message: "Bid increment must be greater than 0." 
+      });
+    }
+    if (bid_increment > starting_price * 0.5) {
+      return res.status(400).json({ 
+        message: "Bid increment cannot be more than 50% of starting price." 
+      });
+    }
+  }
 
   // Calculate end_time based on start_time + duration
   const endTime = new Date(startTime.getTime() + (durationHours * 60 * 60 * 1000));
@@ -67,21 +83,25 @@ if (durationHours < 0.0833) {  // Changed from 0.25 to 0.0833
   console.log("🟡 Calculated end time:", endTime);
   console.log("🟡 Duration hours:", durationHours);
 
-  // UPDATED: Remove payment_status and payment_amount from auctionData
   const auctionData = {
     author_id,
     title,
     description,
     starting_price,
+    use_increment: use_increment == 1 ? 1 : 0,        // Make sure it's 1 or 0
+    bid_increment: bid_increment || 100.00,           // ADD THIS (default ₱100)
     current_price: starting_price,
-    end_time: endTime, // This is when auction ends (start_time + duration)
-    auction_start_time: startTime, // This is when auction starts
+    end_time: endTime,
+    auction_start_time: startTime,
     auction_duration_hours: durationHours,
-    status, // Should be "draft"
-    payment_id // Will be null initially
+    status,
+    payment_id,
+    portfolio_item_id: portfolio_item_id || null
   };
 
   console.log("🟡 Final auction data:", auctionData);
+  console.log("🟡 Final auction data:", auctionData);
+console.log("🟡 All values:", Object.values(auctionData));
 
   auctionModels.createAuction(auctionData, (err, result) => {
     if (err) {
@@ -90,6 +110,17 @@ if (durationHours < 0.0833) {  // Changed from 0.25 to 0.0833
     }
 
     const auctionId = result.insertId;
+
+    if (portfolio_item_id) {
+      const portfolioModels = require("../models/portfolioModels");
+      portfolioModels.updatePortfolioAuctionId(portfolio_item_id, auctionId, (err) => {
+        if (err) {
+          console.error("❌ Error updating portfolio item:", err);
+        } else {
+          console.log(`✅ Portfolio item ${portfolio_item_id} linked to auction ${auctionId}`);
+        }
+      });
+    }
 
     console.log("✅ Auction created with ID:", auctionId);
     console.log("✅ Auction status:", status);
@@ -840,6 +871,192 @@ const completePaymentRelease = (auctionId, auction, receiptPath, res) => {
   });
 };
 
+// In auctionController.js, update getParticipatedAuctions:
+const getParticipatedAuctions = (req, res) => {
+  const userId = req.user.id;
+  console.log("🟡 [CONTROLLER] getParticipatedAuctions called");
+  
+  // IMPORTANT: Use the correct model
+  const auctionbidsModels = require("../models/auctionbidsModels");
+  
+  auctionbidsModels.getAuctionsUserParticipatedIn(userId, (err, results) => {
+    if (err) {
+      console.error("❌ [CONTROLLER] Database error:", err);
+      return res.status(500).json({ 
+        message: "Database error.", 
+        error: err.message
+      });
+    }
+
+    console.log("✅ [CONTROLLER] Found", results.length, "auctions participated in");
+    
+    // Ensure we always return an array
+    if (!Array.isArray(results)) {
+      console.warn("⚠️ Results is not an array, converting...");
+      results = results ? [results] : [];
+    }
+    
+    res.status(200).json(results);
+  });
+};
+
+const getAuctionStats = (req, res) => {
+  console.log("🟡 [CONTROLLER] Fetching auction statistics for dashboard");
+  console.log("🟡 Request headers:", req.headers);
+  console.log("🟡 Admin user:", req.admin ? {
+    id: req.admin.id,
+    username: req.admin.username,
+    role: req.admin.role
+  } : "No admin");
+  
+  // Add admin check
+  if (!req.admin) {
+    console.log("❌ No admin object in request");
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  
+  if (req.admin.role !== "admin" && req.admin.role !== "super_admin") {
+    console.log(`❌ Invalid role: ${req.admin.role}`);
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  
+  console.log("✅ Admin authenticated, proceeding with stats query");
+  
+  auctionModels.getAuctionStats((err, results) => {
+    if (err) {
+      console.error("❌ [CONTROLLER] Error fetching auction stats:", err);
+      console.error("❌ [CONTROLLER] Full error:", JSON.stringify(err, null, 2));
+      return res.status(500).json({ 
+        message: "Database error fetching auction statistics", 
+        error: err.message 
+      });
+    }
+
+    console.log("📊 [CONTROLLER] Raw SQL results:", results);
+    
+    if (results.length === 0) {
+      console.log("⚠️ No auction stats data found - empty results array");
+      return res.status(200).json({
+        totalAuctions: 0,
+        activeAuctions: 0,
+        approvedAuctions: 0,
+        draftAuctions: 0,
+        pendingAuctions: 0,
+        endedAuctions: 0,
+        rejectedAuctions: 0,
+        pendingPayment: 0,
+        paidAuctions: 0,
+        itemReceived: 0,
+        completedAuctions: 0,
+        totalRevenue: 0,
+        avgFinalPrice: 0,
+        recentAuctions: 0,
+        endingSoon: 0
+      });
+    }
+
+    const stats = results[0];
+    
+    console.log("✅ [CONTROLLER] Auction stats fetched:", {
+      totalAuctions: stats.totalAuctions,
+      activeAuctions: stats.activeAuctions,
+      endingSoon: stats.endingSoon,
+      totalRevenue: stats.totalRevenue
+    });
+
+    res.status(200).json(stats);
+  });
+};
+
+const getRecentAuctionActivities = (req, res) => {
+  console.log("🟡 [CONTROLLER] Fetching recent auction activities");
+  console.log("🟡 Query params:", req.query);
+  
+  // Add admin check
+  if (!req.admin || (req.admin.role !== "admin" && req.admin.role !== "super_admin")) {
+    console.log("❌ Admin access required");
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  
+  const limit = parseInt(req.query.limit) || 10;
+  
+  console.log("🟡 [CONTROLLER] Limit:", limit);
+  
+  auctionModels.getRecentAuctions(limit, (err, results) => {
+    if (err) {
+      console.error("❌ [CONTROLLER] Error fetching recent auctions:", err);
+      console.error("❌ [CONTROLLER] Full error:", JSON.stringify(err, null, 2));
+      return res.status(500).json({ 
+        message: "Database error fetching recent auctions", 
+        error: err.message 
+      });
+    }
+
+    console.log(`✅ [CONTROLLER] Found ${results.length} recent auctions`);
+    console.log("📊 [CONTROLLER] Raw auction data:", results);
+    
+    // Format the results for activity feed
+    const activities = results.map(auction => {
+      const now = new Date();
+      const created = new Date(auction.created_at);
+      const diffMs = now - created;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      let timeAgo;
+      if (diffMins < 60) {
+        timeAgo = `${diffMins}m ago`;
+      } else if (diffHours < 24) {
+        timeAgo = `${diffHours}h ago`;
+      } else {
+        timeAgo = `${diffDays}d ago`;
+      }
+
+      let message = '';
+      let icon = '🏷️';
+      
+      switch (auction.status) {
+        case 'active':
+          message = `Auction "${auction.title}" is now live`;
+          icon = '🔥';
+          break;
+        case 'ended':
+          message = `Auction "${auction.title}" has ended`;
+          icon = '🏁';
+          break;
+        case 'approved':
+          message = `Auction "${auction.title}" was approved`;
+          icon = '✅';
+          break;
+        case 'draft':
+          message = `Auction "${auction.title}" created as draft`;
+          icon = '📝';
+          break;
+        default:
+          message = `New auction "${auction.title}" created`;
+          icon = '📝';
+      }
+
+      if (auction.winner_username) {
+        message += ` - Winner: @${auction.winner_username}`;
+      }
+
+      return {
+        message,
+        timeAgo,
+        icon,
+        author: auction.author_username,
+        status: auction.status,
+        price: auction.final_price || auction.current_price || auction.starting_price
+      };
+    });
+
+    console.log(`✅ [CONTROLLER] Formatted ${activities.length} activities`);
+    res.status(200).json(activities);
+  });
+};
+
 module.exports = {
   createAuction,
   getAllAuctions,
@@ -862,4 +1079,7 @@ module.exports = {
   verifyPaymentReceipt,
   rejectPaymentReceipt,
   uploadReleaseReceipt,
+  getParticipatedAuctions,
+  getAuctionStats,
+  getRecentAuctionActivities,
 };

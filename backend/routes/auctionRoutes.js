@@ -6,23 +6,61 @@ const upload = require("../middleware/uploadMiddleware"); // Import upload middl
 
 const router = express.Router();
 
+// ========== DEBUG ==========
+console.log("🔍 auctionRoutes.js is being loaded!");
+console.log("🔍 Available controller methods:", Object.keys(auctionController));
+
+// Add this debug route first
+router.get("/debug-test", (req, res) => {
+  console.log("✅ Debug route hit in auctionRoutes.js");
+  res.json({ 
+    message: "auctionRoutes.js is working",
+    timestamp: new Date(),
+    routes: [
+      "/api/auctions/stats",
+      "/api/auctions/activities/recent",
+      "/api/auctions/test-public",
+      "/api/auctions/test-simple"
+    ]
+  });
+});
+
+// ========== MAIN ROUTES ==========
+
 // Create a new auction (Users create auctions, start as 'pending_payment')
 router.post("/auctions", authenticateToken, auctionController.createAuction);
-
-router.get("/auctions/user/:userId", authenticateToken, auctionController.getAuctionsByUserId);
 
 // ✅ Public / user-accessible route — no auth needed or optional token
 router.get("/auctions", auctionController.getAllAuctionsPublic);
 
-// Get auctions sold by logged-in user (Seller's perspective)
-router.get("/auctions/sold", authenticateToken, auctionController.getSoldAuctions);
-
-// ✅ Admin-only route to get everything
-router.get("/admin/auctions", authenticateAdmin, auctionController.getAllAuctions);
+// ========== USER-SPECIFIC AUCTION ROUTES (STATIC) ==========
+// These MUST come before dynamic routes like /auctions/:auctionId
 
 // Get auctions created by logged-in user
 router.get("/auctions/user", authenticateToken, auctionController.getUserAuctions);
 
+// Get auctions sold by logged-in user (Seller's perspective)
+router.get("/auctions/sold", authenticateToken, auctionController.getSoldAuctions);
+
+// Get auctions user has participated in (placed bids)
+router.get("/auctions/participated", authenticateToken, auctionController.getParticipatedAuctions);
+
+// Get auctions for a specific user (with user ID parameter)
+router.get("/auctions/user/:userId", authenticateToken, auctionController.getAuctionsByUserId);
+
+// ========== AUCTION STATISTICS ROUTES ==========
+// IMPORTANT: These must come BEFORE dynamic routes
+
+// Get auction statistics for admin dashboard
+router.get("/stats", authenticateAdmin, auctionController.getAuctionStats);
+
+// Get recent auction activities for admin dashboard
+router.get("/activities/recent", authenticateAdmin, auctionController.getRecentAuctionActivities);
+
+// ========== ADMIN ROUTES ==========
+router.get("/admin/auctions", authenticateAdmin, auctionController.getAllAuctions);
+
+// ========== DYNAMIC ROUTES (MUST COME AFTER ALL STATIC ROUTES) ==========
 // Get single auction by ID
 router.get("/auctions/:auctionId", authenticateToken, auctionController.getAuctionById);
 
@@ -32,7 +70,7 @@ router.put("/auctions/:auctionId/status", authenticateAdmin, auctionController.u
 // Delete auction
 router.delete("/auctions/:auctionId", authenticateAdmin, auctionController.deleteAuction);
 
-// ESCROW & AUCTION WINS ROUTES
+// ========== ESCROW & AUCTION WINS ROUTES ==========
 
 // Get auctions won by the logged-in user
 router.get("/won/auctions", authenticateToken, auctionController.getAuctionsWonByUser);
