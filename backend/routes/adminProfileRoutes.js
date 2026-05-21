@@ -2,6 +2,7 @@ const express = require("express");
 const authenticateAdmin = require("../middleware/authAdmin");
 const signupController = require("../controllers/signupController");
 const signupModels = require("../models/signupModels");
+const db = require("../config/database");
 
 const router = express.Router();
 

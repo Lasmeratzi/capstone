@@ -4,8 +4,9 @@ import { X, ChevronDown, Calendar, SortAsc, MessageCircle, Tag, ChevronLeft, Che
 import { formatDistanceToNow } from "date-fns";
 import ArtworkLikes from "../../pages/likes/artworklikes";
 import ArtworkComments from "../../pages/comments/artworkcomments";
+import ArtPostModal from "../../components/modals/artpostmodal";
 import { CheckIcon } from "@heroicons/react/24/outline";
-import { Globe, Users, Lock } from "lucide-react";
+import { Globe, Users, Lock, MoreVertical, Trash, Ban } from "lucide-react";
 
 const API_BASE = "http://localhost:5000";
 
@@ -20,13 +21,13 @@ const VisibilityBadge = ({ visibility }) => {
   const getVisibilityInfo = () => {
     switch (visibility) {
       case 'public':
-        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' };
       case 'friends':
-        return { icon: <Users size={14} />, text: 'Friends Only', color: 'text-green-600', bg: 'bg-green-50' };
+        return { icon: <Users size={14} />, text: 'Friends Only', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' };
       case 'private':
-        return { icon: <Lock size={14} />, text: 'Private', color: 'text-gray-600', bg: 'bg-gray-50' };
+        return { icon: <Lock size={14} />, text: 'Private', color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-50 dark:bg-gray-900/20' };
       default:
-        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' };
     }
   };
 
@@ -139,6 +140,12 @@ const VisitArt = ({ userId }) => {
   // per-post inline comments toggle & counts
   const [showCommentsMap, setShowCommentsMap] = useState({});
   const [commentCounts, setCommentCounts] = useState({});
+  const [dropdownOpen, setDropdownOpen] = useState(null);
+  const [artPostModal, setArtPostModal] = useState({
+    isOpen: false,
+    type: "",
+    post: null,
+  });
 
   const currentUserId = localStorage.getItem("id");
   const token = localStorage.getItem("token");
@@ -185,7 +192,7 @@ const VisitArt = ({ userId }) => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const posts = response.data.filter(post => post.author_id === userId);
+        const posts = response.data.filter(post => String(post.author_id) === String(userId));
 
         // Fetch media for each artwork post
         const mediaRequests = posts.map((post) =>
@@ -282,6 +289,62 @@ const VisitArt = ({ userId }) => {
     fetchCommentCount(postId);
   };
 
+  // Handle deletion
+  const handleDeleteConfirmed = async (postId) => {
+    try {
+      await axios.delete(`${API_BASE}/api/artwork-posts/${postId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setArtPosts((prev) => prev.filter((p) => p.id !== postId));
+      setArtPostModal({ isOpen: false, type: "", post: null });
+      
+      // clear comment toggles/counts and tags
+      setShowCommentsMap((prev) => {
+        const copy = { ...prev };
+        delete copy[postId];
+        return copy;
+      });
+      setCommentCounts((prev) => {
+        const copy = { ...prev };
+        delete copy[postId];
+        return copy;
+      });
+      setPostTags((prev) => {
+        const copy = { ...prev };
+        delete copy[postId];
+        return copy;
+      });
+    } catch (err) {
+      console.error("Failed to delete post:", err);
+      alert("Failed to delete post.");
+    }
+  };
+
+  // Handle edit
+  const handleEdit = async (postId, updatedData) => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      let body = updatedData;
+      if (updatedData instanceof FormData) {
+        headers["Content-Type"] = "multipart/form-data";
+      }
+      await axios.patch(`${API_BASE}/api/artwork-posts/${postId}`, body, {
+        headers,
+      });
+
+      setArtPosts((prev) =>
+        prev.map((p) => (p.id === postId ? { ...p, ...Object.fromEntries(updatedData instanceof FormData ? [] : Object.entries(updatedData)) } : p))
+      );
+
+      setArtPostModal({ isOpen: false, type: "", post: null });
+      // Refresh
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to edit post:", err);
+      alert("Failed to edit post.");
+    }
+  };
+
   // Handle tag click
   const handleTagClick = (tagName) => {
     console.log(`Filter by tag: ${tagName}`);
@@ -292,7 +355,11 @@ const VisitArt = ({ userId }) => {
   const renderMediaGrid = (media, post) => {
     const count = media.length;
     if (count === 1)
-      return <ProtectedMedia file={media[0]} onClick={() => openModal(post, 0)} className="w-full h-full" />;
+      return (
+        <div className="w-full max-h-[500px] overflow-hidden rounded-none">
+          <ProtectedMedia file={media[0]} onClick={() => openModal(post, 0)} className="w-full h-full object-cover" />
+        </div>
+      );
     if (count === 2)
       return (
         <div className="grid grid-cols-2 gap-1">
@@ -358,10 +425,11 @@ const VisitArt = ({ userId }) => {
   </p>
 ) : (
             filteredPosts.map((post) => (
-              <div key={post.id} className="relative bg-white p-4 rounded-lg shadow-md border border-gray-200 mb-4">
+              <div key={post.id} className="relative bg-white dark:bg-[#0A0A0B] p-5 rounded-xl shadow-md border border-gray-200 dark:border-white/5 mb-6 transition-all duration-300">
                 {post.post_status === "down" && (
-                  <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg pointer-events-none">
-                    <p className="text-white text-lg font-semibold">🚫 Post is taken down</p>
+                  <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg pointer-events-none gap-2">
+                    <Ban className="text-white w-6 h-6" />
+                    <p className="text-white text-lg font-semibold uppercase tracking-tight">Post is taken down</p>
                   </div>
                 )}
 
@@ -378,13 +446,44 @@ const VisitArt = ({ userId }) => {
                     </div>
                   )}
                   <div>
-  <div className="flex items-center">
-    <p className="font-bold text-gray-800">{post.author}</p>
-    {post.is_verified && <VerifiedBadge />}
-    <VisibilityBadge visibility={post.visibility} />
-  </div>
-  <p className="text-gray-600 text-sm">{post.fullname}</p>
-</div>
+                    <div className="flex items-center">
+                      <p className="font-bold text-gray-800 dark:text-gray-200">{post.author}</p>
+                      {post.is_verified && <VerifiedBadge />}
+                      <VisibilityBadge visibility={post.visibility} />
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{post.fullname}</p>
+                  </div>
+
+                  {String(post.author_id) === String(currentUserId) && (
+                    <div className="ml-auto relative">
+                      <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 transition-colors" onClick={() => setDropdownOpen(dropdownOpen === post.id ? null : post.id)}>
+                        <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      </button>
+
+                      {dropdownOpen === post.id && (
+                        <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-[#1C2128] shadow-lg rounded-xl border border-gray-200 dark:border-white/5 z-50 overflow-hidden">
+                          <button
+                            className="w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/5 text-left text-sm font-medium dark:text-gray-300 transition-colors"
+                            onClick={() => {
+                              setArtPostModal({ isOpen: true, type: "edit", post });
+                              setDropdownOpen(null);
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/5 text-left text-sm font-medium text-red-600 transition-colors"
+                            onClick={() => {
+                              setArtPostModal({ isOpen: true, type: "delete", post: post });
+                              setDropdownOpen(null);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <h4 className="text-base font-semibold text-gray-800 mb-2">{post.title}</h4>
@@ -397,7 +496,7 @@ const VisitArt = ({ userId }) => {
                       <button
                         key={tag.id}
                         onClick={() => handleTagClick(tag.name)}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
                       >
                         <Tag size={12} />
                         #{tag.name}
@@ -603,13 +702,13 @@ const VisitArt = ({ userId }) => {
                     </div>
                   )}
                   <div>
-  <div className="flex items-center">
-    <p className="font-bold text-gray-800">{modalState.post.author}</p>
-    {modalState.post.is_verified && <VerifiedBadge />}
-    <VisibilityBadge visibility={modalState.post.visibility} />
-  </div>
-  <p className="text-gray-600 text-sm">{modalState.post.fullname}</p>
-</div>
+                    <div className="flex items-center">
+                      <p className="font-bold text-gray-800 dark:text-gray-200">{modalState.post.author}</p>
+                      {modalState.post.is_verified && <VerifiedBadge />}
+                      <VisibilityBadge visibility={modalState.post.visibility} />
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{modalState.post.fullname}</p>
+                  </div>
                 </div>
 
                 <h4 className="mt-3 text-lg font-semibold text-gray-800">{modalState.post.title}</h4>
@@ -621,7 +720,7 @@ const VisitArt = ({ userId }) => {
                     {postTags[modalState.post.id].map((tag) => (
                       <span
                         key={tag.id}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold"
                       >
                         <Tag size={12} />
                         #{tag.name}
@@ -660,6 +759,20 @@ const VisitArt = ({ userId }) => {
             </button>
           </div>
         </div>
+      )}
+      {/* ArtPostModal for edit/delete */}
+      {artPostModal.isOpen && (
+        <ArtPostModal
+          type={artPostModal.type}
+          post={artPostModal.post}
+          onClose={() => setArtPostModal({ isOpen: false, type: "", post: null })}
+          onDelete={(postId) => {
+            handleDeleteConfirmed(postId);
+          }}
+          onEdit={(postId, updatedData) => {
+            handleEdit(postId, updatedData);
+          }}
+        />
       )}
     </div>
   );

@@ -36,6 +36,7 @@ const reportsRoutes = require("./routes/reportsRoutes");
 const adminPostsRoutes = require("./routes/adminPostsRoutes");
 const auctionRemindersRoutes = require("./routes/auctionRemindersRoutes");
 const adminProfileRoutes = require("./routes/adminProfileRoutes");
+const adminDashboardRoutes = require("./routes/adminDashboardRoutes");
 const reviewsRoutes = require('./routes/reviewsRoutes');
 
 // Auction cron job
@@ -48,7 +49,7 @@ const app = express();
 const cors = require("cors");
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: ["http://localhost:5173", "http://localhost:4173"],
   credentials: true
 }));
 
@@ -69,8 +70,7 @@ app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"), {
     setHeaders: (res, filePath) => {
-      // Allow frontend (Vite dev server) to access
-      res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+      res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
       res.setHeader("Cache-Control", "public, max-age=0");
@@ -133,6 +133,7 @@ app.use("/api", reportsRoutes);
 app.use("/api", adminPostsRoutes);
 app.use("/api/auctionreminders", auctionRemindersRoutes);
 app.use("/api", adminProfileRoutes);
+app.use("/api", adminDashboardRoutes);
 app.use('/api/reviews', reviewsRoutes);
 
 
@@ -147,7 +148,7 @@ const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "http://localhost:4173"],
     methods: ["GET", "POST"],
     credentials: true
   }

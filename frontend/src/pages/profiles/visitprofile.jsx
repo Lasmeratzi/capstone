@@ -6,13 +6,26 @@ import VisitPortfolio from "./visitportfolio";
 import VisitPost from "./visitpost";
 import VisitArt from "./visitart";
 import VisitAuct from "./visitauct";
-import { CakeIcon, NewspaperIcon, PhotoIcon, Squares2X2Icon, TagIcon, MapPinIcon, CameraIcon } from "@heroicons/react/24/outline";
+import { 
+  CakeIcon, 
+  NewspaperIcon, 
+  PhotoIcon, 
+  Squares2X2Icon, 
+  TagIcon, 
+  MapPinIcon, 
+  CameraIcon,
+  CheckIcon,
+  PencilSquareIcon
+} from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { FaInstagram, FaFacebook } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { FaPaintBrush, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import FollowButton from "../follow/followbutton";
 import FollowStats from "../follow/followstats";
+import ProfileInfo from "../../components/profile/ProfileInfo";
+import ProfileHeader from "../../components/profile/ProfileHeader";
+import MobileNav from "../../components/layout/MobileNav";
 
 const BASE_URL = "http://localhost:5000";
 
@@ -74,6 +87,7 @@ const VisitProfile = () => {
   const [refreshStats, setRefreshStats] = useState(false);
   const [locations, setLocations] = useState([]);
   const [coverImageLoadError, setCoverImageLoadError] = useState(false);
+  const [isWatermarkVisible, setIsWatermarkVisible] = useState(false);
 
   const handleRefreshStats = () => setRefreshStats(prev => !prev);
 
@@ -154,7 +168,10 @@ const VisitProfile = () => {
 
   return (
     <div className="flex">
-      <div className="fixed h-screen w-60">
+      {/* Mobile Navigation */}
+      <MobileNav />
+
+      <div className="hidden md:block fixed h-screen w-50">
         <Sidebar />
       </div>
 
@@ -163,45 +180,85 @@ const VisitProfile = () => {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -50 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="ml-50 flex-grow px-6"
+        className="ml-0 md:ml-50 flex-grow px-4 md:px-6 pt-16 md:pt-0 pb-20 md:pb-0 bg-white dark:bg-[#0A0A0B] min-h-screen overflow-x-hidden"
       >
         {/* Profile Header with Cover Photo Background */}
-        <div className="relative mb-6 -mx-6 bg-gray-200 h-80">
-          {/* Cover Photo Background */}
-          <div className="w-full h-full">
-            {user.cover_photo ? (
+        <ProfileHeader
+          coverPhoto={user.cover_photo}
+          coverPhotoUrl={coverPhotoUrl}
+          onCoverImageError={() => setCoverImageLoadError(true)}
+        >
+          {/* Mobile Header Layout (PFP + Name side by side) */}
+          <div className="flex lg:hidden items-center gap-4 mb-6">
+            <div className="w-24 flex flex-col items-center">
               <img
-                src={coverPhotoUrl(user.cover_photo)}
-                alt="Cover"
-                className="w-full h-full object-cover"
-                onError={() => setCoverImageLoadError(true)}
+                src={`${BASE_URL}/uploads/${user.pfp}`}
+                alt={`${user.username}'s Profile`}
+                className="w-24 h-24 rounded-full object-cover shadow-lg border-4 border-white dark:border-[#0A0A0B] transition-all duration-300"
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-gray-300 to-gray-400">
-                <CameraIcon className="w-16 h-16 text-gray-500" />
-              </div>
-            )}
+            </div>
+            <ProfileInfo
+              user={user}
+              CheckIcon={CheckIcon}
+              variant="header"
+              locations={locations}
+              followButton={<FollowButton targetUserId={user.id} onFollowChange={handleRefreshStats} />}
+              refreshTrigger={refreshStats}
+            />
           </div>
 
-          {/* Profile Content Overlay */}
-          <div className="absolute inset-0 p-6 bg-gradient-to-t from-black/50 to-transparent h-full">
-            <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-6 items-start">
-              {/* Profile Picture + Commissions */}
-              <div className="w-32 flex flex-col items-center mx-auto sm:mx-0">
-                <div className="relative">
-                  <img
-                    src={`${BASE_URL}/uploads/${user.pfp}`}
-                    alt={`${user.username}'s Profile`}
-                    className="w-32 h-32 rounded-full object-cover shadow-lg border-4 border-white transition-all duration-300"
-                  />
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-6 items-start">
+            {/* Column 1: Profile Picture + Commissions (Desktop) */}
+            <div className="hidden lg:flex w-24 sm:w-32 flex-col items-center mx-auto sm:mx-0">
+              <div className="relative">
+                <img
+                  src={`${BASE_URL}/uploads/${user.pfp}`}
+                  alt={`${user.username}'s Profile`}
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover shadow-lg border-4 border-white dark:border-[#0A0A0B] transition-all duration-300"
+                />
+              </div>
 
-                {/* Commissions Button */}
-                <div className="mt-3 flex flex-col items-center">
-                  <div className="flex items-center text-white font-medium text-xs uppercase tracking-wider mb-1">
-                    <FaPaintBrush className="mr-1.5 text-white" size={12} />
-                    <span>Commissions</span>
-                  </div>
+              {/* Commissions Button */}
+              <div className="mt-3 flex flex-col items-center">
+                <div className="flex items-center text-current dark:text-current font-medium text-xs uppercase tracking-wider mb-1">
+                  <FaPaintBrush className="mr-1.5 text-current dark:text-current" size={12} />
+                  <span>Commissions</span>
+                </div>
+                <div
+                  className={`px-4 py-1.5 rounded-full flex items-center gap-2 shadow-sm ${
+                    user.commissions === "open"
+                      ? "bg-green-500 text-white"
+                      : "bg-rose-500 text-white"
+                  }`}
+                >
+                  {user.commissions === "open" ? (
+                    <>
+                      <FaCheckCircle size={14} />
+                      <span className="text-sm font-medium">Open</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaTimesCircle size={14} />
+                      <span className="text-sm font-medium">Closed</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Column 2: Profile Details */}
+            <div className="flex flex-col space-y-4">
+              <ProfileInfo
+                user={user}
+                CheckIcon={CheckIcon}
+                locations={locations}
+                followButton={<FollowButton targetUserId={user.id} onFollowChange={handleRefreshStats} />}
+                refreshTrigger={refreshStats}
+              />
+
+              {/* Mobile Commissions & Actions */}
+              <div className="flex lg:hidden flex-col gap-3 mt-4">
+                <div className="flex items-center gap-2">
                   <div
                     className={`px-4 py-1.5 rounded-full flex items-center gap-2 shadow-sm ${
                       user.commissions === "open"
@@ -212,102 +269,47 @@ const VisitProfile = () => {
                     {user.commissions === "open" ? (
                       <>
                         <FaCheckCircle size={14} />
-                        <span className="text-sm font-medium">Open</span>
+                        <span className="font-semibold text-sm">Commissions: Open</span>
                       </>
                     ) : (
                       <>
                         <FaTimesCircle size={14} />
-                        <span className="text-sm font-medium">Closed</span>
+                        <span className="font-semibold text-sm">Commissions: Closed</span>
                       </>
                     )}
                   </div>
                 </div>
-              </div>
-
-              {/* Profile Details */}
-              <div className="flex flex-col space-y-2 text-white">
-                <div className="flex items-center flex-wrap gap-2">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-2xl sm:text-3xl font-bold text-white">
-                      {user.username}
-                    </h2>
-                    {user.isVerified && (
-                      <span title="Verified" className="text-blue-300">
-                        <VerifiedBadge />
-                      </span>
-                    )}
-                  </div>
+                <div className="flex items-center gap-4">
                   <FollowButton targetUserId={user.id} onFollowChange={handleRefreshStats} />
-                  {/* Follow Stats - Placed beside the Follow Button */}
-                  <div className="flex items-center gap-4 text-sm text-white">
+                  <div className="flex items-center gap-4 text-sm text-current dark:text-current">
                     <FollowStats targetUserId={user.id} refreshTrigger={refreshStats} />
                   </div>
                 </div>
-
-                <div className="text-xl text-white">{user.fullname}</div>
-
-                <div className="flex items-center text-sm text-white">
-                  <CakeIcon className="w-5 h-5 mr-2 text-white" />
-                  {new Date(user.birthdate).toLocaleDateString()}
-                </div>
-
-                <p className="text-sm text-white italic max-w-xl overflow-hidden text-ellipsis">
-                  {user.bio ? `"${user.bio}"` : "No bio provided."}
-                </p>
-
-                {/* Location Display */}
-                {userLocation && (
-                  <div className="flex items-center text-sm text-white">
-                    <MapPinIcon className="w-4 h-4 mr-2 text-white" />
-                    <span className="font-medium text-white">
-                      {userLocation.split(', ')[0]}, <span className="text-white">{userLocation.split(', ')[1]}</span>
-                    </span>
-                  </div>
-                )}
-
-                <div className="text-xs mt-1">
-                  {user.verification_request_status === "pending" && (
-                    <p className="text-yellow-300">Verification under review</p>
-                  )}
-                  {user.verification_request_status === "rejected" && (
-                    <p className="text-red-300">Verification request rejected</p>
-                  )}
-                </div>
-
-                {/* Social Media Icons */}
-                {user.isVerified && (
-                  <div className="flex gap-3 mt-1">
-                    {user.twitter_link && (
-                      <a href={user.twitter_link} target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-200">
-                        <FaXTwitter size={20} />
-                      </a>
-                    )}
-                    {user.instagram_link && (
-                      <a href={user.instagram_link} target="_blank" rel="noopener noreferrer" className="text-white hover:text-pink-200">
-                        <FaInstagram size={20} />
-                      </a>
-                    )}
-                    {user.facebook_link && (
-                      <a href={user.facebook_link} target="_blank" rel="noopener noreferrer" className="text-white hover:text-blue-200">
-                        <FaFacebook size={20} />
-                      </a>
-                    )}
-                  </div>
-                )}
               </div>
 
-              {/* Watermark Section (Read-only for visitors) */}
+              {/* Watermark Toggle (Mobile) */}
+              <button
+                onClick={() => setIsWatermarkVisible(!isWatermarkVisible)}
+                className="lg:hidden flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg backdrop-blur-md border border-white/20 transition-all mt-2"
+              >
+                <CameraIcon className="w-4 h-4" />
+                {isWatermarkVisible ? "Hide Artist Branding" : "View Artist Branding"}
+              </button>
+            </div>
+
+            {/* Column 3: Watermark Display */}
+            <div className={`${isWatermarkVisible ? 'block' : 'hidden'} lg:block`}>
               {user.watermark_path && (
-                <div className="w-40 flex flex-col items-center space-y-4">
+                <div className="w-40 flex flex-col items-center space-y-4 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
                   <div className="w-full">
-                    <h3 className="text-xs font-semibold text-white uppercase mb-2">
-                      Watermark
+                    <h3 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 text-center">
+                      Artist Watermark
                     </h3>
-                    <div className="flex flex-col items-center space-y-2">
+                    <div className="flex flex-col items-center">
                       <ProtectedWatermarkImage
                         src={`${BASE_URL}/uploads/watermarks/${user.watermark_path}?t=${new Date().getTime()}`}
                         alt="User Watermark"
-                        className="w-20 h-20 object-contain border rounded-md shadow-sm bg-white"
+                        className="w-24 h-24 object-contain rounded-lg shadow-inner bg-white/10"
                         onError={() => console.log("Watermark load error")}
                       />
                     </div>
@@ -316,12 +318,12 @@ const VisitProfile = () => {
               )}
             </div>
           </div>
-        </div>
+        </ProfileHeader>
+        
+        <div className="border-b border-gray-200 dark:border-white/5 mb-4"></div>
 
-        <div className="border-b border-gray-200 mb-4"></div>
-
-        {/* Tabs Section */}
-        <div className="flex border-b border-gray-300 mb-6 text-sm">
+        {/* Tabs Section - Polished Style */}
+        <div className="flex border-b border-gray-200 dark:border-white/5 mb-8 text-sm overflow-x-auto no-scrollbar">
           {[
             { key: "posts", icon: NewspaperIcon, label: "Posts" },
             { key: "visitart", icon: PhotoIcon, label: "Art Posts" },
@@ -331,14 +333,22 @@ const VisitProfile = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
+              className={`flex-1 min-w-[120px] py-4 font-bold flex items-center justify-center gap-2 transition-all duration-300 relative cursor-pointer ${
                 activeTab === tab.key
-                  ? "border-b-4 border-blue-500 text-blue-600"
-                  : "hover:bg-gray-100 text-gray-600"
+                  ? "text-[#5E66FF]"
+                  : "text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"
               }`}
             >
-              <tab.icon className="h-5 w-5" />
-              {tab.label}
+              <tab.icon className={`h-5 w-5 transition-transform duration-300 ${activeTab === tab.key ? "scale-110" : "scale-100"}`} />
+              <span className="tracking-tight">{tab.label}</span>
+              
+              {activeTab === tab.key && (
+                <motion.div 
+                  layoutId="activeVisitTabUnderline"
+                  className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#5E66FF]"
+                  initial={false}
+                />
+              )}
             </button>
           ))}
         </div>

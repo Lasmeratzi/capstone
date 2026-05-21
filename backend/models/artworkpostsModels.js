@@ -133,11 +133,35 @@ const updateArtworkPostById = (id, postData, callback) => {
 
 // Delete an artwork post
 const deleteArtworkPost = (id, callback) => {
-  const sql = `
-    DELETE FROM artwork_posts
-    WHERE id = ?
-  `;
-  db.query(sql, [id], callback);
+  if (!id) return callback(new Error("No artwork post ID provided."));
+
+  // Manually delete associated records to avoid ANY FK constraint errors
+  const queries = [
+    { table: "artwork_comments", sql: "DELETE FROM artwork_comments WHERE artwork_post_id = ?", params: [id] },
+    { table: "artwork_post_likes", sql: "DELETE FROM artwork_post_likes WHERE artwork_post_id = ?", params: [id] },
+    { table: "artwork_tags", sql: "DELETE FROM artwork_tags WHERE post_id = ?", params: [id] },
+    { table: "artwork_media", sql: "DELETE FROM artwork_media WHERE post_id = ?", params: [id] },
+    { table: "reports", sql: "DELETE FROM reports WHERE artwork_id = ?", params: [id] },
+    { table: "notifications", sql: "DELETE FROM notifications WHERE related_table = 'artwork_posts' AND related_id = ?", params: [id] }
+  ];
+
+  const runQueries = (index) => {
+    if (index === queries.length) {
+      const sql = "DELETE FROM artwork_posts WHERE id = ?";
+      return db.query(sql, [id], callback);
+    }
+
+    const current = queries[index];
+    db.query(current.sql, current.params, (err) => {
+      if (err) {
+        console.error(`Warning: Failed to cleanup ${current.table} before deleting post ${id}:`, err);
+        // Continue anyway to allow the final post deletion to attempt success
+      }
+      runQueries(index + 1);
+    });
+  };
+
+  runQueries(0);
 };
 
 // Get artwork posts from followed users
@@ -174,6 +198,25 @@ const getFollowingArtworkPosts = (viewerId, callback) => {
   db.query(sql, [viewerId, viewerId, viewerId], callback);
 };
 
+// Get public artwork posts (no auth needed - for landing page)
+const getPublicArtworkPosts = (callback) => {
+  const sql = `
+    SELECT artwork_posts.id, artwork_posts.title, artwork_posts.description, 
+           artwork_posts.created_at, artwork_posts.visibility,
+           users.id AS author_id, users.username AS author, users.fullname, 
+           users.pfp AS author_pfp, users.verified AS is_verified,
+           (SELECT am.media_path FROM artwork_media am WHERE am.post_id = artwork_posts.id ORDER BY am.id ASC LIMIT 1) AS first_media
+    FROM artwork_posts
+    JOIN users ON artwork_posts.author_id = users.id
+    WHERE artwork_posts.visibility = 'public'
+    AND users.account_status = 'active'
+    AND EXISTS (SELECT 1 FROM artwork_media am2 WHERE am2.post_id = artwork_posts.id)
+    ORDER BY artwork_posts.created_at DESC
+    LIMIT 20
+  `;
+  db.query(sql, callback);
+};
+
 module.exports = {
   createArtworkPost,
   getAllArtworkPosts,
@@ -182,4 +225,5 @@ module.exports = {
   updateArtworkPostById,
   deleteArtworkPost,
   getFollowingArtworkPosts,
+  getPublicArtworkPosts,
 };

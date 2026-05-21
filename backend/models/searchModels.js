@@ -161,7 +161,7 @@ const quickSearch = (query, callback) => {
   }
 
   const sql = `
-    (SELECT id, username as name, pfp as image, 'user' as type, username as subtitle,
+    (SELECT users.id, username as name, pfp as image, 'user' as type, username as subtitle,
             CASE WHEN username LIKE ? THEN 1 ELSE 2 END as match_priority
      FROM users 
      WHERE (username LIKE ? OR username LIKE ?) AND account_status = 'active'
@@ -170,7 +170,7 @@ const quickSearch = (query, callback) => {
     
     UNION ALL
     
-    (SELECT id, name, NULL as image, 'tag' as type, 
+    (SELECT tags.id, name, NULL as image, 'tag' as type, 
             CONCAT(COUNT(artwork_tags.id), ' posts') as subtitle,
             CASE WHEN name LIKE ? THEN 1 ELSE 2 END as match_priority
      FROM tags 
@@ -183,7 +183,7 @@ const quickSearch = (query, callback) => {
     
     UNION ALL
     
-    (SELECT id, name as name, NULL as image, 'location' as type,
+    (SELECT locations.id, name as name, NULL as image, 'location' as type,
             CONCAT(COUNT(users.id), ' artists') as subtitle,
             CASE WHEN name LIKE ? THEN 1 ELSE 2 END as match_priority
      FROM locations 

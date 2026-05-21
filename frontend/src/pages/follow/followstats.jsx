@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
-const FollowStats = ({ targetUserId }) => {
+const FollowStats = ({ targetUserId, refreshTrigger }) => {
   const [stats, setStats] = useState({ followers: 0, following: 0 });
   const [modal, setModal] = useState({ 
     show: false, 
@@ -29,7 +29,7 @@ const FollowStats = ({ targetUserId }) => {
       }
     };
     fetchFollowStats();
-  }, [targetUserId]);
+  }, [targetUserId, refreshTrigger]);
 
   const fetchList = async (type) => {
     setLoading(true);

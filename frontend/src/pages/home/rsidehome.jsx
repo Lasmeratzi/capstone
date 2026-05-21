@@ -139,7 +139,7 @@ const RSideHome = ({ user, accounts, onSwitchToAuctions }) => {
   };
 
   return (
-    <div className="w-95 py-6 pr-4">
+    <div className="w-full h-full py-6 px-4 bg-white dark:bg-[#0A0A0B] transition-colors duration-300">
       {/* Logged In User */}
       <div
         className="flex items-center mb-6 cursor-pointer"
@@ -157,16 +157,16 @@ const RSideHome = ({ user, accounts, onSwitchToAuctions }) => {
           </div>
         )}
         <div className="ml-3">
-          <p className="font-bold text-gray-800">{user.username}</p>
-          <p className="text-gray-600 text-sm">{user.fullname}</p>
+          <p className="font-bold text-gray-800 dark:text-gray-200">{user.username}</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.fullname}</p>
         </div>
       </div>
 
       {/* Recent Auctions Section */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-gray-700 font-semibold">Recent Auctions</h3>
-          <Gavel className="w-5 h-5 text-purple-600" />
+          <h3 className="text-gray-700 dark:text-gray-300 font-bold text-sm uppercase tracking-wider">Recent Auctions</h3>
+          <Gavel className="w-4 h-4 text-purple-600" />
         </div>
         
         {loadingAuctions ? (
@@ -178,7 +178,7 @@ const RSideHome = ({ user, accounts, onSwitchToAuctions }) => {
             {recentAuctions.map((auction) => (
               <div 
                 key={auction.id} 
-                className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition"
+                className="bg-white dark:bg-[#161B22]/40 border border-gray-100 dark:border-gray-800/50 rounded-xl p-3 shadow-sm hover:shadow-md transition"
               >
                 <div className="flex gap-3">
                   {/* Auction Image */}
@@ -196,7 +196,7 @@ const RSideHome = ({ user, accounts, onSwitchToAuctions }) => {
                   
                   {/* Auction Info */}
                   <div className="flex-grow min-w-0">
-                    <h4 className="font-medium text-gray-800 text-sm truncate">
+                    <h4 className="font-bold text-gray-800 dark:text-gray-200 text-sm truncate">
                       {auction.title}
                     </h4>
                     <div className="flex items-center gap-1 mt-1">
@@ -208,10 +208,10 @@ const RSideHome = ({ user, accounts, onSwitchToAuctions }) => {
                     
                     {/* Status Badge */}
                     <div className="mt-1">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight ${
                         auction.status === 'active' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-blue-100 text-blue-700'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' 
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
                       }`}>
                         {auction.status === 'active' ? (
                           <>
@@ -237,46 +237,46 @@ const RSideHome = ({ user, accounts, onSwitchToAuctions }) => {
             ))}
           </div>
         ) : (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-            <Gavel className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500 text-sm">No active auctions</p>
+          <div className="bg-gray-50 dark:bg-[#161B22]/20 border border-gray-100 dark:border-gray-800/50 rounded-xl p-4 text-center">
+            <Gavel className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+            <p className="text-gray-400 dark:text-gray-600 text-sm font-medium">No active auctions</p>
           </div>
         )}
       </div>
 
       {/* Recent Users */}
       <div>
-        <h3 className="text-gray-700 font-semibold mb-3">Follow other artists</h3>
+        <h3 className="text-gray-700 dark:text-gray-300 font-bold text-sm uppercase tracking-wider mb-3">Follow artists</h3>
         <div className="space-y-3">
           {accounts.slice(0, 3).map((account) => (
-            <div key={account.id} className="flex items-center bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition">
-              <img src={`http://localhost:5000/uploads/${account.pfp || "default.png"}`} alt={account.username} className="w-10 h-10 rounded-full border" />
+            <div key={account.id} className="flex items-center bg-white dark:bg-[#161B22]/40 border border-gray-100 dark:border-gray-800/50 rounded-xl p-3 shadow-sm hover:shadow-md transition">
+              <img src={`http://localhost:5000/uploads/${account.pfp || "default.png"}`} alt={account.username} className="w-10 h-10 rounded-full border border-gray-100 dark:border-gray-800" />
               <div className="ml-3">
-                <p className="font-medium text-gray-800">{account.username}</p>
-                <p className="text-gray-500 text-sm">{account.fullname}</p>
+                <p className="font-bold text-gray-800 dark:text-gray-200 text-sm">{account.username}</p>
+                <p className="text-gray-500 dark:text-gray-500 text-xs">{account.fullname}</p>
               </div>
             </div>
           ))}
-          {accounts.length === 0 && <p className="text-gray-500 text-sm">No other users available.</p>}
+          {accounts.length === 0 && <p className="text-gray-400 dark:text-gray-600 text-sm font-medium">No artists available.</p>}
         </div>
 
         {/* Review Button Section */}
         <div className="mt-8 mb-6">
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-xl p-4">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/10 dark:to-purple-900/10 border border-blue-100 dark:border-blue-900/20 rounded-xl p-4">
             <div className="flex items-center mb-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center mr-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center mr-3 shadow-lg shadow-blue-200 dark:shadow-none">
                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                 </svg>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900">Help Improve Illura</h4>
-                <p className="text-gray-600 text-sm">Share your experience</p>
+                <h4 className="font-bold text-gray-900 dark:text-gray-200 text-sm">Help Improve Illura</h4>
+                <p className="text-gray-500 dark:text-gray-400 text-xs">Share your experience</p>
               </div>
             </div>
             
             {reviewError && (
-              <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+              <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-xl">
                 <p className="text-red-600 text-sm text-center">{reviewError}</p>
               </div>
             )}
@@ -284,7 +284,7 @@ const RSideHome = ({ user, accounts, onSwitchToAuctions }) => {
             <button
               onClick={handleReviewClick}
               disabled={loadingReview}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingReview ? (
                 <>
@@ -306,11 +306,11 @@ const RSideHome = ({ user, accounts, onSwitchToAuctions }) => {
             
             {userReview && !loadingReview && (
               <div className="mt-3 text-center">
-                <div className="inline-flex items-center bg-white px-3 py-1 rounded-full border border-green-200">
-                  <svg className="w-4 h-4 text-green-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="inline-flex items-center bg-white dark:bg-gray-800 px-3 py-1 rounded-full border border-green-200 dark:border-green-900/50 shadow-sm">
+                  <svg className="w-4 h-4 text-green-600 dark:text-green-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="text-green-700 text-sm">You've reviewed Illura!</span>
+                  <span className="text-green-700 dark:text-green-400 text-[10px] font-bold uppercase tracking-wide">You've reviewed Illura!</span>
                 </div>
               </div>
             )}
@@ -318,17 +318,17 @@ const RSideHome = ({ user, accounts, onSwitchToAuctions }) => {
         </div>
 
         {/* Footer */}
-        <div className="mt-6 text-xs text-gray-400 space-x-2">
+        <div className="mt-10 text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest space-x-2">
           <span 
-            className="hover:underline cursor-pointer hover:text-gray-600"
+            className="hover:text-gray-900 dark:hover:text-gray-400 transition-colors cursor-pointer"
             onClick={() => navigate("/about")}
           >
             About
           </span>·
-          <span className="hover:underline cursor-pointer hover:text-gray-600">Help</span>·
-          <span className="hover:underline cursor-pointer hover:text-gray-600">Privacy</span>·
-          <span className="hover:underline cursor-pointer hover:text-gray-600">Terms</span>
-          <p className="mt-3">&copy; 2025 Illura from Studio</p>
+          <span className="hover:text-gray-900 dark:hover:text-gray-400 transition-colors cursor-pointer">Help</span>·
+          <span className="hover:text-gray-900 dark:hover:text-gray-400 transition-colors cursor-pointer">Privacy</span>·
+          <span className="hover:text-gray-900 dark:hover:text-gray-400 transition-colors cursor-pointer">Terms</span>
+          <p className="mt-4 opacity-50">&copy; 2026 Illura from Studio</p>
         </div>
       </div>
 

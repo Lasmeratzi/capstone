@@ -112,7 +112,7 @@ const VisitPost = ({ userId }) => {
                 key={post.id} 
                 post={post} 
                 userId={loggedInUserId} // Pass logged-in user's ID
-                handleDelete={loggedInUserId === userId ? handleDelete : undefined} // Only pass if viewing own profile
+                handleDelete={String(loggedInUserId) === String(userId) ? handleDelete : undefined} // Only pass if viewing own profile
               />
             ))
           ) : (
@@ -133,7 +133,7 @@ const VisitPost = ({ userId }) => {
           <select 
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value)}
-            className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm"
+            className="w-full bg-white dark:bg-[#0A0A0B] border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#5E66FF]/50 appearance-none cursor-pointer transition-all"
           >
             <option value="latest">Latest first</option>
             <option value="oldest">Oldest first</option>
@@ -148,7 +148,7 @@ const VisitPost = ({ userId }) => {
           <div className="relative">
             <button
               onClick={() => setShowYearDropdown(!showYearDropdown)}
-              className="w-full flex items-center justify-between gap-1 bg-white border border-gray-300 rounded px-3 py-2 text-sm"
+              className="w-full flex items-center justify-between gap-1 bg-white dark:bg-[#0A0A0B] border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer"
             >
               {yearFilter === "all" ? "All years" : yearFilter}
               <ChevronDown size={16} className={`transition-transform ${showYearDropdown ? "rotate-180" : ""}`} />

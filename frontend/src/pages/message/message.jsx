@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { io } from "socket.io-client";
+import { MessageSquare, Hand } from "lucide-react";
 
 const socket = io("http://localhost:5000", {
   withCredentials: true,
@@ -20,7 +21,6 @@ const Message = ({ otherUserId, refreshInbox }) => {
   const userId = parseInt(localStorage.getItem("id"));
   const messagesEndRef = useRef(null);
 
-  // 👉 Fetch conversation history
   const fetchConversation = async () => {
     if (!otherUserId) return;
     try {
@@ -43,7 +43,6 @@ const Message = ({ otherUserId, refreshInbox }) => {
     }
   };
 
-  // 👉 Fetch profiles
   const fetchOtherUser = async () => {
     try {
       const res = await axios.get(
@@ -67,7 +66,6 @@ const Message = ({ otherUserId, refreshInbox }) => {
     }
   };
 
-  // 👉 Setup sockets
   useEffect(() => {
     if (!userId) return;
 
@@ -107,7 +105,6 @@ const Message = ({ otherUserId, refreshInbox }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 👉 Send message
   const handleSend = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
@@ -147,7 +144,6 @@ const Message = ({ otherUserId, refreshInbox }) => {
     }
   };
 
-  // 👉 Delete a message
   const handleDeleteMessage = async (messageId) => {
     try {
       await axios.delete(`http://localhost:5000/api/messages/${messageId}`, {
@@ -167,7 +163,6 @@ const Message = ({ otherUserId, refreshInbox }) => {
     setConfirmDelete(null);
   };
 
-  // 👉 Delete conversation
   const handleDeleteConversation = async () => {
     try {
       await axios.delete(
@@ -195,9 +190,8 @@ const Message = ({ otherUserId, refreshInbox }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white border-l border-gray-200">
-      {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-white">
+    <div className="flex flex-col h-full bg-white dark:bg-[#0A0A0B] border-l border-gray-200 dark:border-white/10">
+      <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-white/5 bg-white dark:bg-[#0A0A0B]">
         <div className="flex items-center gap-4">
           <img
             src={
@@ -206,19 +200,18 @@ const Message = ({ otherUserId, refreshInbox }) => {
                 : "/default-avatar.png"
             }
             alt="avatar"
-            className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+            className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 dark:border-white/10 shadow-sm"
           />
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               {otherUser ? otherUser.username : "Loading..."}
             </h2>
-            <p className="text-sm text-gray-500 font-medium">
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
               {otherUser ? otherUser.fullname : ""}
             </p>
           </div>
         </div>
 
-        {/* Header menu */}
         <div className="relative">
           <button
             onClick={() => setShowHeaderMenu(!showHeaderMenu)}
@@ -229,7 +222,7 @@ const Message = ({ otherUserId, refreshInbox }) => {
             </svg>
           </button>
           {showHeaderMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-10 py-2">
+            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1A1A1B] border border-gray-200 dark:border-white/10 rounded-xl shadow-lg z-10 py-2">
               <button
                 onClick={() => {
                   setShowHeaderMenu(false);
@@ -247,21 +240,23 @@ const Message = ({ otherUserId, refreshInbox }) => {
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50 dark:bg-[#0A0A0B]">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <svg className="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
             <p className="text-lg font-medium text-gray-500">No messages yet</p>
-            <p className="text-sm text-gray-400">Say hi to start the conversation 👋</p>
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <span>Say hi to start the conversation</span>
+              <Hand className="w-4 h-4 text-yellow-500 animate-bounce" />
+            </div>
           </div>
         ) : (
           messages.map((msg, index) => {
             const isCurrentUser = msg.sender_id === userId || msg.senderId === userId;
             const isDeleted = (msg.message_text || msg.text) === "message deleted";
-            
+
             return (
               <div
                 key={msg.id || index}
@@ -278,12 +273,12 @@ const Message = ({ otherUserId, refreshInbox }) => {
                 <div className={`flex flex-col ${isCurrentUser ? "items-end" : "items-start"} max-w-xs`}>
                   <div className="flex items-center gap-2">
                     {!isCurrentUser && (
-                      <span className="text-xs text-gray-500 font-medium">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                         {otherUser?.username}
                       </span>
                     )}
                   </div>
-                  
+
                   <div className="flex items-end gap-2 group relative">
                     {isCurrentUser && !isDeleted && (
                       <div className="relative">
@@ -315,18 +310,16 @@ const Message = ({ otherUserId, refreshInbox }) => {
                     )}
 
                     <div
-                      className={`px-4 py-3 rounded-2xl shadow-sm ${
-                        isDeleted
-                          ? "bg-gray-100 border border-gray-300 text-gray-500 italic text-center"
+                      className={`px-4 py-3 rounded-2xl shadow-sm ${isDeleted
+                          ? "bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-500 dark:text-gray-400 italic text-center"
                           : isCurrentUser
-                          ? "bg-blue-600 text-white"
-                          : "bg-white text-gray-800 border border-gray-200"
-                      }`}
+                            ? "bg-blue-600 text-white"
+                            : "bg-white dark:bg-white/10 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-white/5"
+                        }`}
                     >
                       <p className="text-sm leading-relaxed">{msg.message_text || msg.text}</p>
                     </div>
 
-                    {/* Timestamp */}
                     {!isDeleted && (
                       <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
                         {new Date(msg.created_at || msg.timestamp).toLocaleTimeString([], {
@@ -352,15 +345,14 @@ const Message = ({ otherUserId, refreshInbox }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="p-6 border-t border-gray-100 bg-white">
+      <div className="p-6 border-t border-gray-100 dark:border-white/10 bg-white dark:bg-[#0A0A0B]">
         <form onSubmit={handleSend} className="flex items-center gap-3">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 border border-gray-300 rounded-full px-6 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            className="flex-1 border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 rounded-full px-6 py-3 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           />
           <button
             type="submit"
@@ -372,18 +364,17 @@ const Message = ({ otherUserId, refreshInbox }) => {
         </form>
       </div>
 
-      {/* Delete message confirmation modal */}
       {confirmDelete && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
-          <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm mx-4">
+          <div className="bg-white dark:bg-[#1A1A1B] p-8 rounded-2xl shadow-xl max-w-sm mx-4 border dark:border-white/10">
             <div className="text-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Message</h3>
-              <p className="text-gray-600 mb-6">Are you sure you want to delete this message? This action cannot be undone.</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Delete Message</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">Are you sure you want to delete this message? This action cannot be undone.</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmDelete(null)}
@@ -403,7 +394,6 @@ const Message = ({ otherUserId, refreshInbox }) => {
         </div>
       )}
 
-      {/* Delete conversation confirmation modal */}
       {confirmDeleteConversation && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
           <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm mx-4">

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { PaperAirplaneIcon, InformationCircleIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
 import GradientText from "../../components/gradienttext/gradienttext";
+import MobileNav from "../../components/layout/MobileNav";
 
 function ChatBot() {
   const [message, setMessage] = useState("");
@@ -87,9 +88,14 @@ function ChatBot() {
   }
 
   return (
-    <div className="flex h-screen bg-white text-gray-800">
-      {/* Sidebar */}
-      <Sidebar />
+    <div className="flex h-screen bg-white dark:bg-[#0A0A0B] text-gray-800 dark:text-gray-100">
+      {/* Mobile Navigation */}
+      <MobileNav />
+
+      {/* Sidebar - hidden on mobile */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
 
       {/* Main Chat Area with transition */}
       <motion.div
@@ -97,7 +103,7 @@ function ChatBot() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -50 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="flex flex-col flex-grow px-8 pb-4 pt-5 relative"
+        className="flex flex-col flex-grow px-4 md:px-8 pb-20 md:pb-4 pt-16 md:pt-5 relative bg-white dark:bg-[#0A0A0B]"
       >
         {/* Title Row */}
         <div className="flex items-center mb-2 justify-between">
@@ -112,11 +118,11 @@ function ChatBot() {
               Chatbot Assistance
             </GradientText>
             <div className="flex items-center space-x-2 ml-2">
-              <span className="text-sm text-gray-500 font-normal">Powered by</span>
-              <span className="text-sm text-gray-500 font-normal">
-                <img src="/Qwen.png" alt="Qwen Logo" className="h-6" />
+              <span className="text-sm text-gray-500 dark:text-gray-400 font-normal">Powered by</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 font-normal">
+                <img src="/Qwen.png" alt="Qwen Logo" className="h-6 dark:invert dark:opacity-80" />
               </span>
-              <span className="text-sm text-gray-500 font-normal">Qwen3 235B A22B</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 font-normal">Qwen3 235B A22B</span>
             </div>
           </div>
 
@@ -137,7 +143,7 @@ function ChatBot() {
           </div>
         </div>
 
-        <div className="border-b border-gray-300 mb-6 w-full" />
+        <div className="border-b border-gray-300 dark:border-white/10 mb-6 w-full" />
 
         {/* Chat History */}
         <div className="flex flex-col flex-grow space-y-4 overflow-y-auto pb-36">
@@ -151,8 +157,8 @@ function ChatBot() {
               <div
                 className={`max-w-3xl px-4 py-3 rounded-xl transition-all leading-relaxed ${
                   msg.role === "user"
-                    ? "bg-blue-100 text-right"
-                    : "bg-gray-100 text-left"
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-right dark:text-blue-100"
+                    : "bg-gray-100 dark:bg-white/5 text-left dark:text-gray-100"
                 }`}
                 dangerouslySetInnerHTML={{ __html: msg.content }}
               />
@@ -164,14 +170,14 @@ function ChatBot() {
         <div className="flex justify-center mt-auto">
           <div className="flex flex-col items-center w-full max-w-xl mx-auto">
             {/* Input Field */}
-            <div className="flex items-center bg-gray-100 px-5 py-3 rounded-full shadow w-full border border-gray-300">
+            <div className="flex items-center bg-gray-100 dark:bg-white/[0.03] px-5 py-3 rounded-full shadow w-full border border-gray-300 dark:border-white/10">
               <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type your message..."
-                className="flex-grow bg-transparent border-none text-gray-800 placeholder-gray-500 focus:outline-none px-2"
+                className="flex-grow bg-transparent border-none text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none px-2"
               />
               <button
                 onClick={handleSend}
@@ -181,7 +187,7 @@ function ChatBot() {
               </button>
             </div>
             {/* AI Disclaimer Below Input Field */}
-            <p className="mt-2 text-xs text-gray-500 text-center">
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
               Illura Chatbot uses AI to generate responses automatically. While we aim for accuracy, please verify important details as information may be incomplete or incorrect.
             </p>
           </div>
@@ -206,15 +212,15 @@ function ChatBot() {
             </div>
           )}
           <div className="ml-3">
-            <p className="font-bold">{user.username}</p>
-            <p className="text-gray-500 text-sm">{user.fullname}</p>
+            <p className="font-bold dark:text-gray-100">{user.username}</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">{user.fullname}</p>
           </div>
         </div>
 
         {/* Mini Footer */}
         <div className="mt-10 text-xs text-gray-400 space-y-1">
           <p>About • Help • Privacy • Terms</p>
-          <p>© 2025 Illura</p>
+          <p>© 2026 Illura</p>
         </div>
       </div>
     </div>

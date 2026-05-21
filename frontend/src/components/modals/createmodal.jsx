@@ -42,7 +42,7 @@ const CreateModal = ({ onClose, onSelect }) => {
 
   const modalContent = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-6 space-y-6 max-w-lg w-full border border-gray-200">
+      <div className="bg-white rounded-xl shadow-xl p-6 space-y-6 max-w-lg w-full border border-gray-200">
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-3">
           <h2 className="text-xl font-semibold text-gray-800">Create New</h2>
@@ -76,7 +76,7 @@ const CreateModal = ({ onClose, onSelect }) => {
         {/* Cancel */}
         <button
           onClick={onClose}
-          className="w-full py-2 mt-4 border rounded-lg text-red-500 font-medium transition
+          className="w-full py-2 mt-4 border rounded-xl text-red-500 font-medium transition
                      hover:bg-red-500 hover:text-white hover:border-red-500"
         >
           Cancel

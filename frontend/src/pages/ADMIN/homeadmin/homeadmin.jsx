@@ -29,11 +29,10 @@ const HomeAdmin = () => {
   const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingLocations, setLoadingLocations] = useState(true);
-  const [usersData, setUsersData] = useState([]);
   const [locationStats, setLocationStats] = useState([]);
   const [platformStats, setPlatformStats] = useState({
-    mostActiveTime: "Evening (6-10 PM)",
-    popularTags: ["Digital Art", "Traditional", "Portrait"],
+    mostActiveTime: null,
+    popularTags: [],
     avgPostsPerUser: 0
   });
 
@@ -43,69 +42,30 @@ const HomeAdmin = () => {
   }, []);
 
   const fetchDashboardData = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("adminToken");
     setLoading(true);
 
     try {
-      // Fetch multiple data sources in parallel
-      const [usersResponse, auctionStatsResponse, auctionActivitiesResponse] = await Promise.all([
-        axios.get("http://localhost:5000/api/users", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get("http://localhost:5000/api/stats", {
-          headers: { Authorization: `Bearer ${token}` },
-        }).catch(err => {
-          console.warn("⚠️ Auction stats endpoint not available, using fallback");
-          return { data: null };
-        }),
-        axios.get("http://localhost:5000/api/activities/recent?limit=5", {
-          headers: { Authorization: `Bearer ${token}` },
-        }).catch(err => {
-          console.warn("⚠️ Auction activities endpoint not available, using fallback");
-          return { data: [] };
-        })
-      ]);
-
-      const users = usersResponse.data;
-      setUsersData(users);
-
-      const auctionStats = auctionStatsResponse.data;
-      const auctionActivities = auctionActivitiesResponse.data || [];
-
-      console.log("✅ Dashboard data fetched:", {
-        usersCount: users.length,
-        auctionStats: auctionStats,
-        auctionActivitiesCount: auctionActivities.length
+      // Use the new comprehensive dashboard stats endpoint
+      const response = await axios.get("http://localhost:5000/api/admin/dashboard-stats", {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Calculate user statistics
-      const totalUsers = users.length;
-      const activeUsers = users.filter(u => u.account_status === 'active').length;
-      const onHoldUsers = users.filter(u => u.account_status === 'on hold').length;
-      const bannedUsers = users.filter(u => u.account_status === 'banned').length;
-      const verifiedUsers = users.filter(u => u.verified === 1 || u.verified === true || u.verified === '1').length;
-      const openCommissions = users.filter(u => u.commissions === 'open').length;
-
-      // Calculate posts (simulated until you have posts API)
-      const totalPosts = Math.floor(users.length * 0.8);
+      const data = response.data;
       
-      // Calculate pending verifications (simulated)
-      const pendingVerifications = Math.floor(users.length * 0.02);
-
-      // Use real auction stats if available, otherwise calculate
-      const activeAuctions = auctionStats ? auctionStats.activeAuctions || 0 : Math.floor(users.length * 0.05);
+      console.log("Dashboard data fetched:", data);
 
       setStats({
-        totalUsers,
-        activeUsers,
-        onHoldUsers,
-        bannedUsers,
-        activeAuctions,
-        totalPosts,
-        pendingVerifications,
-        verifiedUsers,
-        openCommissions,
-        auctionStats: auctionStats || {
+        totalUsers: data.totalUsers || 0,
+        activeUsers: data.activeUsers || 0,
+        onHoldUsers: data.onHoldUsers || 0,
+        bannedUsers: data.bannedUsers || 0,
+        activeAuctions: data.activeAuctions || 0,
+        totalPosts: data.totalPosts || 0,
+        pendingVerifications: data.pendingVerifications || 0,
+        verifiedUsers: data.verifiedUsers || 0,
+        openCommissions: data.openCommissions || 0,
+        auctionStats: data.auctionStats || {
           totalAuctions: 0,
           endingSoon: 0,
           totalRevenue: 0,
@@ -117,64 +77,25 @@ const HomeAdmin = () => {
         }
       });
 
-      // Generate combined recent activities
-      const userActivities = generateUserActivities(users);
-      const combinedActivities = [...auctionActivities, ...userActivities]
-        .sort((a, b) => {
-          // Sort by time (newest first)
-          const timeA = a.created_at || a.timeAgo;
-          const timeB = b.created_at || b.timeAgo;
-          return new Date(timeB) - new Date(timeA);
-        })
-        .slice(0, 5);
+      setRecentActivities(data.recentActivities || []);
       
-      setRecentActivities(combinedActivities);
-      
-      // Calculate platform stats
-      calculatePlatformStats(users);
+      // Update platform stats based on real data
+      setPlatformStats({
+        mostActiveTime: data.mostActiveTime || null,
+        popularTags: data.popularTags || [],
+        avgPostsPerUser: data.totalUsers > 0 ? (data.totalPosts / data.totalUsers).toFixed(1) : 0
+      });
       
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      // Use mock data for demo if API fails
-      const mockStats = {
-        totalUsers: 245,
-        activeUsers: 210,
-        onHoldUsers: 15,
-        bannedUsers: 20,
-        activeAuctions: 12,
-        totalPosts: 156,
-        pendingVerifications: 5,
-        verifiedUsers: 85,
-        openCommissions: 42,
-        auctionStats: {
-          totalAuctions: 45,
-          endingSoon: 3,
-          totalRevenue: 12500,
-          completedAuctions: 22,
-          pendingPayment: 5,
-          draftAuctions: 8,
-          approvedAuctions: 15,
-          endedAuctions: 18
-        }
-      };
-      setStats(mockStats);
-      
-      const mockActivities = [
-        { message: "User @artlover23 registered", timeAgo: "2m ago", icon: "👤" },
-        { message: "New auction by @sketchmaster", timeAgo: "15m ago", icon: "🏷️" },
-        { message: "Verification request from @canvasQueen", timeAgo: "1h ago", icon: "✅" },
-        { message: "New post by @painterPro", timeAgo: "2h ago", icon: "📝" },
-        { message: "User @digitalArtist updated profile", timeAgo: "3h ago", icon: "🎨" }
-      ];
-      setRecentActivities(mockActivities);
-      
+      // Show empty state — no mock data
     } finally {
       setLoading(false);
     }
   };
 
   const fetchLocationData = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("adminToken");
     setLoadingLocations(true);
 
     try {
@@ -209,72 +130,13 @@ const HomeAdmin = () => {
       
     } catch (error) {
       console.error("Error fetching location data:", error);
-      // Mock data for demonstration
-      const mockLocationStats = [
-        { id: 1, name: "Manila", province: "Metro Manila", artistCount: 45, percentage: 18 },
-        { id: 2, name: "Cebu City", province: "Cebu", artistCount: 32, percentage: 13 },
-        { id: 3, name: "Davao City", province: "Davao del Sur", artistCount: 28, percentage: 11 },
-        { id: 4, name: "Quezon City", province: "Metro Manila", artistCount: 25, percentage: 10 },
-        { id: 5, name: "Makati", province: "Metro Manila", artistCount: 22, percentage: 9 }
-      ];
-      setLocationStats(mockLocationStats);
-      
+      // Show empty state — no mock data
     } finally {
       setLoadingLocations(false);
     }
   };
 
-  // Helper function to generate user activities
-  const generateUserActivities = (users) => {
-    if (users.length === 0) return [];
-    
-    const recentUsers = [...users]
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 3);
-    
-    return recentUsers.map(user => ({
-      message: `User @${user.username} registered`,
-      timeAgo: getTimeAgo(user.created_at),
-      icon: '👤',
-      created_at: user.created_at
-    }));
-  };
 
-  const calculatePlatformStats = (users) => {
-    // Calculate average posts per user (simulated)
-    const avgPostsPerUser = stats.totalPosts > 0 ? (stats.totalPosts / users.length).toFixed(1) : 0;
-    
-    // Determine most active time (simulated based on user registration times)
-    const registrationHours = users.map(user => {
-      if (user.created_at) {
-        return new Date(user.created_at).getHours();
-      }
-      return null;
-    }).filter(hour => hour !== null);
-    
-    let mostActiveTime = "Evening (6-10 PM)";
-    if (registrationHours.length > 0) {
-      const hourCounts = {};
-      registrationHours.forEach(hour => {
-        hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-      });
-      
-      const sortedHours = Object.entries(hourCounts).sort((a, b) => b[1] - a[1]);
-      if (sortedHours.length > 0) {
-        const mostActiveHour = parseInt(sortedHours[0][0]);
-        if (mostActiveHour >= 6 && mostActiveHour < 12) mostActiveTime = "Morning (6-11 AM)";
-        else if (mostActiveHour >= 12 && mostActiveHour < 17) mostActiveTime = "Afternoon (12-4 PM)";
-        else if (mostActiveHour >= 17 && mostActiveHour < 22) mostActiveTime = "Evening (5-9 PM)";
-        else mostActiveTime = "Night (10 PM-5 AM)";
-      }
-    }
-    
-    setPlatformStats({
-      mostActiveTime,
-      popularTags: ["Digital Art", "Traditional", "Portrait", "Abstract", "Landscape"],
-      avgPostsPerUser: parseFloat(avgPostsPerUser)
-    });
-  };
 
   const getTimeAgo = (dateString) => {
     if (!dateString) return "Recently";
@@ -344,14 +206,10 @@ const HomeAdmin = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Fixed Sidebar - Will stay in place during scrolling */}
-      <div className="fixed left-0 top-0 h-full z-10">
-        <SideAdmin />
-      </div>
+      <SideAdmin />
 
-      {/* Main Content with proper margin for fixed sidebar */}
-      <div className="flex-grow ml-48">
-        <div className="p-6">
+      {/* Main Content */}
+      <div className="flex-grow p-6">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Admin Dashboard</h1>
@@ -584,7 +442,7 @@ const HomeAdmin = () => {
                   {recentActivities.map((activity, index) => (
                     <div key={index} className="flex items-start pb-4 border-b border-gray-100 last:border-0">
                       <div className="flex-shrink-0 mr-3 mt-1">
-                        <span className="text-lg">{activity.icon}</span>
+                        {/* No icon */}
                       </div>
                       <div className="flex-grow">
                         <p className="text-sm font-medium text-gray-800">{activity.message}</p>
@@ -700,7 +558,7 @@ const HomeAdmin = () => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">Most Active Time</span>
-                      <span className="text-sm font-semibold text-blue-600">{platformStats.mostActiveTime}</span>
+                      <span className="text-sm font-semibold text-blue-600">{platformStats.mostActiveTime || 'No data yet'}</span>
                     </div>
                     <p className="text-xs text-gray-600">
                       Users are most active during this time period for posting and bidding.
@@ -722,17 +580,19 @@ const HomeAdmin = () => {
                       <span className="text-sm font-medium text-gray-700">Popular Art Tags</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {platformStats.popularTags.map((tag, index) => (
+                      {platformStats.popularTags.length > 0 ? platformStats.popularTags.map((tag, index) => (
                         <span 
                           key={index}
                           className="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full"
                         >
                           {tag}
                         </span>
-                      ))}
+                      )) : (
+                        <span className="text-xs text-gray-400">No tags used yet</span>
+                      )}
                     </div>
                     <p className="text-xs text-gray-600 mt-2">
-                      These are the most commonly used tags by artists.
+                      {platformStats.popularTags.length > 0 ? 'These are the most commonly used tags by artists.' : 'Tags will appear here once artists start tagging their work.'}
                     </p>
                   </div>
                 </div>
@@ -743,39 +603,13 @@ const HomeAdmin = () => {
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                     </svg>
                     <span>
-                      Platform engagement is highest during {platformStats.mostActiveTime.toLowerCase()}.
+                      {platformStats.mostActiveTime ? `Platform engagement is highest during ${platformStats.mostActiveTime.toLowerCase()}.` : 'Not enough activity data to determine peak times.'}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Quick Tips for Admins */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-100 p-6">
-            <div className="flex items-start">
-              <div className="p-2 bg-blue-100 rounded-lg mr-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Admin Tips</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-sm text-gray-700">
-                    <span className="font-medium">💡 Monitor peak hours:</span> Schedule important announcements during {platformStats.mostActiveTime}.
-                  </div>
-                  <div className="text-sm text-gray-700">
-                    <span className="font-medium">📍 Regional focus:</span> Consider hosting virtual events in {locationStats[0]?.name || "Manila"} to reach more artists.
-                  </div>
-                  <div className="text-sm text-gray-700">
-                    <span className="font-medium">🎨 Content strategy:</span> Encourage posts about {platformStats.popularTags[0]?.toLowerCase() || "digital art"} to boost engagement.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

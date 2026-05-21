@@ -12,7 +12,8 @@ import {
   UserCircleIcon,
   CurrencyDollarIcon,
   CheckCircleIcon,
-  PhoneIcon
+  PhoneIcon,
+  TrophyIcon
 } from "@heroicons/react/20/solid";
 
 // Custom debounce hook
@@ -416,17 +417,43 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
       setLocalText(replyText); // Reset to original text
     };
 
+    const colorMap = {
+      blue: { 
+        bg: 'bg-blue-50 dark:bg-blue-900/10', 
+        border: 'border-blue-200 dark:border-blue-800/30',
+        icon: 'text-blue-600 dark:text-blue-400',
+        badge: 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300',
+        btn: 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500'
+      },
+      green: { 
+        bg: 'bg-green-50 dark:bg-green-900/10', 
+        border: 'border-green-200 dark:border-green-800/30',
+        icon: 'text-green-600 dark:text-green-400',
+        badge: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
+        btn: 'bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500'
+      },
+      purple: { 
+        bg: 'bg-purple-50 dark:bg-purple-900/10', 
+        border: 'border-purple-200 dark:border-purple-800/30',
+        icon: 'text-purple-600 dark:text-purple-400',
+        badge: 'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300',
+        btn: 'bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500'
+      }
+    };
+
+    const theme = colorMap[color] || colorMap.blue;
+
     return (
-      <div className={`bg-${color}-50 rounded-lg p-4 border border-${color}-200`}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <Icon className={`h-4 w-4 text-${color}-600`} />
-            <h3 className="text-sm font-semibold text-gray-800">
+      <div className={`${theme.bg} rounded-xl p-5 border ${theme.border} transition-all duration-300`}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2.5">
+            <Icon className={`h-4 w-4 ${theme.icon}`} />
+            <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">
               {title} Auto-Reply
             </h3>
           </div>
           {hasReply && !isEditing && (
-            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-${color}-100 text-${color}-800 border border-${color}-200`}>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${theme.badge} border ${theme.border}`}>
               Active
             </span>
           )}
@@ -438,8 +465,8 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
               <textarea
                 ref={textareaRef}
                 key={`textarea-${type}-${isEditing}`}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200 bg-white text-sm"
-                rows="2"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-[#5E66FF]/50 focus:border-[#5E66FF] resize-none transition-all duration-200 bg-white dark:bg-[#0A0A0B] text-gray-900 dark:text-gray-100 text-sm"
+                rows="3"
                 placeholder={placeholder}
                 value={localText}
                 onChange={(e) => setLocalText(e.target.value)}
@@ -474,24 +501,24 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
           <div className="flex items-center justify-between">
             {hasReply ? (
               <>
-                <div className="flex-1 bg-white rounded-lg border border-gray-300 p-3 mr-4">
-                  <p className="text-gray-700 text-sm leading-relaxed">
+                <div className="flex-1 bg-white/50 dark:bg-black/20 rounded-xl border border-gray-200 dark:border-white/5 p-4 mr-4">
+                  <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                     {replyText}
                   </p>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex flex-col space-y-2">
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center px-3 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-gray-400"
+                    className="flex items-center px-3 py-2 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-all duration-200 font-bold text-xs border border-gray-200 dark:border-white/10 shadow-sm"
                   >
-                    <PencilSquareIcon className="h-4 w-4 mr-2" />
+                    <PencilSquareIcon className="h-3.5 w-3.5 mr-2" />
                     Edit
                   </button>
                   <button
                     onClick={() => handleDeleteAutoReply(type)}
-                    className="flex items-center px-3 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-red-300"
+                    className="flex items-center px-3 py-2 bg-white dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 font-bold text-xs border border-gray-200 dark:border-red-900/20 shadow-sm"
                   >
-                    <TrashIcon className="h-4 w-4 mr-2" />
+                    <TrashIcon className="h-3.5 w-3.5 mr-2" />
                     Delete
                   </button>
                 </div>
@@ -499,13 +526,13 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
             ) : (
               <>
                 <div className="flex-1">
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-gray-500 dark:text-gray-400 text-xs font-medium">
                     Set an automatic reply for {title.toLowerCase()} inquiries
                   </p>
                 </div>
                 <button
                   onClick={() => setIsEditing(true)}
-                  className={`flex items-center px-3 py-2 bg-${color}-600 text-white rounded-lg hover:bg-${color}-700 transition-all duration-200 font-medium text-sm border border-${color}-700 shadow-sm`}
+                  className={`flex items-center px-4 py-2 ${theme.btn} text-white rounded-xl transition-all duration-300 font-bold text-xs shadow-lg shadow-[#5E66FF]/10`}
                 >
                   <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
                   Add {title}
@@ -531,21 +558,23 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
             <div
               key={item.id}
               onClick={() => handleImageClick(item)}
-              className="group relative cursor-pointer transform transition-all duration-300 hover:scale-105 w-full h-0 pb-[100%] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl border border-gray-200"
+              className="group relative cursor-pointer w-full h-0 pb-[100%] rounded-none overflow-hidden shadow-lg border border-gray-200"
               style={{ position: "relative" }}
             >
               <img
                 src={`http://localhost:5000/uploads/${item.image_path}`}
                 alt={item.title}
-                className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500"
               />
 
               {/* SOLD Overlay */}
               {item.is_sold && (
                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10">
                   <div className="text-center p-4">
-                    <div className="bg-red-600 text-white font-bold text-xl px-6 py-3 rounded-lg mb-2 transform rotate-[-5deg] shadow-lg">
-                      🏆 SOLD 🏆
+                    <div className="bg-red-600 text-white font-bold text-xl px-6 py-3 rounded-none mb-2 transform rotate-[-5deg] shadow-lg flex items-center justify-center gap-2">
+                      <TrophyIcon className="h-6 w-6" />
+                      <span>SOLD</span>
+                      <TrophyIcon className="h-6 w-6" />
                     </div>
                     <p className="text-white text-sm font-medium">Auction Completed</p>
                     {item.final_price && (
@@ -557,14 +586,7 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                 </div>
               )}
 
-              {/* Subtle overlay on hover (only show if not sold) */}
-              {!item.is_sold && (
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-start p-4">
-                  <h3 className="text-white text-lg font-semibold drop-shadow-lg">
-                    {item.title}
-                  </h3>
-                </div>
-              )}
+              {/* Overlay removed to follow "no hover effect" rule */}
             </div>
           ))
         )}
@@ -583,23 +605,23 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.3, type: "spring", damping: 25 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col lg:flex-row relative border border-gray-100"
+            className="bg-white dark:bg-[#161B22] rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col lg:flex-row relative border border-gray-100 dark:border-white/5"
           >
             {/* Image Section - Larger */}
-            <div className="lg:w-3/5 flex items-center justify-center p-10 bg-gradient-to-br from-gray-50 to-gray-100">
+            <div className="lg:w-3/5 flex items-center justify-center p-10 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0A0A0B] dark:to-[#161B22]">
               <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center">
                 <img
                   src={`http://localhost:5000/uploads/${selectedItem.image_path}`}
                   alt={selectedItem.title}
-                  className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+                  className="max-w-full max-h-full object-contain rounded-none shadow-2xl"
                 />
               </div>
             </div>
 
             {/* Content Section */}
-            <div className="lg:w-2/5 flex flex-col p-8 overflow-y-auto">
+            <div className="lg:w-2/5 flex flex-col p-8 overflow-y-auto bg-white dark:bg-[#0A0A0B]">
               {/* Header with Close Button and Portfolio Management */}
-              <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-200">
+              <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-200 dark:border-white/5">
                 {/* Author Information */}
                 {authorInfo && (
                   <div className="flex items-center space-x-4">
@@ -615,10 +637,10 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">
                         {authorInfo.fullname}
                       </h3>
-                      <p className="text-sm text-gray-500 truncate">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                         @{authorInfo.username}
                       </p>
                     </div>
@@ -638,21 +660,21 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                     </button>
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="flex items-center px-3 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-gray-400"
+                      className="flex items-center px-3 py-2 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-all duration-200 font-bold text-xs border border-gray-300 dark:border-white/10 shadow-sm"
                     >
-                      <PencilSquareIcon className="h-4 w-4 mr-2" />
+                      <PencilSquareIcon className="h-3.5 w-3.5 mr-2" />
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(selectedItem.id)}
-                      className="flex items-center px-3 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200 font-medium text-sm border border-gray-300 shadow-sm hover:border-red-300"
+                      className="flex items-center px-3 py-2 bg-white dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 font-bold text-xs border border-gray-300 dark:border-red-900/20 shadow-sm"
                     >
-                      <TrashIcon className="h-4 w-4 mr-2" />
+                      <TrashIcon className="h-3.5 w-3.5 mr-2" />
                       Delete
                     </button>
                     <button
                       onClick={closeModal}
-                      className="flex items-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300"
+                      className="flex items-center p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300 dark:hover:border-white/10"
                     >
                       <XMarkIcon className="h-5 w-5" />
                     </button>
@@ -745,12 +767,12 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
               ) : (
                 <>
                   {/* Portfolio Content */}
-                  <div className="flex-1">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">
+                  <div className="flex-1 mb-8">
+                    <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
                       {selectedItem.title}
                     </h1>
-                    <div className="prose prose-gray max-w-none">
-                      <p className="text-gray-600 leading-relaxed text-lg">
+                    <div className="prose prose-gray dark:prose-invert max-w-none">
+                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg font-medium">
                         {selectedItem.description}
                       </p>
                     </div>
@@ -758,7 +780,7 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
 
                   {/* Auction Information - Show if sold */}
                   {selectedItem.is_sold && selectedItem.auction_id && (
-                    <div className="mt-6 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border-2 border-yellow-300 shadow-md">
+                    <div className="mt-6 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 rounded-xl border-2 border-yellow-300 dark:border-yellow-700/30 shadow-md transition-all duration-300">
                       <div className="flex items-center mb-4">
                         <CurrencyDollarIcon className="h-6 w-6 text-yellow-600 mr-2" />
                         <h3 className="text-lg font-bold text-gray-900">Auction Results</h3>
@@ -766,14 +788,14 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                       
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Starting Price:</span>
-                          <span className="text-gray-900 font-semibold">
+                          <span className="text-gray-600 dark:text-gray-400 font-medium">Starting Price:</span>
+                          <span className="text-gray-900 dark:text-gray-100 font-bold">
                             ₱{Number(selectedItem.starting_price).toLocaleString()}
                           </span>
                         </div>
                         
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Final Price:</span>
+                          <span className="text-gray-600 dark:text-gray-400 font-medium">Final Price:</span>
                           <span className="text-green-600 font-bold text-xl">
                             ₱{Number(selectedItem.final_price || selectedItem.current_price).toLocaleString()}
                           </span>
@@ -781,8 +803,8 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
                         
                         {selectedItem.winner_username && (
                           <div className="flex justify-between items-center pt-2 border-t border-yellow-200">
-                            <span className="text-gray-600 font-medium">Winner:</span>
-                            <span className="text-gray-900 font-semibold">
+                            <span className="text-gray-600 dark:text-gray-400 font-medium">Winner:</span>
+                            <span className="text-gray-900 dark:text-gray-100 font-bold">
                               @{selectedItem.winner_username}
                             </span>
                           </div>
@@ -800,11 +822,19 @@ const PortfolioGrid = ({ portfolioItems, loggedInUserId }) => {
 
                   {/* Owner-only actions - 3 Auto-reply Sections - Only show if NOT sold */}
                   {isOwner && !selectedItem.is_sold && (
-                    <div className="mt-8 pt-8 border-t border-gray-200 space-y-4">
-                      <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center">
-                        <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2 text-gray-600" />
-                        Auto-Reply Settings
-                      </h3>
+                    <div className="mt-8 pt-8 border-t border-gray-200 dark:border-white/5 space-y-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center">
+                          <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2 text-[#5E66FF]" />
+                          Auto-Reply Settings
+                        </h3>
+                        <button 
+                          onClick={handleBatchUpdate}
+                          className="text-[10px] font-bold text-[#5E66FF] hover:underline uppercase tracking-widest"
+                        >
+                          Update All
+                        </button>
+                      </div>
                       
                       {/* Price Auto-Reply */}
                       <AutoReplySection

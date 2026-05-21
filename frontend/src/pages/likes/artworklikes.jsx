@@ -78,14 +78,14 @@ const ArtworkLikes = ({ artworkPostId }) => {
         className={`transition ${
           liked
             ? "text-purple-600 fill-purple-600"
-            : "text-gray-500 group-hover:text-black"
+            : "text-gray-500 group-hover:text-purple-600"
         }`}
         fill={liked ? "currentColor" : "none"}
       />
 
       <span
         className={`transition ${
-          liked ? "text-purple-600 font-medium" : "text-gray-600 group-hover:text-black"
+          liked ? "text-purple-600 font-medium" : "text-gray-600 group-hover:text-purple-600"
         }`}
       >
         {likeCount}

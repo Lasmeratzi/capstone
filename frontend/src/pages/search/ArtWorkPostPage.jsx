@@ -10,6 +10,7 @@ import {
   MoreVertical,
   MessageCircle,
   Tag,
+  Ban
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ArtPostModal from "../../components/modals/artpostmodal";
@@ -246,12 +247,12 @@ const ArtworkPostPage = () => {
   const renderMediaGrid = (media) => {
     const count = media.length;
     if (count === 1)
-      return <ProtectedMedia file={media[0]} onClick={() => openModal(0)} className="w-full h-full rounded-lg cursor-pointer" />;
+      return <ProtectedMedia file={media[0]} onClick={() => openModal(0)} className="w-full h-full rounded-none cursor-pointer" />;
     if (count === 2)
       return (
         <div className="grid grid-cols-2 gap-1">
           {media.map((file, index) => (
-            <ProtectedMedia key={file.id} file={file} onClick={() => openModal(index)} className="w-full h-full aspect-square rounded-lg cursor-pointer" />
+            <ProtectedMedia key={file.id} file={file} onClick={() => openModal(index)} className="w-full h-full aspect-square rounded-none cursor-pointer" />
           ))}
         </div>
       );
@@ -259,13 +260,13 @@ const ArtworkPostPage = () => {
       return (
         <div className="grid grid-cols-2 gap-1">
           <div className="row-span-2 aspect-square">
-            <ProtectedMedia file={media[0]} onClick={() => openModal(0)} className="w-full h-full rounded-lg cursor-pointer" />
+            <ProtectedMedia file={media[0]} onClick={() => openModal(0)} className="w-full h-full rounded-none cursor-pointer" />
           </div>
           <div className="aspect-square">
-            <ProtectedMedia file={media[1]} onClick={() => openModal(1)} className="w-full h-full rounded-lg cursor-pointer" />
+            <ProtectedMedia file={media[1]} onClick={() => openModal(1)} className="w-full h-full rounded-none cursor-pointer" />
           </div>
           <div className="aspect-square">
-            <ProtectedMedia file={media[2]} onClick={() => openModal(2)} className="w-full h-full rounded-lg cursor-pointer" />
+            <ProtectedMedia file={media[2]} onClick={() => openModal(2)} className="w-full h-full rounded-none cursor-pointer" />
           </div>
         </div>
       );
@@ -273,7 +274,7 @@ const ArtworkPostPage = () => {
       return (
         <div className="grid grid-cols-2 gap-1">
           {media.map((file, index) => (
-            <ProtectedMedia key={file.id} file={file} onClick={() => openModal(index)} className="w-full h-full aspect-square rounded-lg cursor-pointer" />
+            <ProtectedMedia key={file.id} file={file} onClick={() => openModal(index)} className="w-full h-full aspect-square rounded-none cursor-pointer" />
           ))}
         </div>
       );
@@ -281,9 +282,9 @@ const ArtworkPostPage = () => {
       <div className="grid grid-cols-2 gap-1">
         {media.slice(0, 4).map((file, index) => (
           <div key={file.id} className={`aspect-square relative`}>
-            <ProtectedMedia file={file} onClick={() => openModal(index)} className="w-full h-full rounded-lg cursor-pointer" />
+            <ProtectedMedia file={file} onClick={() => openModal(index)} className="w-full h-full rounded-none cursor-pointer" />
             {index === 3 && (
-              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center text-white font-bold text-xl pointer-events-none rounded-lg">
+              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center text-white font-bold text-xl pointer-events-none rounded-none">
                 +{media.length - 4}
               </div>
             )}
@@ -371,8 +372,9 @@ const ArtworkPostPage = () => {
         <div className="max-w-2xl mx-auto space-y-4">
           <div className="relative bg-white p-4 rounded-lg shadow-md border border-gray-200">
             {post.post_status === "down" && (
-              <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg pointer-events-none">
-                <p className="text-white text-lg font-semibold">🚫 Post is taken down</p>
+              <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg pointer-events-none gap-2">
+                <Ban className="text-white w-6 h-6" />
+                <p className="text-white text-lg font-semibold uppercase tracking-tight">Post is taken down</p>
               </div>
             )}
 
@@ -383,7 +385,7 @@ const ArtworkPostPage = () => {
                   <img
                     src={`${API_BASE}/uploads/${post.author_pfp}`}
                     alt={`${post.author}'s profile`}
-                    className="w-10 h-10 rounded-full border border-gray-300 object-cover hover:border-blue-500 transition-colors"
+                    className="w-10 h-10 rounded-full border border-gray-300 object-cover transition-colors"
                     onError={(e) => {
                       e.target.src = "/default-avatar.png";
                     }}
@@ -397,7 +399,7 @@ const ArtworkPostPage = () => {
               <div>
                 <Link
                   to={`/visitprofile/${post.author_id}`}
-                  className="font-bold text-gray-800 hover:text-blue-600 transition-colors"
+                  className="font-bold text-gray-800 transition-colors"
                 >
                   {post.author}
                 </Link>
@@ -453,7 +455,7 @@ const ArtworkPostPage = () => {
                   <Link
                     key={tag.id}
                     to={`/tags/${tag.name}`}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium transition-colors"
                   >
                     <Tag size={12} />
                     #{tag.name}

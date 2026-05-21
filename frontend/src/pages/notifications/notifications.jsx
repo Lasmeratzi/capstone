@@ -17,6 +17,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import Sidebar from "../sidebar/sidebar";
+import MobileNav from "../../components/layout/MobileNav";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -305,19 +306,22 @@ const Notifications = () => {
   }
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
+    <div className="flex bg-gray-50 dark:bg-[#0A0A0B] min-h-screen">
+      {/* Mobile Navigation */}
+      <MobileNav />
+
       {/* Sidebar */}
-      <div className="fixed h-full">
+      <div className="hidden md:block fixed h-full">
         <Sidebar />
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-8 text-gray-800 ml-64">
+      <div className="flex-1 p-4 md:p-8 text-gray-800 dark:text-gray-100 ml-0 md:ml-64 pt-18 md:pt-8 pb-20 md:pb-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg relative">
-              <BellIcon className="h-7 w-7 text-blue-600" />
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg relative">
+              <BellIcon className="h-7 w-7 text-blue-600 dark:text-blue-400" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -326,7 +330,7 @@ const Notifications = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold">Notifications</h1>
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                 {notifications.length} total • {unreadCount} unread
               </p>
             </div>
@@ -344,24 +348,24 @@ const Notifications = () => {
         </div>
 
         {notifications.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <BellIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">No notifications yet</p>
-            <p className="text-gray-400 text-sm mt-2">
+          <div className="text-center py-16 bg-white dark:bg-white/[0.02] rounded-xl border border-gray-200 dark:border-white/5 shadow-sm">
+            <BellIcon className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400 text-lg">No notifications yet</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
               You'll see notifications here when you get likes, comments, or auction updates.
             </p>
           </div>
         ) : (
           <div className="w-full max-w-3xl">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <ul className="divide-y divide-gray-100">
+            <div className="bg-white dark:bg-white/[0.02] rounded-xl border border-gray-200 dark:border-white/5 shadow-sm overflow-hidden">
+              <ul className="divide-y divide-gray-100 dark:divide-white/5">
                 {currentNotifications.map((notif, index) => (
                   <li
                     key={notif.id}
                     className={`px-5 py-4 transition-all duration-150 cursor-pointer group ${
                       index === 4 ? '' : 'border-b-0'
                     } ${!notif.is_read ? getNotificationColor(notif.type) : ''} 
-                    hover:bg-gray-50 border-b border-gray-100 last:border-b-0`}
+                    hover:bg-gray-50 dark:hover:bg-white/[0.05] border-b border-gray-100 dark:border-white/5 last:border-b-0`}
                     onClick={() => !notif.is_read && markAsRead(notif.id)}
                     title={formatDetailedDate(notif.created_at)}
                   >

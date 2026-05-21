@@ -4,6 +4,7 @@ import { CheckIcon, BellIcon, BellSlashIcon } from "@heroicons/react/24/outline"
 import AuctionBids from "../comments/auctionbids";
 import ReportsModal from "../../components/modals/reportsmodal";
 import { X, Clock, Tag, User, Gavel, Zap, MoreVertical, Flag, Calculator } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const API_BASE = "http://localhost:5000";
 
@@ -257,12 +258,13 @@ const Auctions = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full">
       {errorMessage && (
-        <p className="text-center text-red-500 mb-4">{errorMessage}</p>
+        <p className="text-center text-red-500 mb-6">{errorMessage}</p>
       )}
       {auctions.length > 0 ? (
-        auctions.map((auction) => {
+        <div className="columns-1 md:columns-2 gap-8">
+        {auctions.map((auction) => {
           const currentUserId = getCurrentUserId();
           const isAuthor = String(auction.author_id) === String(currentUserId);
           const hasReminder = reminders[auction.id] || false;
@@ -270,21 +272,25 @@ const Auctions = () => {
           const showReminderButton = canSetReminder(auction) && !isAuthor;
           
           return (
+            <div key={auction.id} className="break-inside-avoid mb-8">
             <div
-              key={auction.id}
-              className="bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 relative"
+              className="relative bg-white dark:bg-[#0A0A0B] p-5 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 overflow-hidden group transition-all duration-300 hover:shadow-lg"
             >
               {/* Three dots menu - Top Right Corner */}
               <div className="absolute top-4 right-4 z-10">
                 <button
                   onClick={() => setMenuOpen(menuOpen === auction.id ? null : auction.id)}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
                 >
-                  <MoreVertical className="w-5 h-5 text-gray-600" />
+                  <MoreVertical className="w-5 h-5" />
                 </button>
                 
                 {menuOpen === auction.id && (
-                  <div className="absolute right-0 mt-2 w-36 bg-white shadow-lg rounded-lg border border-gray-200 z-50">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 shadow-2xl rounded-xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden"
+                  >
                     {/* Author-only options */}
                     {isAuthor && (
                       <>
@@ -324,255 +330,239 @@ const Auctions = () => {
                         Report Auction
                       </button>
                     )}
-                  </div>
+                  </motion.div>
                 )}
               </div>
 
-              <div className="p-6 pt-12">
-                {/* Two div layout */}
-                <div className="flex gap-6">
-                  {/* Left Div - Author and Image */}
-                  <div className="flex-shrink-0 w-64">
-                    {/* Author Info - Top Left */}
-                    <div className="flex items-center gap-3 mb-4">
-                      {auction.author_pfp ? (
-                        <img
-                          src={`${API_BASE}/uploads/${auction.author_pfp}`}
-                          alt={`${auction.author}'s profile`}
-                          className="w-10 h-10 rounded-full border-2 border-blue-200 object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-blue-200 flex items-center justify-center">
-                          <User className="w-5 h-5 text-blue-600" />
-                        </div>
-                      )}
-                      <div>
-                        <div className="flex items-center">
-                          <p className="font-bold text-gray-900">@{auction.author_username}</p>
-                          {auction.is_verified && <VerifiedBadge />}
-                        </div>
-                        <p className="text-gray-600 text-sm">{auction.author_fullname}</p>
-                      </div>
+              {/* Author Info */}
+              <div className="flex items-center gap-3 mb-6 mt-2">
+                <div className="relative group/pfp">
+                  {auction.author_pfp ? (
+                    <img src={`${API_BASE}/uploads/${auction.author_pfp}`} alt={`${auction.author}'s profile`} className="w-11 h-11 rounded-full border-2 border-white dark:border-gray-800 shadow-sm object-cover transition-transform group-hover/pfp:scale-105" />
+                  ) : (
+                    <div className="w-11 h-11 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 text-xs font-bold">
+                      {auction.author_username?.charAt(0).toUpperCase()}
                     </div>
-
-                    {/* Auction Image - Below Author */}
-                    {auction.media && auction.media.length > 0 && (
-                      <div
-                        className="relative w-full h-64 cursor-pointer group"
-                        onClick={() => setSelectedMedia(auction.media[0])}
-                      >
-                        <img
-                          src={`${API_BASE}/uploads/${auction.media[0].media_path}`}
-                          alt="Auction media"
-                          className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                        />
-                        {auction.media.length > 1 && (
-                          <div className="absolute top-3 right-3 bg-black bg-opacity-70 rounded-full w-8 h-8 flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">+{auction.media.length - 1}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center flex-wrap gap-1">
+                    <p className="font-bold text-gray-900 dark:text-gray-100">@{auction.author_username}</p>
+                    {auction.is_verified && <VerifiedBadge />}
                   </div>
+                  <p className="text-gray-400 dark:text-gray-500 text-xs font-medium tracking-tight">{auction.author_fullname}</p>
+                </div>
+              </div>
 
-                  {/* Right Div - All Content */}
-                  <div className="flex-grow min-w-0">
-                    {/* Status Badge */}
-                    <div className="flex justify-between items-start mb-4">
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-                          auction.status === "active"
-                            ? "bg-green-100 text-green-800 border border-green-200"
-                            : auction.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                            : auction.status === "approved"
-                            ? "bg-blue-100 text-blue-800 border border-blue-200"
-                            : "bg-gray-100 text-gray-600 border border-gray-200"
-                        }`}
-                      >
-                        <Gavel className="w-4 h-4 mr-2" />
-                        {auction.status.toUpperCase()}
-                      </span>
-                      
-                      {/* Reminder Button - Only show for non-active auctions and non-authors */}
-                      {showReminderButton && (
-                        <button
-                          onClick={() => toggleReminder(auction.id)}
-                          disabled={isLoading}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            hasReminder
-                              ? "bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200"
-                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                          } ${isLoading ? "opacity-50 cursor-not-allowed" : "hover:shadow-md"}`}
-                        >
-                          {isLoading ? (
-                            <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                          ) : hasReminder ? (
-                            <>
-                              <BellSlashIcon className="w-4 h-4" />
-                              <span>Remove Reminder</span>
-                            </>
-                          ) : (
-                            <>
-                              <BellIcon className="w-4 h-4" />
-                              <span>Remind Me</span>
-                            </>
-                          )}
-                        </button>
+              {/* Vertical layout for grid */}
+              <div className="flex flex-col gap-5">
+                {/* Image */}
+                <div className="w-full">
+                  {auction.media && auction.media.length > 0 && (
+                    <div
+                      className="relative w-full h-72 cursor-pointer rounded-none overflow-hidden border border-gray-100 dark:border-gray-800 group/image"
+                      onClick={() => setSelectedMedia(auction.media[0])}
+                    >
+                      <img
+                        src={`${API_BASE}/uploads/${auction.media[0].media_path}`}
+                        alt="Auction media"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover/image:scale-[1.05]"
+                      />
+                      {auction.media.length > 1 && (
+                        <div className="absolute top-3 right-3 bg-black bg-opacity-70 rounded-full w-8 h-8 flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">+{auction.media.length - 1}</span>
+                        </div>
                       )}
                     </div>
+                  )}
+                </div>
 
-                    {/* Title and Description */}
-                    <div className="mb-4">
-                      <h3 className="font-bold text-gray-900 text-xl mb-3">
-                        {auction.title}
-                      </h3>
-                      <p className="text-gray-700 text-sm leading-relaxed">
-                        {auction.description}
-                      </p>
-                    </div>
-
-                    {/* Price Info */}
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Tag className="w-5 h-5 text-blue-600" />
-                          <span className="text-sm font-semibold text-blue-800">Starting Price</span>
-                        </div>
-                        <p className="text-2xl font-bold text-blue-700">{formatCurrency(auction.starting_price)}</p>
-                      </div>
-                      
-                      <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Gavel className="w-5 h-5 text-green-600" />
-                          <span className="text-sm font-semibold text-green-800">Current Bid</span>
-                        </div>
-                        <p className="text-2xl font-bold text-green-700">{formatCurrency(auction.current_price)}</p>
-                      </div>
-
-                      {/* Bid Increment Info */}
-                      <div className={`rounded-lg p-4 border ${
-                        auction.use_increment 
-                          ? 'bg-purple-50 border-purple-200' 
-                          : 'bg-gray-50 border-gray-200'
-                      }`}>
-                        <div className="flex items-center gap-2 mb-2">
-                          {auction.use_increment ? (
-                            <>
-                              <Calculator className="w-5 h-5 text-purple-600" />
-                              <span className="text-sm font-semibold text-purple-800">Bid Increment</span>
-                            </>
-                          ) : (
-                            <>
-                              <Gavel className="w-5 h-5 text-gray-600" />
-                              <span className="text-sm font-semibold text-gray-800">Bidding Rules</span>
-                            </>
-                          )}
-                        </div>
-                        
-                        {auction.use_increment ? (
+                {/* Content */}
+                <div className="min-w-0">
+                  {/* Status Badge */}
+                  <div className="flex justify-between items-start mb-4">
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
+                        auction.status === "active"
+                          ? "bg-green-100 text-green-800 border border-green-200"
+                          : auction.status === "pending"
+                          ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                          : auction.status === "approved"
+                          ? "bg-blue-100 text-blue-800 border border-blue-200"
+                          : "bg-gray-100 text-gray-600 border border-gray-200"
+                      }`}
+                    >
+                      <Gavel className="w-4 h-4 mr-2" />
+                      {auction.status.toUpperCase()}
+                    </span>
+                    
+                    {showReminderButton && (
+                      <button
+                        onClick={() => toggleReminder(auction.id)}
+                        disabled={isLoading}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          hasReminder
+                            ? "bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200"
+                            : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                        } ${isLoading ? "opacity-50 cursor-not-allowed" : "hover:shadow-md"}`}
+                      >
+                        {isLoading ? (
+                          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                        ) : hasReminder ? (
                           <>
-                            <p className="text-2xl font-bold text-purple-700">{formatCurrency(auction.bid_increment || 100)}</p>
-                            <p className="text-xs text-purple-600 mt-1">
-                              Bids must increase by exactly {formatCurrency(auction.bid_increment || 100)}
-                            </p>
+                            <BellSlashIcon className="w-4 h-4" />
+                            <span>Remove Reminder</span>
                           </>
                         ) : (
                           <>
-                            <p className="text-lg font-bold text-gray-700">Free Bidding</p>
-                            <p className="text-xs text-gray-600 mt-1">
-                              Bid any amount above current price
-                            </p>
+                            <BellIcon className="w-4 h-4" />
+                            <span>Remind Me</span>
                           </>
                         )}
-                      </div>
-                    </div>
-
-                    {/* Countdown Timer - Only show for active auctions */}
-                    {auction.status === "active" && (
-                      <div className="mb-4">
-                        <CountdownTimer endTime={auction.end_time} />
-                      </div>
-                    )}
-
-                    {/* Show auction start time for pending/approved auctions */}
-                    {(auction.status === "pending" || auction.status === "approved") && auction.auction_start_time && (
-                      <div className="mb-4">
-                        <div className="bg-yellow-50 border border-yellow-200 rounded px-3 py-2 inline-flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-yellow-600" />
-                          <span className="text-sm font-medium text-yellow-700">
-                            Starts: {new Date(auction.auction_start_time).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Auction Results when Ended */}
-                    {auction.status === "ended" && auction.winner_id && (
-                      <div className="bg-purple-50 rounded-lg p-4 border border-purple-200 mb-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Zap className="w-5 h-5 text-purple-600" />
-                          <span className="text-sm font-semibold text-purple-800">Auction Results</span>
-                        </div>
-                        <p className="text-lg font-bold text-purple-700">
-                          Sold for {formatCurrency(auction.final_price || auction.current_price)}
-                        </p>
-                        <p className="text-sm text-purple-600 mt-1">
-                          Winner has been notified to complete the transaction
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Auction Bidding Form */}
-                    {auction.status === "active" && (
-                      <div className="mt-6 pt-4 border-t border-gray-200">
-                        <AuctionBids 
-                          auctionId={auction.id} 
-                          currentPrice={parseFloat(auction.current_price)} 
-                          refreshAuctions={refreshAuctions} // ✅ Pass the refresh function
-                        />
-                      </div>
+                      </button>
                     )}
                   </div>
+
+                  {/* Title and Description */}
+                  <div className="mb-6">
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-2xl mb-2 leading-tight">
+                      {auction.title}
+                    </h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                      {auction.description}
+                    </p>
+                  </div>
+
+                  {/* Price Info */}
+                  <div className="grid grid-cols-1 gap-3 mb-5">
+                    <div className="bg-blue-50/50 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-xs font-semibold text-blue-800 dark:text-blue-300">Starting Price</span>
+                      </div>
+                      <p className="text-lg font-bold text-blue-700 dark:text-blue-400">{formatCurrency(auction.starting_price)}</p>
+                    </div>
+                    
+                    <div className="bg-green-50/50 dark:bg-green-900/10 rounded-xl p-3 border border-green-100 dark:border-green-900/30 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Gavel className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        <span className="text-xs font-semibold text-green-800 dark:text-green-300">Current Bid</span>
+                      </div>
+                      <p className="text-lg font-bold text-green-700 dark:text-green-400">{formatCurrency(auction.current_price)}</p>
+                    </div>
+
+                    <div className={`rounded-xl p-3 border flex items-center justify-between transition-all ${
+                      auction.use_increment 
+                        ? 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-900/30' 
+                        : 'bg-gray-50/50 dark:bg-white/5 border-gray-100 dark:border-white/10'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        {auction.use_increment ? (
+                          <Calculator className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        ) : (
+                          <Gavel className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        )}
+                        <span className={`text-xs font-semibold ${auction.use_increment ? 'text-purple-800 dark:text-purple-300' : 'text-gray-800 dark:text-gray-300'}`}>
+                          {auction.use_increment ? 'Bid Increment' : 'Bidding Rules'}
+                        </span>
+                      </div>
+                      
+                      {auction.use_increment ? (
+                        <p className="text-lg font-bold text-purple-700 dark:text-purple-400">{formatCurrency(auction.bid_increment || 100)}</p>
+                      ) : (
+                        <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Free Bidding</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Countdown Timer */}
+                  {auction.status === "active" && (
+                    <div className="mb-4">
+                      <CountdownTimer endTime={auction.end_time} />
+                    </div>
+                  )}
+
+                  {/* Auction start time */}
+                  {(auction.status === "pending" || auction.status === "approved") && auction.auction_start_time && (
+                    <div className="mb-4">
+                      <div className="bg-yellow-50 border border-yellow-200 rounded px-3 py-2 inline-flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-yellow-600" />
+                        <span className="text-sm font-medium text-yellow-700">
+                          Starts: {new Date(auction.auction_start_time).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Auction Results when Ended */}
+                  {auction.status === "ended" && auction.winner_id && (
+                    <div className="bg-purple-50 rounded-lg p-4 border border-purple-200 mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Zap className="w-5 h-5 text-purple-600" />
+                        <span className="text-sm font-semibold text-purple-800">Auction Results</span>
+                      </div>
+                      <p className="text-lg font-bold text-purple-700">
+                        Sold for {formatCurrency(auction.final_price || auction.current_price)}
+                      </p>
+                      <p className="text-sm text-purple-600 mt-1">
+                        Winner has been notified to complete the transaction
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Auction Bidding Form */}
+                  {auction.status === "active" && (
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                      <AuctionBids 
+                        auctionId={auction.id} 
+                        currentPrice={parseFloat(auction.current_price)} 
+                        refreshAuctions={refreshAuctions}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
+          </div>
           );
-        })
+        })}
+        </div>
       ) : (
-        <div className="text-center py-12">
-          <div className="bg-gray-50 rounded-2xl p-8 max-w-md mx-auto border border-gray-200">
-            <Gavel className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Active Auctions</h3>
-            <p className="text-gray-600">Check back later for new auction listings</p>
+        <div className="text-center py-16">
+          <div className="bg-white dark:bg-[#0A0A0B] rounded-2xl p-10 max-w-md mx-auto border border-gray-200 dark:border-white/5 shadow-xl transition-all">
+            <div className="w-16 h-16 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Gavel className="w-8 h-8 text-gray-400 dark:text-gray-600" />
+            </div>
+            <h3 className="text-xl font-extrabold text-gray-900 dark:text-gray-100 mb-3">No Active Auctions</h3>
+            <p className="text-gray-600 dark:text-gray-400 font-medium">Check back later for new auction listings</p>
           </div>
         </div>
       )}
 
-      {/* Media Preview Modal */}
+      {/* Media Modal */}
       {selectedMedia && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4 backdrop-blur-sm"
-          onClick={() => setSelectedMedia(null)}
-        >
-          <div
-            className="relative max-w-6xl w-full max-h-[90vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300" onClick={() => setSelectedMedia(null)}>
+          <div className="relative max-w-5xl w-full flex flex-col items-center animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setSelectedMedia(null)}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-transform hover:scale-110 z-10 bg-black bg-opacity-50 rounded-full p-2"
+              className="absolute -top-12 right-0 text-white/70 hover:text-white transition-all hover:scale-110 z-10 bg-white/10 hover:bg-white/20 p-2 rounded-full backdrop-blur-md border border-white/10"
             >
               <X size={24} />
             </button>
-            <div className="bg-white rounded-xl overflow-hidden">
+            
+            <div className="bg-[#0F0F11] rounded-xl overflow-hidden shadow-2xl border border-white/5">
               <img
                 src={`${API_BASE}/uploads/${selectedMedia.media_path}`}
                 alt="Auction media preview"
-                className="max-h-[80vh] w-auto max-w-full mx-auto object-contain"
+                className="max-h-[80vh] w-auto max-w-full mx-auto object-contain select-none"
               />
             </div>
-        </div>
+            
+            {/* Minimal Info Overlay */}
+            <div className="mt-4 px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
+              <p className="text-white text-xs font-bold uppercase tracking-widest">Media Preview</p>
+            </div>
+          </div>
         </div>
       )}
 

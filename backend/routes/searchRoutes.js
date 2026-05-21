@@ -8,9 +8,15 @@ const router = express.Router();
 // GET /api/search/universal?query=bacolod
 router.get("/search/universal", authenticateToken, searchController.universalSearch);
 
+// Public search (no token needed)
+router.get("/search/public/universal", searchController.universalSearch);
+
 // Quick search for real-time suggestions
 // GET /api/search/quick?query=t
 router.get("/search/quick", authenticateToken, searchController.quickSearch);
+
+// Public quick search (no token needed)
+router.get("/search/public/quick", searchController.quickSearch);
 
 // Individual search endpoints (optional, for specific needs)
 // GET /api/search/users?query=maria

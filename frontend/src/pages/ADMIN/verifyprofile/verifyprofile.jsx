@@ -87,7 +87,7 @@ const VerifyProfile = () => {
   );
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100">
       <SideAdmin />
       <div className="flex-grow p-6">
         <div className="mb-6">

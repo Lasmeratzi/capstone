@@ -8,7 +8,10 @@ import {
   ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
   CheckCircleIcon,
-  PhoneIcon
+  PhoneIcon,
+  TrashIcon,
+  PencilSquareIcon,
+  TrophyIcon
 } from "@heroicons/react/20/solid";
 
 const VisitPortfolio = () => {
@@ -113,6 +116,21 @@ const VisitPortfolio = () => {
     }
   };
 
+  const handleDelete = async (itemId) => {
+    if (!window.confirm("Are you sure you want to delete this portfolio item?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:5000/api/portfolio/${itemId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPortfolioItems(portfolioItems.filter(item => item.id !== itemId));
+      closeModal();
+    } catch (err) {
+      console.error("Failed to delete item:", err);
+      alert("Failed to delete item.");
+    }
+  };
+
   // 🔹 Handle custom message (opens inbox)
   const handleCustomMessage = () => {
     if (selectedItem) {
@@ -153,20 +171,22 @@ const VisitPortfolio = () => {
           <div
             key={item.id}
             onClick={() => handleImageClick(item)}
-            className="group relative cursor-pointer transform transition-all duration-300 hover:scale-105 w-full h-0 pb-[100%] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl border border-gray-200"
+            className="group relative cursor-pointer w-full h-0 pb-[100%] rounded-none overflow-hidden shadow-lg border border-gray-200"
           >
             <img
               src={`http://localhost:5000/uploads/${item.image_path}`}
               alt={item.title}
-              className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-500"
             />
 
             {/* SOLD Overlay */}
             {item.is_sold && (
               <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10">
                 <div className="text-center p-4">
-                  <div className="bg-red-600 text-white font-bold text-xl px-6 py-3 rounded-lg mb-2 transform rotate-[-5deg] shadow-lg">
-                    🏆 SOLD 🏆
+                  <div className="bg-red-600 text-white font-bold text-xl px-6 py-3 rounded-none mb-2 transform rotate-[-5deg] shadow-lg flex items-center justify-center gap-2">
+                    <TrophyIcon className="h-6 w-6" />
+                    <span>SOLD</span>
+                    <TrophyIcon className="h-6 w-6" />
                   </div>
                   <p className="text-white text-sm font-medium">Auction Completed</p>
                   {item.final_price && (
@@ -178,14 +198,7 @@ const VisitPortfolio = () => {
               </div>
             )}
 
-            {/* Subtle overlay on hover (only show if not sold) */}
-            {!item.is_sold && (
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-start p-4">
-                <h3 className="text-white text-lg font-semibold drop-shadow-lg">
-                  {item.title}
-                </h3>
-              </div>
-            )}
+            {/* Overlay removed to follow "no hover effect" rule */}
           </div>
         ))}
       </div>
@@ -203,7 +216,7 @@ const VisitPortfolio = () => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.3, type: "spring", damping: 25 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col lg:flex-row relative border border-gray-100"
+            className="bg-white rounded-none shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col lg:flex-row relative border border-gray-100"
           >
             {/* Image Section - Larger */}
             <div className="lg:w-3/5 flex items-center justify-center p-10 bg-gradient-to-br from-gray-50 to-gray-100">
@@ -211,7 +224,7 @@ const VisitPortfolio = () => {
                 <img
                   src={`http://localhost:5000/uploads/${selectedItem.image_path}`}
                   alt={selectedItem.title}
-                  className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+                  className="max-w-full max-h-full object-contain rounded-none shadow-2xl"
                 />
               </div>
             </div>
@@ -245,14 +258,25 @@ const VisitPortfolio = () => {
                   </div>
                 )}
 
-                {/* Close Button */}
-                <button
-                  onClick={closeModal}
-                  className="flex items-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300"
-                  disabled={isSending}
-                >
-                  <XMarkIcon className="h-5 w-5" />
-                </button>
+                {/* Close & Management Buttons */}
+                <div className="flex items-center space-x-2">
+                  {String(loggedInUserId) === String(id) && (
+                    <button
+                      onClick={() => handleDelete(selectedItem.id)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                      title="Delete Item"
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
+                  )}
+                  <button
+                    onClick={closeModal}
+                    className="flex items-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300"
+                    disabled={isSending}
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
 
               {/* Portfolio Content */}

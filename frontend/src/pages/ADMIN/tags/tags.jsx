@@ -37,7 +37,8 @@ const Tags = () => {
 
   // Get token - handles multiple storage locations
   const getToken = () => {
-    const token = localStorage.getItem("token") || 
+    const token = sessionStorage.getItem("adminToken") ||
+                  localStorage.getItem("token") || 
                   localStorage.getItem("adminToken") ||
                   sessionStorage.getItem("token") ||
                   "";
@@ -402,14 +403,10 @@ const Tags = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Fixed Sidebar - Same as homeadmin.jsx */}
-      <div className="fixed left-0 top-0 h-full z-10">
-        <SideAdmin />
-      </div>
+      <SideAdmin />
 
-      {/* Main Content with proper margin for fixed sidebar */}
-      <div className="flex-grow ml-48">
-        <div className="p-6">
+      {/* Main Content */}
+      <div className="flex-grow p-6">
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-center justify-between">
@@ -862,7 +859,6 @@ const Tags = () => {
             </div>
           )}
         </div>
-      </div>
 
       {/* Edit Modal - Clean design */}
       {showModal && currentTag && (

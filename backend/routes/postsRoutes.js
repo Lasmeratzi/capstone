@@ -18,6 +18,9 @@ router.use((req, res, next) => {
   next();
 });
 
+// Public route (no auth needed - for landing page)
+router.get("/posts/public", postsController.getPublicPosts);
+
 // Create a new post
 router.post("/posts", authenticateToken, upload.single("media"), postsController.createPost);
 

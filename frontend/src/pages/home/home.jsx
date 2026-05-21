@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../sidebar/sidebar";
+import { motion } from "framer-motion";
 import MakePost from "../makepost/makepost";
 import MakeArt from "../makepost/makeart";
 import MakeAuction from "../makepost/makeauction";
@@ -10,6 +11,7 @@ import ArtPosts from "../home/artpost";
 import Auctions from "../home/auctions";
 import RSideHome from "../home/rsidehome";
 import CreateModal from "../../components/modals/createmodal";
+import MobileNav from "../../components/layout/MobileNav";
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -167,164 +169,164 @@ const Home = () => {
   }
 
   return (
-    <div className="flex">
-      {/* Sidebar */}
-      <div className="fixed h-screen w-50 bg-white border-r shadow-md">
+    <div className="flex bg-white dark:bg-[#0A0A0B] transition-colors duration-300">
+      {/* Mobile Navigation */}
+      <MobileNav onOpenCreate={() => setIsCreateOpen(true)} />
+
+      {/* Sidebar — hidden on mobile */}
+      <div className="hidden md:block fixed top-0 left-0 h-screen w-[200px] z-40">
         <Sidebar onOpenCreate={() => setIsCreateOpen(true)} />
       </div>
 
-      {/* Main Content */}
-      <div className="ml-[200px] flex-grow max-w-5xl mx-auto min-h-screen px-6 py-6">
-        {/* Hero Section */}
-        <div className="mb-10">
-          <div
-            className="rounded-2xl shadow-lg p-10 text-white relative overflow-hidden"
-            style={{
-              backgroundImage: user.pfp
-                ? `url("http://localhost:5000/uploads/${user.pfp}")`
-                : "linear-gradient(to right, #6366F1, #8B5CF6, #F9A8D4)",
-              backgroundSize: "cover",
-              backgroundPosition: "95% 30%",
-            }}
-          >
-            <div className="absolute inset-0 rounded-2xl">
-              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/60 via-purple-500/50 to-pink-400/60 mix-blend-multiply"></div>
+      {/* Main Content & Right Sidebar Container */}
+      <div className="ml-0 md:ml-[200px] flex-grow flex min-h-screen border-l border-transparent md:border-gray-100 dark:md:border-gray-800/50">
+        {/* Center Feed */}
+        <div className="flex-grow px-4 md:px-8 pb-20 md:pb-10 pt-16 md:pt-0">
+          {/* Content Tabs - Centered Gallery Style */}
+          <div className="pt-10">
+            {/* Tabs Container - Centered */}
+            <div className="flex flex-col items-center mb-10">
+              <div className="flex items-center gap-12">
+                {[
+                  { key: "artworks", label: "Artworks" },
+                  { key: "posts", label: "Posts" },
+                  { key: "auctions", label: "Auctions" },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`relative pb-2 text-base font-bold tracking-tight transition-all duration-300 cursor-pointer ${
+                      activeTab === tab.key
+                        ? "text-gray-900 dark:text-gray-100"
+                        : "text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400"
+                    }`}
+                  >
+                    {tab.label}
+                    {activeTab === tab.key && (
+                      <motion.div 
+                        layoutId="activeTab"
+                        className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#5E66FF] rounded-full"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-
-            <div className="relative z-10 max-w-lg">
-              <h1 className="text-3xl font-bold mb-2">
-                Welcome back, {user.username}!
-              </h1>
-              <p className="text-lg">
-                Share your thoughts, showcase your art, or join auctions from
-                fellow artists.
-              </p>
-            </div>
           </div>
-        </div>
 
-        {/* Tabs */}
-        <div className="relative mb-6 mt-[-4px]">
-          <div className="flex space-x-1">
-            {["artworks", "posts", "auctions"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`relative px-6 py-2 text-sm font-medium rounded-t-md transition-colors duration-200
-                  ${
-                    activeTab === tab
-                      ? "bg-white shadow-md border-x border-t border-gray-300 text-blue-600 -mb-[2px]"
-                      : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-transparent"
-                  }`}
-                style={{
-                  clipPath: "polygon(0 0, 88% 0, 100% 100%, 0% 100%)",
-                  zIndex: activeTab === tab ? 10 : 1,
-                  minWidth: "fit-content",
-                  width: "auto",
-                }}
-              >
-                {tab === "artworks"
-                  ? "Artworks"
-                  : tab === "posts"
-                  ? "Posts"
-                  : "Auctions"}
-              </button>
-            ))}
-          </div>
-          <div className="h-[2px] bg-gray-300 w-full absolute top-full left-0 z-0" />
-        </div>
-
-        {/* Content */}
-        {activeTab === "artworks" && (
-          <div className="columns-1 md:columns-2 gap-4">
-            {isLoadingArtworks ? (
-              <div className="col-span-2 text-center py-10">
-                <p className="text-gray-500">Loading artworks...</p>
-              </div>
-            ) : artworks.length > 0 ? (
-              // Pass artworks as prop to ArtPosts component
-              <ArtPosts 
-                initialArtworks={artworks}
-                userId={user.id}
-                onDeleteArtwork={handleDeleteArtwork}
-              />
-            ) : (
-              <div className="col-span-2 text-center py-10">
-                <p className="text-gray-500 text-lg mb-3">
-                  No artwork posts yet.
-                </p>
-                <p className="text-gray-400 mb-4">
-                  Be the first to post artwork, or follow artists to see their posts!
-                </p>
-                <button
-                  onClick={() => navigate("/search")}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-                >
-                  Discover Artists
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "posts" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {errorMessage && (
-              <p className="col-span-2 text-red-500 text-center">
-                {errorMessage}
-              </p>
-            )}
-            
-            {isLoadingPosts ? (
-              <div className="col-span-2 text-center py-10">
-                <p className="text-gray-500">Loading posts...</p>
-              </div>
-            ) : posts.length > 0 ? (
-              posts.map((post) => (
-                <Post
-                  key={post.id}
-                  post={post}
+        {/* Content Feed */}
+        <div>
+          {activeTab === "artworks" && (
+            <div>
+              {isLoadingArtworks ? (
+                <div className="text-center py-20">
+                  <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-400 font-medium text-sm">Loading artworks...</p>
+                </div>
+              ) : artworks.length > 0 ? (
+                <ArtPosts 
+                  initialArtworks={artworks}
                   userId={user.id}
-                  handleDelete={() => handleDelete(post.id)}
+                  onDeleteArtwork={handleDeleteArtwork}
                 />
-              ))
-            ) : (
-              <div className="col-span-2 text-center py-10">
-                <p className="text-gray-500 text-lg mb-3">
-                  No posts yet.
-                </p>
-                <p className="text-gray-400 mb-4">
-                  Be the first to post, or follow users to see their posts!
-                </p>
-                <button
-                  onClick={() => navigate("/search")}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-                >
-                  Discover Users
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+              ) : (
+                <div className="text-center py-16">
+                  <p className="text-gray-400 text-sm font-medium mb-1">No artworks yet</p>
+                  <p className="text-gray-300 text-xs mb-5">Be the first to share your creativity.</p>
+                  <button
+                    onClick={() => navigate("/search")}
+                    className="px-5 py-2 bg-gray-900 text-white text-xs font-semibold rounded-lg hover:bg-gray-800 transition cursor-pointer"
+                  >
+                    Discover Artists
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
-        {activeTab === "auctions" && (
-          <div className="space-y-6">
-            {errorMessage && (
-              <p className="text-red-500 text-center">{errorMessage}</p>
-            )}
-            <Auctions />
-          </div>
-        )}
+          {activeTab === "posts" && (
+            <div className="w-full">
+              {isLoadingPosts ? (
+                <div className="w-full text-center py-20">
+                  <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-400 font-medium text-sm">Loading feed...</p>
+                </div>
+              ) : posts.length > 0 ? (
+                <>
+                  {/* Mobile/Tablet view: Single Column (chronological) */}
+                  <div className="flex flex-col gap-8 md:hidden">
+                    {posts.map((post) => (
+                      <Post
+                        key={post.id}
+                        post={post}
+                        userId={user.id}
+                        handleDelete={() => handleDelete(post.id)}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Desktop view: Two Columns */}
+                  <div className="hidden md:flex gap-8 items-start">
+                    {/* Left Column */}
+                    <div className="flex-1 flex flex-col gap-8">
+                      {posts.filter((_, i) => i % 2 === 0).map((post) => (
+                        <Post
+                          key={post.id}
+                          post={post}
+                          userId={user.id}
+                          handleDelete={() => handleDelete(post.id)}
+                        />
+                      ))}
+                    </div>
+                    {/* Right Column */}
+                    <div className="flex-1 flex flex-col gap-8">
+                      {posts.filter((_, i) => i % 2 !== 0).map((post) => (
+                        <Post
+                          key={post.id}
+                          post={post}
+                          userId={user.id}
+                          handleDelete={() => handleDelete(post.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="w-full text-center py-16">
+                  <p className="text-gray-400 text-sm font-medium mb-1">Your feed is empty</p>
+                  <p className="text-gray-300 text-xs mb-5">Follow other users to see their updates.</p>
+                  <button
+                    onClick={() => navigate("/search")}
+                    className="px-5 py-2 bg-gray-900 text-white text-xs font-semibold rounded-lg hover:bg-gray-800 transition cursor-pointer"
+                  >
+                    Find People
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "auctions" && (
+            <div>
+              {errorMessage && (
+                <p className="text-red-500 text-center text-sm mb-4">{errorMessage}</p>
+              )}
+              <Auctions />
+            </div>
+          )}
+        </div>
       </div>
 
-     
-      {/* Right Sidebar */}
-<RSideHome 
-  user={user} 
-  accounts={accounts} 
-  onSwitchToAuctions={handleSwitchToAuctions}
-/>
+      {/* Right Sidebar - Hidden on mobile/tablet */}
+      <div className="hidden lg:block w-[320px] flex-shrink-0 bg-white dark:bg-[#0A0A0B] min-h-screen transition-colors duration-300">
+        <RSideHome 
+          user={user} 
+          accounts={accounts} 
+          onSwitchToAuctions={handleSwitchToAuctions}
+        />
+      </div>
+      </div>
 
       {/* Create Modal */}
       {isCreateOpen && (

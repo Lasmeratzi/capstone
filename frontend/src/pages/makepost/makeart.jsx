@@ -26,7 +26,6 @@ export default function MakeArt({ onClose }) {
     };
   }, [filePreviews]);
 
-  // Fetch tag suggestions as user types
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (tagInput.length >= 2) {
@@ -54,7 +53,7 @@ export default function MakeArt({ onClose }) {
     const newFiles = Array.from(e.target.files);
     if (newFiles.length) {
       setFiles([...files, ...newFiles]);
-      
+
       const newPreviews = newFiles.map(file => ({
         file,
         preview: URL.createObjectURL(file)
@@ -109,12 +108,12 @@ export default function MakeArt({ onClose }) {
 
     try {
       setSubmitting(true);
-      
+
       const postResponse = await axios.post(
         "http://localhost:5000/api/artwork-posts",
-        { 
-          title, 
-          description, 
+        {
+          title,
+          description,
           tags,
           visibility
         },
@@ -122,7 +121,7 @@ export default function MakeArt({ onClose }) {
       );
 
       const postId = postResponse.data.postId;
-      
+
       const formData = new FormData();
       formData.append("post_id", postId);
       files.forEach((file) => formData.append("media", file));
@@ -157,7 +156,6 @@ export default function MakeArt({ onClose }) {
   return (
     <div className="fixed inset-0 bg-gray-900/75 backdrop-blur-md flex items-center justify-center p-4 z-50">
       <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header - Fixed */}
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-semibold text-gray-800">Create Artwork Post</h1>
@@ -169,24 +167,22 @@ export default function MakeArt({ onClose }) {
             </button>
           </div>
         </div>
-        
-        {/* Scrollable Content */}
+
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {success && (
-            <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">
+            <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-xl text-sm">
               {success}
             </div>
           )}
-          
+
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-xl text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left side - Text fields */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -197,7 +193,7 @@ export default function MakeArt({ onClose }) {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                   />
                 </div>
 
@@ -210,11 +206,9 @@ export default function MakeArt({ onClose }) {
                     onChange={(e) => setDescription(e.target.value)}
                     required
                     rows={5}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none"
                   ></textarea>
                 </div>
-
-                {/* Visibility Selector */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Who can see this artwork?
@@ -223,11 +217,10 @@ export default function MakeArt({ onClose }) {
                     <button
                       type="button"
                       onClick={() => setVisibility("public")}
-                      className={`w-full px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${
-                        visibility === "public"
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 ${visibility === "public"
                           ? "bg-blue-500 text-white shadow-md"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
+                        }`}
                     >
                       <Globe size={18} />
                       <div className="text-left">
@@ -239,11 +232,10 @@ export default function MakeArt({ onClose }) {
                     <button
                       type="button"
                       onClick={() => setVisibility("friends")}
-                      className={`w-full px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${
-                        visibility === "friends"
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 ${visibility === "friends"
                           ? "bg-green-500 text-white shadow-md"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
+                        }`}
                     >
                       <Users size={18} />
                       <div className="text-left">
@@ -255,11 +247,10 @@ export default function MakeArt({ onClose }) {
                     <button
                       type="button"
                       onClick={() => setVisibility("private")}
-                      className={`w-full px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${
-                        visibility === "private"
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3 ${visibility === "private"
                           ? "bg-gray-600 text-white shadow-md"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
+                        }`}
                     >
                       <Lock size={18} />
                       <div className="text-left">
@@ -268,23 +259,21 @@ export default function MakeArt({ onClose }) {
                       </div>
                     </button>
                   </div>
-                  
+
                   <p className="text-xs text-gray-500 mt-3 p-2 bg-gray-50 rounded">
-                    {visibility === "public" && 
-                      "🌍 Your artwork will be visible to all users on Illura, including non-followers."}
-                    {visibility === "friends" && 
-                      "👥 Only users who follow you can see this artwork. Perfect for exclusive content for your fans!"}
-                    {visibility === "private" && 
-                      "🔒 This artwork is only visible to you. Great for WIPs, drafts, or personal pieces."}
+                    {visibility === "public" &&
+                      "Your artwork will be visible to all users on Illura, including non-followers."}
+                    {visibility === "friends" &&
+                      "Only users who follow you can see this artwork. Perfect for exclusive content for your fans!"}
+                    {visibility === "private" &&
+                      "This artwork is only visible to you. Great for WIPs, drafts, or personal pieces."}
                   </p>
                 </div>
-
-                {/* Tags Input */}
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Tags (optional) <span className="text-gray-500 text-xs">- Max 10</span>
                   </label>
-                  
+
                   <div className="flex flex-wrap gap-2 mb-2">
                     {tags.map((tag, index) => (
                       <span
@@ -312,11 +301,11 @@ export default function MakeArt({ onClose }) {
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     placeholder="Type and press Enter to add tags..."
                     disabled={tags.length >= 10}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   />
 
                   {showSuggestions && tagSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                       {tagSuggestions.map((suggestion) => (
                         <button
                           key={suggestion.id}
@@ -338,20 +327,18 @@ export default function MakeArt({ onClose }) {
                   </p>
                 </div>
               </div>
-
-              {/* Right side - Image upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Images <span className="text-red-500">*</span>
                 </label>
-                
+
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   {filePreviews.map((preview, index) => (
                     <div key={index} className="relative aspect-square">
                       <img
                         src={preview.preview}
                         alt={`Preview ${index}`}
-                        className="w-full h-full object-cover rounded-lg border border-gray-200"
+                        className="w-full h-full object-cover rounded-xl border border-gray-200"
                       />
                       <button
                         type="button"
@@ -364,11 +351,11 @@ export default function MakeArt({ onClose }) {
                   ))}
                 </div>
 
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-gray-400 transition-colors">
                   <label className="flex flex-col items-center justify-center cursor-pointer">
                     <div className="flex flex-col items-center justify-center">
                       <svg className="w-10 h-10 mb-3 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                       </svg>
                       <p className="text-sm text-gray-600 mb-1">
                         <span className="font-medium">Click to upload</span>
@@ -377,11 +364,11 @@ export default function MakeArt({ onClose }) {
                         PNG, JPG, GIF up to 10MB
                       </p>
                     </div>
-                    <input 
-                      id="dropzone-file" 
-                      type="file" 
-                      multiple 
-                      className="hidden" 
+                    <input
+                      id="dropzone-file"
+                      type="file"
+                      multiple
+                      className="hidden"
                       accept="image/*"
                       onChange={handleFileChange}
                     />
@@ -389,9 +376,7 @@ export default function MakeArt({ onClose }) {
                 </div>
               </div>
             </div>
-
-            {/* Community Guidelines */}
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
               <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Posting Guidelines</h3>
               <ul className="text-xs text-gray-600 space-y-1.5">
                 <li className="flex items-start">
@@ -412,24 +397,21 @@ export default function MakeArt({ onClose }) {
                 </li>
               </ul>
             </div>
-
-            {/* Footer - Fixed at bottom of modal */}
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
               <button
                 type="button"
-                onClick={onClose} 
-                className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={onClose}
+                className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className={`px-5 py-2.5 text-sm font-medium text-white rounded-lg transition-colors ${
-                  submitting 
-                    ? "bg-blue-400 cursor-not-allowed" 
+                className={`px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-colors ${submitting
+                    ? "bg-blue-400 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700"
-                }`}
+                  }`}
               >
                 {submitting ? "Uploading..." : "Post Artwork"}
               </button>

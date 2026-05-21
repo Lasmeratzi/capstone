@@ -22,6 +22,9 @@ const upload = multer({ storage });
 
 const router = express.Router();
 
+// Public route (no auth needed - for landing page)
+router.get("/artwork-media/public/:postId", artmediaController.getArtworkMediaByPostId);
+
 router.post("/artwork-media", authenticateToken, upload.array("media", 10), artmediaController.addArtworkMedia);
 
 router.get("/artwork-media/:postId", authenticateToken, artmediaController.getArtworkMediaByPostId);

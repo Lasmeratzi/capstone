@@ -27,11 +27,12 @@ const OwnPost = ({ userId }) => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const normalizedPosts = response.data.map((post) => ({
-          ...post,
-          author_id: userId,
-          createdAt: new Date(post.created_at),
-        }));
+        const normalizedPosts = response.data
+          .filter((post) => String(post.author_id) === String(userId))
+          .map((post) => ({
+            ...post,
+            createdAt: new Date(post.created_at),
+          }));
 
         setUserPosts(normalizedPosts);
         setFilteredPosts(normalizedPosts);
@@ -98,44 +99,47 @@ const OwnPost = ({ userId }) => {
       </div>
 
       {/* Filter Sidebar */}
-      <div className="lg:w-64 space-y-4">
+      <div className="lg:w-64 space-y-6">
         {/* Sort Option */}
-        <div className="mb-4">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+        <div>
+          <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
             <SortAsc size={16} /> Sort by
           </label>
-          <select 
-            value={sortOption}
-            onChange={(e) => setSortOption(e.target.value)}
-            className="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm"
-          >
-            <option value="latest">Latest first</option>
-            <option value="oldest">Oldest first</option>
-          </select>
+          <div className="relative">
+            <select 
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value)}
+              className="w-full bg-white dark:bg-[#0A0A0B] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#5E66FF]/50 appearance-none cursor-pointer transition-all"
+            >
+              <option value="latest">Latest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+            <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
         </div>
 
         {/* Year Filter */}
         <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+          <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
             <Calendar size={16} /> Filter by year
           </label>
           <div className="relative">
             <button
               onClick={() => setShowYearDropdown(!showYearDropdown)}
-              className="w-full flex items-center justify-between gap-1 bg-white border border-gray-300 rounded px-3 py-2 text-sm"
+              className="w-full flex items-center justify-between gap-1 bg-white dark:bg-[#0A0A0B] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer"
             >
               {yearFilter === "all" ? "All years" : yearFilter}
-              <ChevronDown size={16} className={`transition-transform ${showYearDropdown ? "rotate-180" : ""}`} />
+              <ChevronDown size={16} className={`transition-transform duration-300 ${showYearDropdown ? "rotate-180" : ""}`} />
             </button>
 
             {showYearDropdown && (
-              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
+              <div className="absolute z-10 mt-2 w-full bg-white dark:bg-[#1C2128] border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl overflow-hidden overflow-y-auto max-h-60">
                 <button
                   onClick={() => {
                     setYearFilter("all");
                     setShowYearDropdown(false);
                   }}
-                  className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${yearFilter === "all" ? "bg-gray-100 font-medium" : ""}`}
+                  className={`block w-full text-left px-4 py-3 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-white/5 ${yearFilter === "all" ? "text-[#5E66FF] font-bold" : "text-gray-600 dark:text-gray-400"}`}
                 >
                   All years
                 </button>
@@ -146,7 +150,7 @@ const OwnPost = ({ userId }) => {
                       setYearFilter(year.toString());
                       setShowYearDropdown(false);
                     }}
-                    className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${yearFilter === year.toString() ? "bg-gray-100 font-medium" : ""}`}
+                    className={`block w-full text-left px-4 py-3 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-white/5 ${yearFilter === year.toString() ? "text-[#5E66FF] font-bold" : "text-gray-600 dark:text-gray-400"}`}
                   >
                     {year}
                   </button>

@@ -5,6 +5,7 @@ import Sidebar from "../sidebar/sidebar";
 import { MagnifyingGlassIcon, XMarkIcon, PhotoIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { FaCheckCircle, FaUser, FaHashtag, FaMapMarkerAlt, FaImage } from "react-icons/fa";
 import { formatDistanceToNow } from "date-fns";
+import MobileNav from "../../components/layout/MobileNav";
 
 const VerifiedBadge = () => (
   <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 ml-1">
@@ -166,25 +167,28 @@ const SearchProfile = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="fixed h-screen w-60">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-[#0A0A0B]">
+      {/* Mobile Navigation */}
+      <MobileNav />
+
+      <div className="hidden md:block fixed h-screen w-50">
         <Sidebar />
       </div>
 
-      <div className="ml-60 flex-grow py-6 px-8 md:px-20 lg:px-40">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Search</h2>
-        <p className="text-gray-600 mb-6">Find artists, tags, locations, and portfolio items</p> {/* UPDATE TEXT */}
+      <div className="ml-0 md:ml-50 flex-grow py-6 px-4 md:px-12 lg:px-24 pt-20 md:pt-6 pb-20 md:pb-6 bg-white dark:bg-[#0A0A0B] overflow-x-hidden">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Search</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">Find artists, tags, locations, and portfolio items</p> {/* UPDATE TEXT */}
 
         {/* Search Bar */}
-        <div className="flex items-center bg-white shadow-md rounded-lg px-4 py-3 mb-8 border border-gray-200">
-          <MagnifyingGlassIcon className="h-5 w-5 text-gray-500 mr-3" />
+        <div className="flex items-center bg-white dark:bg-white/[0.03] shadow-md rounded-lg px-4 py-3 mb-8 border border-gray-200 dark:border-white/10">
+          <MagnifyingGlassIcon className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-3" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Search users, tags, locations, or portfolio items..." 
-            className="w-full text-gray-700 focus:outline-none bg-transparent"
+            className="w-full text-gray-700 dark:text-gray-100 focus:outline-none bg-transparent"
           />
           {searchTerm && (
             <button
@@ -255,14 +259,16 @@ const SearchProfile = () => {
                 {/* USERS */}
                 {resultCounts.users > 0 && (
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                      <FaUser className="mr-2 text-blue-600" />
+                    <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                      <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
+                        <FaUser className="text-blue-600 dark:text-blue-400" />
+                      </div>
                       Artists
                       <ResultCount count={resultCounts.users} />
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {filteredUsers.map((user) => (
-                        <div key={user.id} className="bg-white shadow-md rounded-lg p-5 hover:shadow-lg transition-all duration-300 border border-gray-100">
+                        <div key={user.id} className="bg-white dark:bg-white/[0.02] shadow-md rounded-lg p-5 transition-all duration-300 border border-gray-100 dark:border-white/5">
                           <div className="flex items-center mb-4">
                             <img
                               src={user.pfp 
@@ -270,21 +276,21 @@ const SearchProfile = () => {
                                 : "/default-avatar.png"
                               }
                               alt={`${user.username}'s profile`}
-                              className="w-14 h-14 rounded-full object-cover border-2 border-gray-300"
+                              className="w-14 h-14 rounded-full object-cover border-2 border-gray-300 dark:border-white/10"
                               onError={(e) => {
                                 e.target.src = "/default-avatar.png";
                               }}
                             />
                             <div className="ml-4 flex-1">
                               <div className="flex items-center">
-                                <p className="text-lg font-semibold text-gray-800 truncate">
+                                <p className="text-lg font-semibold text-gray-800 dark:text-gray-100 truncate">
                                   {user.username}
                                 </p>
                                 {user.verification_status === "approved" && <VerifiedBadge />}
                               </div>
-                              <p className="text-sm text-gray-600 truncate">{user.fullname}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{user.fullname}</p>
                               {user.location_name && (
-                                <p className="text-xs text-gray-500 truncate">
+                                <p className="text-xs text-gray-500 dark:text-gray-500 truncate">
                                   {user.location_name}, {user.location_province}
                                 </p>
                               )}
@@ -292,7 +298,7 @@ const SearchProfile = () => {
                           </div>
                           <Link
                             to={`/visitprofile/${user.id}`}
-                            className="block w-full text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-all duration-300"
+                            className="block w-full text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-medium rounded-md transition-all duration-300"
                           >
                             Visit Profile
                           </Link>
@@ -305,8 +311,10 @@ const SearchProfile = () => {
                 {/* TAGS */}
                 {resultCounts.tags > 0 && (
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                      <FaHashtag className="mr-2 text-green-600" />
+                    <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                      <div className="p-2 bg-green-50 dark:bg-green-500/10 rounded-lg">
+                        <FaHashtag className="text-green-600 dark:text-green-400" />
+                      </div>
                       Tags
                       <ResultCount count={resultCounts.tags} />
                     </h3>
@@ -315,7 +323,7 @@ const SearchProfile = () => {
                         <Link
                           key={tag.id}
                           to={`/tags/${tag.name}`}
-                          className="inline-flex items-center px-4 py-2 bg-green-50 border border-green-200 rounded-full text-green-800 hover:bg-green-100 hover:border-green-300 transition-all duration-300 cursor-pointer"
+                          className="inline-flex items-center px-4 py-2 bg-green-50 border border-green-200 rounded-full text-green-800 transition-all duration-300 cursor-pointer"
                         >
                           <FaHashtag className="w-3 h-3 mr-2" />
                           #{tag.name}
@@ -331,8 +339,10 @@ const SearchProfile = () => {
                 {/* LOCATIONS */}
                 {resultCounts.locations > 0 && (
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                      <FaMapMarkerAlt className="mr-2 text-red-600" />
+                    <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                      <div className="p-2 bg-red-50 dark:bg-red-500/10 rounded-lg">
+                        <FaMapMarkerAlt className="text-red-600 dark:text-red-400" />
+                      </div>
                       Locations
                       <ResultCount count={resultCounts.locations} />
                     </h3>
@@ -341,15 +351,15 @@ const SearchProfile = () => {
                         <Link
                           key={loc.id}
                           to={`/location/${loc.id}`}
-                          className="bg-white shadow rounded-lg p-4 border border-gray-200 hover:shadow-md transition-all duration-300 hover:border-red-200 cursor-pointer block"
+                          className="bg-white dark:bg-white/[0.02] shadow rounded-lg p-4 border border-gray-200 dark:border-white/5 transition-all duration-300 cursor-pointer block"
                         >
                           <div className="flex items-center mb-2">
                             <FaMapMarkerAlt className="w-4 h-4 text-red-500 mr-2" />
-                            <p className="font-semibold text-gray-800">
+                            <p className="font-semibold text-gray-800 dark:text-gray-100">
                               {loc.city}, {loc.province}
                             </p>
                           </div>
-                          <p className="text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded inline-block">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded inline-block">
                             {loc.artist_count} artist{loc.artist_count !== 1 ? 's' : ''}
                           </p>
                         </Link>
@@ -361,9 +371,11 @@ const SearchProfile = () => {
                 {/* PORTFOLIO ITEMS */}
                 {resultCounts.portfolio > 0 && (
                   <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-semibold text-gray-800 flex items-center">
-                        <FaImage className="mr-2 text-purple-600" />
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
+                        <div className="p-2 bg-purple-50 dark:bg-purple-500/10 rounded-lg">
+                          <FaImage className="text-purple-600 dark:text-purple-400" />
+                        </div>
                         Portfolio Items
                         <ResultCount count={resultCounts.portfolio} />
                       </h3>
@@ -385,7 +397,7 @@ const SearchProfile = () => {
                         <div 
                           key={item.id}
                           onClick={() => handlePortfolioClick(item.id, item.user_id)}
-                          className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-purple-300 group cursor-pointer"
+                          className="bg-white dark:bg-white/[0.02] rounded-xl border border-gray-200 dark:border-white/5 overflow-hidden transition-all duration-300 group cursor-pointer"
                         >
                           {/* Portfolio Image */}
                           <div className="relative h-48 overflow-hidden bg-gray-100">
@@ -548,14 +560,14 @@ const SearchProfile = () => {
                     <div
                       key={item.id}
                       onClick={() => handlePortfolioClick(item.id, item.user_id)}
-                      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-purple-300 group cursor-pointer"
+                      className="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all duration-300 group cursor-pointer"
                     >
                       {/* Portfolio Image */}
                       <div className="relative h-48 overflow-hidden bg-gray-100">
                         <img
                           src={getPortfolioImageUrl(item.image_path)}
                           alt={item.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="w-full h-full object-cover transition-transform duration-500"
                           onError={(e) => {
                             e.target.src = "/default-image.png";
                           }}
@@ -577,7 +589,7 @@ const SearchProfile = () => {
                         {/* Author Info */}
                         <div className="flex items-center justify-between border-t border-gray-100 pt-3">
                           <div 
-                            className="flex items-center space-x-2 cursor-pointer hover:opacity-80"
+                            className="flex items-center space-x-2 cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/visitprofile/${item.user_id}`);
