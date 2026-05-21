@@ -108,28 +108,28 @@ const OwnAuct = ({ userId }) => {
       <div className="flex-1 space-y-6">
         {/* Stats Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-            <p className="text-sm text-gray-600">Total Auctions</p>
-            <p className="text-2xl font-bold text-gray-900">{filteredAuctions.length}</p>
+          <div className="bg-white dark:bg-[#0A0A0B] p-4 rounded-lg border border-gray-100 dark:border-white/5 shadow-sm transition-all duration-300">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">Total Auctions</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{filteredAuctions.length}</p>
           </div>
           
-          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-            <p className="text-sm text-gray-600">Active</p>
-            <p className="text-2xl font-bold text-green-600">
+          <div className="bg-white dark:bg-[#0A0A0B] p-4 rounded-lg border border-gray-100 dark:border-white/5 shadow-sm transition-all duration-300">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">Active</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-500">
               {filteredAuctions.filter(a => a.status === 'active').length}
             </p>
           </div>
           
-          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-            <p className="text-sm text-gray-600">With Increments</p>
-            <p className="text-2xl font-bold text-purple-600">
+          <div className="bg-white dark:bg-[#0A0A0B] p-4 rounded-lg border border-gray-100 dark:border-white/5 shadow-sm transition-all duration-300">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">With Increments</p>
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-500">
               {filteredAuctions.filter(a => a.use_increment === 1).length}
             </p>
           </div>
           
-          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-            <p className="text-sm text-gray-600">Ended</p>
-            <p className="text-2xl font-bold text-blue-600">
+          <div className="bg-white dark:bg-[#0A0A0B] p-4 rounded-lg border border-gray-100 dark:border-white/5 shadow-sm transition-all duration-300">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">Ended</p>
+            <p className="text-2xl font-bold text-[#5E66FF]">
               {filteredAuctions.filter(a => a.status === 'ended').length}
             </p>
           </div>
@@ -144,13 +144,13 @@ const OwnAuct = ({ userId }) => {
         )}
 
         {!loading && filteredAuctions.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+          <div className="text-center py-12 bg-white dark:bg-[#0A0A0B] rounded-xl border border-gray-100 dark:border-white/5 shadow-sm">
             <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Calendar className="h-8 w-8 text-gray-400" />
+              <div className="w-16 h-16 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="h-8 w-8 text-gray-400 dark:text-gray-600" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No auctions found</h3>
-              <p className="text-gray-500 text-sm">You haven't created any auctions yet.</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">No auctions found</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">You haven't created any auctions yet.</p>
             </div>
           </div>
         ) : (
@@ -158,18 +158,24 @@ const OwnAuct = ({ userId }) => {
             const statusBadge = getStatusBadge(auction.status);
             const useIncrement = auction.use_increment === 1;
             const bidIncrement = auction.bid_increment || 100;
+
+            const getImagePath = (path) => {
+              if (!path) return "";
+              const cleanPath = path.replace(/^\/+/, '').replace(/^uploads\//, '');
+              return `${API_BASE}/uploads/${cleanPath}`;
+            };
             
             return (
-              <div key={auction.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+              <div key={auction.id} className="bg-white dark:bg-[#161B22] rounded-xl shadow-md border border-gray-100 dark:border-white/5 overflow-hidden transition-all duration-300">
                 {/* Header */}
-                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                <div className="p-4 border-b border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02]">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       {auction.author_pfp ? (
                         <img
                           src={`${API_BASE}/uploads/${auction.author_pfp}`}
                           alt={`${auction.author_username}'s profile`}
-                          className="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
+                          className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 shadow-sm object-cover"
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold">
@@ -177,8 +183,8 @@ const OwnAuct = ({ userId }) => {
                         </div>
                       )}
                       <div>
-                        <p className="font-bold text-gray-800">@{auction.author_username}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="font-bold text-gray-900 dark:text-gray-100">@{auction.author_username}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {new Date(auction.created_at).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
@@ -191,129 +197,145 @@ const OwnAuct = ({ userId }) => {
                     <div className="flex items-center gap-3">
                       {/* Increment Badge */}
                       {useIncrement && (
-                        <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold border border-purple-200">
-                          <Calculator size={14} />
+                        <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 rounded-full text-xs font-bold border border-purple-200 dark:border-purple-800/30">
+                          <Calculator size={12} />
                           <span>₱{formatPrice(bidIncrement)} increment</span>
                         </div>
                       )}
                       
                       {/* Status Badge */}
-                      <div className={`px-3 py-1 rounded-full text-sm font-semibold ${statusBadge.bg} ${statusBadge.text}`}>
+                      <div className={`px-3 py-1 rounded-full text-xs font-bold ${statusBadge.bg} ${statusBadge.text} dark:bg-opacity-20`}>
                         {statusBadge.label}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-4 md:p-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-xl font-bold text-gray-900 mb-2">{auction.title}</h4>
-                      <p className="text-gray-600">{auction.description}</p>
-                    </div>
-
-                    {/* Price Info - 3 columns */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-                        <p className="text-sm font-medium text-blue-800 mb-1">Starting Price</p>
-                        <p className="text-2xl font-bold text-blue-900">₱{formatPrice(auction.starting_price)}</p>
-                      </div>
-                      
-                      <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
-                        <p className="text-sm font-medium text-green-800 mb-1">Current Price</p>
-                        <p className="text-2xl font-bold text-green-900">₱{formatPrice(auction.current_price)}</p>
-                      </div>
-                      
-                      {/* Bid Increment Card */}
-                      <div className={`p-4 rounded-xl border ${
-                        useIncrement 
-                          ? 'bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200'
-                          : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
-                      }`}>
-                        <p className={`text-sm font-medium mb-1 ${useIncrement ? 'text-purple-800' : 'text-gray-700'}`}>
-                          {useIncrement ? 'Bid Increment' : 'Bidding Rules'}
-                        </p>
-                        {useIncrement ? (
-                          <>
-                            <p className="text-2xl font-bold text-purple-900">₱{formatPrice(bidIncrement)}</p>
-                            <p className="text-xs text-purple-700 mt-1">
-                              Bids increase by ₱{formatPrice(bidIncrement)}
-                            </p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-xl font-bold text-gray-900">Free Bidding</p>
-                            <p className="text-xs text-gray-600 mt-1">
-                              Bid any amount above current
-                            </p>
-                          </>
+                {/* Content Area */}
+                <div className="flex flex-col md:flex-row gap-6 p-4 md:p-6">
+                  {/* Left: Images */}
+                  <div className="md:w-1/3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Images ({auction.media?.length || 0})</p>
+                    {auction.media?.length > 0 ? (
+                      <div className="space-y-3">
+                        <div 
+                          className="relative aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-white/5 cursor-pointer group"
+                          onClick={() => setSelectedMedia(auction.media[0])}
+                        >
+                           <img
+                            src={getImagePath(auction.media[0].media_path)}
+                            alt={auction.title}
+                            className="w-full h-full object-cover transition-transform duration-500"
+                          />
+                          {auction.media.length > 1 && (
+                            <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-full border border-white/10">
+                              +{auction.media.length - 1} more
+                            </div>
+                          )}
+                        </div>
+                        {/* Thumbnails if multiple */}
+                        {auction.media.length > 1 && (
+                          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                            {auction.media.slice(1, 4).map((file, idx) => (
+                              <div 
+                                key={file.id} 
+                                className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-gray-100 dark:border-white/5 cursor-pointer transition"
+                                onClick={() => setSelectedMedia(file)}
+                              >
+                                <img
+                                  src={getImagePath(file.media_path)}
+                                  alt="Thumbnail"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ))}
+                            {auction.media.length > 4 && (
+                              <div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center text-xs font-bold text-gray-500">
+                                +{auction.media.length - 4}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
-                    </div>
+                    ) : (
+                      <div className="aspect-square rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-dashed border-gray-200 dark:border-white/10 flex items-center justify-center">
+                        <p className="text-xs text-gray-400">No media available</p>
+                      </div>
+                    )}
+                  </div>
 
-                    {/* Time Info */}
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-xs text-gray-500">Created</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {new Date(auction.created_at).toLocaleString()}
-                          </p>
+                  {/* Right: Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="space-y-5">
+                      <div>
+                        <h4 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{auction.title}</h4>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">{auction.description}</p>
+                      </div>
+
+                      {/* Price Info Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100 dark:border-blue-900/20">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">Starting Price</p>
+                          <p className="text-lg font-bold text-blue-900 dark:text-blue-100">₱{formatPrice(auction.starting_price)}</p>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Ends</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {new Date(auction.end_time).toLocaleString()}
+                        
+                        <div className="bg-green-50/50 dark:bg-green-900/10 p-3 rounded-xl border border-green-100 dark:border-green-900/20">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-green-600 dark:text-green-400 mb-1">Current Price</p>
+                          <p className="text-lg font-bold text-green-900 dark:text-green-100">₱{formatPrice(auction.current_price)}</p>
+                        </div>
+                        
+                        <div className={`sm:col-span-2 p-3 rounded-xl border ${
+                          useIncrement 
+                            ? 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-900/20'
+                            : 'bg-gray-50/50 dark:bg-white/[0.02] border-gray-100 dark:border-white/5'
+                        }`}>
+                          <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${useIncrement ? 'text-purple-600 dark:text-purple-400' : 'text-gray-500'}`}>
+                            {useIncrement ? 'Bid Increment' : 'Bidding Rules'}
                           </p>
+                          {useIncrement ? (
+                            <p className="text-lg font-bold text-purple-900 dark:text-purple-100">₱{formatPrice(bidIncrement)}</p>
+                          ) : (
+                            <p className="text-sm font-bold text-gray-700 dark:text-gray-300">Free Bidding</p>
+                          )}
                         </div>
                       </div>
-                    </div>
 
-                    {/* Winner Info for ended auctions */}
-                    {auction.status === 'ended' && auction.winner_id && (
-                      <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
-                        <p className="text-sm font-medium text-purple-800 mb-2">Auction Winner</p>
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold">
-                            {auction.winner_username?.charAt(0) || 'W'}
+                      {/* Time Info */}
+                      <div className="bg-gray-50 dark:bg-white/[0.02] p-4 rounded-xl border border-gray-100 dark:border-white/5">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Created</p>
+                            <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                              {new Date(auction.created_at).toLocaleString()}
+                            </p>
                           </div>
                           <div>
-                            <p className="font-medium text-purple-900">@{auction.winner_username || 'Unknown'}</p>
-                            <p className="text-sm text-purple-700">
-                              Won for ₱{formatPrice(auction.final_price || auction.current_price)}
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Ends</p>
+                            <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                              {new Date(auction.end_time).toLocaleString()}
                             </p>
                           </div>
                         </div>
                       </div>
-                    )}
 
-                    {/* Images */}
-                    {auction.media?.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 mb-2">Images ({auction.media.length})</p>
-                        <div className={`grid gap-3 ${
-                          auction.media.length === 1 ? "grid-cols-1" : 
-                          auction.media.length === 2 ? "grid-cols-2" : 
-                          "grid-cols-2 md:grid-cols-3"
-                        }`}>
-                          {auction.media.map((file, index) => (
-                            <div
-                              key={file.id}
-                              className="relative aspect-square cursor-pointer group"
-                              onClick={() => setSelectedMedia(file)}
-                            >
-                              <img
-                                src={`${API_BASE}/uploads/${file.media_path}`}
-                                alt="Auction media"
-                                className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
-                              />
-                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-300 rounded-lg" />
+                      {/* Winner Info */}
+                      {auction.status === 'ended' && auction.winner_id && (
+                        <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 p-4 rounded-xl border border-purple-500/20">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-2">Auction Winner</p>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                              {auction.winner_username?.charAt(0) || 'W'}
                             </div>
-                          ))}
+                            <div>
+                              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">@{auction.winner_username || 'Unknown'}</p>
+                              <p className="text-xs text-purple-600 dark:text-purple-400">
+                                Won for ₱{formatPrice(auction.final_price || auction.current_price)}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -322,52 +344,55 @@ const OwnAuct = ({ userId }) => {
         )}
       </div>
 
-      {/* Filter sidebar */}
+      {/* Filter Sidebar */}
       <div className="lg:w-64">
         <div className="sticky top-4 space-y-4">
-          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters & Sorting</h3>
+          <div className="bg-white dark:bg-[#0A0A0B] p-5 rounded-lg border border-gray-100 dark:border-white/5 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-5">Filters & Sorting</h3>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                   <SortAsc size={16} /> Sort by
                 </label>
-                <select
-                  value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
-                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="latest">Latest first</option>
-                  <option value="oldest">Oldest first</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
+                    className="w-full bg-white dark:bg-[#0A0A0B] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#5E66FF]/50 appearance-none cursor-pointer transition-all"
+                  >
+                    <option value="latest">Latest first</option>
+                    <option value="oldest">Oldest first</option>
+                  </select>
+                  <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                   <Calendar size={16} /> Filter by year
                 </label>
                 <div className="relative">
                   <button
                     onClick={() => setShowYearDropdown(!showYearDropdown)}
-                    className="w-full flex items-center justify-between gap-1 bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center justify-between gap-1 bg-white dark:bg-[#0A0A0B] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer"
                   >
                     {yearFilter === "all" ? "All years" : yearFilter}
                     <ChevronDown
                       size={16}
-                      className={`transition-transform ${showYearDropdown ? "rotate-180" : ""}`}
+                      className={`transition-transform duration-300 ${showYearDropdown ? "rotate-180" : ""}`}
                     />
                   </button>
 
                   {showYearDropdown && (
-                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-10 mt-2 w-full bg-white dark:bg-[#0A0A0B] border border-gray-200 dark:border-white/10 rounded-lg shadow-xl overflow-hidden overflow-y-auto max-h-60">
                       <button
                         onClick={() => {
                           setYearFilter("all");
                           setShowYearDropdown(false);
                         }}
-                        className={`block w-full text-left px-3 py-2.5 text-sm hover:bg-gray-100 ${
-                          yearFilter === "all" ? "bg-gray-100 font-medium" : ""
+                        className={`block w-full text-left px-4 py-3 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-white/5 ${
+                          yearFilter === "all" ? "text-[#5E66FF] font-bold" : "text-gray-600 dark:text-gray-400"
                         }`}
                       >
                         All years
@@ -379,8 +404,8 @@ const OwnAuct = ({ userId }) => {
                             setYearFilter(year.toString());
                             setShowYearDropdown(false);
                           }}
-                          className={`block w-full text-left px-3 py-2.5 text-sm hover:bg-gray-100 ${
-                            yearFilter === year.toString() ? "bg-gray-100 font-medium" : ""
+                          className={`block w-full text-left px-4 py-3 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-white/5 ${
+                            yearFilter === year.toString() ? "text-[#5E66FF] font-bold" : "text-gray-600 dark:text-gray-400"
                           }`}
                         >
                           {year}
@@ -393,19 +418,19 @@ const OwnAuct = ({ userId }) => {
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h4>
-            <div className="space-y-3">
+          {/* Quick Stats Sidebar */}
+          <div className="bg-white dark:bg-[#0A0A0B] border border-gray-100 dark:border-white/5 rounded-lg p-5 shadow-sm">
+            <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-5">Auction Status</h4>
+            <div className="space-y-4">
               {[
-                { label: 'Active', count: filteredAuctions.filter(a => a.status === 'active').length, color: 'bg-green-100 text-green-700' },
-                { label: 'With Increments', count: filteredAuctions.filter(a => a.use_increment === 1).length, color: 'bg-purple-100 text-purple-700' },
-                { label: 'Ended', count: filteredAuctions.filter(a => a.status === 'ended').length, color: 'bg-blue-100 text-blue-700' },
-                { label: 'Draft/Pending', count: filteredAuctions.filter(a => a.status === 'draft' || a.status === 'pending').length, color: 'bg-yellow-100 text-yellow-700' },
+                { label: 'Active', count: filteredAuctions.filter(a => a.status === 'active').length, color: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' },
+                { label: 'With Increments', count: filteredAuctions.filter(a => a.use_increment === 1).length, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400' },
+                { label: 'Ended', count: filteredAuctions.filter(a => a.status === 'ended').length, color: 'bg-blue-100 text-[#5E66FF] dark:bg-blue-900/20 dark:text-[#5E66FF]' },
+                { label: 'Draft/Pending', count: filteredAuctions.filter(a => a.status === 'draft' || a.status === 'pending').length, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400' },
               ].map((stat, index) => (
                 <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{stat.label}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${stat.color}`}>
+                  <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">{stat.label}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${stat.color}`}>
                     {stat.count}
                   </span>
                 </div>
@@ -434,7 +459,7 @@ const OwnAuct = ({ userId }) => {
             </button>
 
             <img
-              src={`${API_BASE}/uploads/${selectedMedia.media_path}`}
+              src={selectedMedia.media_path.includes('http') ? selectedMedia.media_path : `${API_BASE}/uploads/${selectedMedia.media_path.replace(/^\/+/, '').replace(/^uploads\//, '')}`}
               alt="Auction preview"
               className="max-h-[80vh] w-auto max-w-full mx-auto rounded-lg shadow-2xl"
             />

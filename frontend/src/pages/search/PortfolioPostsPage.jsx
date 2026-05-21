@@ -232,7 +232,7 @@ const PortfolioPostsPage = () => {
                 {portfolioResults.map((item, index) => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-blue-300 group"
+                    className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-md group"
                   >
                     {/* Portfolio Image */}
                     <div 
@@ -242,14 +242,14 @@ const PortfolioPostsPage = () => {
                       <ProtectedMedia
                         image_path={item.image_path}
                         title={item.title}
-                        className="w-full h-full group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full transition-transform duration-500"
                       />
                     </div>
 
                     {/* Portfolio Content */}
                     <div className="p-4">
                       <h3 
-                        className="font-semibold text-gray-900 text-lg mb-2 line-clamp-1 cursor-pointer hover:text-blue-600"
+                        className="font-semibold text-gray-900 text-lg mb-2 line-clamp-1 cursor-pointer"
                         onClick={() => handlePortfolioClick(item.id, item.user_id)}
                       >
                         {item.title}

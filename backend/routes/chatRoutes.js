@@ -21,7 +21,7 @@ router.post("/chat", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "arcee-ai/trinity-mini:free",
+        model: "baidu/cobuddy:free",
         messages: messages
       })
     });

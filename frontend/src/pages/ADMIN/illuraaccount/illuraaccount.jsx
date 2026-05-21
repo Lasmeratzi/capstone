@@ -53,15 +53,15 @@ const IlluraAccount = () => {
       }
 
       await axios.put("http://localhost:5000/api/admin/illura-account", formData, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         },
       });
-      
+
       setIsEditing(false);
       setQrCodeFile(null);
-      fetchGcashInfo(); // Refresh data
+      fetchGcashInfo();
       alert("GCash information updated successfully!");
     } catch (error) {
       console.error("Error updating GCash info:", error);
@@ -74,10 +74,8 @@ const IlluraAccount = () => {
   if (loading) {
     return (
       <div className="flex bg-gray-100 min-h-screen">
-        <div className="fixed h-full">
-          <SideAdmin />
-        </div>
-        <div className="flex-grow p-6 ml-48">
+        <SideAdmin />
+        <div className="flex-grow p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-6">Illura Account - GCash Information</h1>
           <p>Loading...</p>
         </div>
@@ -87,14 +85,12 @@ const IlluraAccount = () => {
 
   return (
     <div className="flex bg-gray-100 min-h-screen">
-      <div className="fixed h-full">
-        <SideAdmin />
-      </div>
+      <SideAdmin />
 
-      <div className="flex-grow p-6 ml-48">
+      <div className="flex-grow p-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Illura Account - GCash Information</h1>
         <p className="text-gray-600 mb-8">This GCash information will be shown to buyers when they win auctions.</p>
-        
+
         <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl">
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">GCash Number</label>
@@ -102,7 +98,7 @@ const IlluraAccount = () => {
               <input
                 type="text"
                 value={gcashInfo.gcash_number}
-                onChange={(e) => setGcashInfo({...gcashInfo, gcash_number: e.target.value})}
+                onChange={(e) => setGcashInfo({ ...gcashInfo, gcash_number: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="09XXXXXXXXX"
               />
@@ -117,7 +113,7 @@ const IlluraAccount = () => {
               <input
                 type="text"
                 value={gcashInfo.gcash_name}
-                onChange={(e) => setGcashInfo({...gcashInfo, gcash_name: e.target.value})}
+                onChange={(e) => setGcashInfo({ ...gcashInfo, gcash_name: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Illura Team"
               />
@@ -130,8 +126,8 @@ const IlluraAccount = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">QR Code</label>
             {gcashInfo.qr_code_path ? (
               <div className="flex items-start gap-4">
-                <img 
-                  src={`http://localhost:5000/uploads/${gcashInfo.qr_code_path}`} 
+                <img
+                  src={`http://localhost:5000/uploads/${gcashInfo.qr_code_path}`}
                   alt="GCash QR Code"
                   className="w-48 h-48 border-2 border-gray-300 rounded-lg object-contain"
                 />
@@ -176,7 +172,7 @@ const IlluraAccount = () => {
                   onClick={() => {
                     setIsEditing(false);
                     setQrCodeFile(null);
-                    fetchGcashInfo(); // Reset to original values
+                    fetchGcashInfo();
                   }}
                   disabled={saving}
                   className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
@@ -198,7 +194,7 @@ const IlluraAccount = () => {
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <h3 className="font-semibold text-blue-800 mb-2">How buyers will see this:</h3>
               <p className="text-sm text-blue-700">
-                When a user wins an auction, they'll see your GCash number and QR code in their "Auction Wins" page 
+                When a user wins an auction, they'll see your GCash number and QR code in their "Auction Wins" page
                 so they know where to send the payment.
               </p>
             </div>

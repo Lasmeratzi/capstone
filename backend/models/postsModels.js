@@ -209,6 +209,24 @@ const deletePost = (id, authorId, callback) => {
   db.query(sql, [id, authorId], callback);
 };
 
+// Get public posts (no auth needed - for landing page)
+const getPublicPosts = (callback) => {
+  const sql = `
+    SELECT posts.id, posts.title, posts.media_path, posts.created_at, posts.updated_at,
+           users.id AS author_id, users.username AS author, users.fullname, users.pfp AS author_pfp, 
+           posts.post_status, posts.visibility, users.verified AS is_verified
+    FROM posts
+    JOIN users ON posts.author_id = users.id
+    WHERE posts.visibility = 'public'
+    AND posts.post_status = 'active'
+    AND users.account_status = 'active'
+    AND posts.media_path IS NOT NULL
+    AND posts.media_path != ''
+    ORDER BY posts.created_at DESC
+  `;
+  db.query(sql, callback);
+};
+
 module.exports = {
   createPost,
   getAllPosts,
@@ -218,4 +236,5 @@ module.exports = {
   updatePostStatus,
   deletePost,
   getFollowingPosts,
+  getPublicPosts,
 };

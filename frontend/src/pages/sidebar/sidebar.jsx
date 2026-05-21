@@ -11,7 +11,10 @@ import {
   TrophyIcon,
   ChatBubbleLeftEllipsisIcon,
   PencilSquareIcon,
+  SunIcon,
+  MoonIcon,
 } from "@heroicons/react/24/solid";
+import logo from "../../assets/images/illura.png";
 
 const Sidebar = ({ onOpenCreate }) => {
   const navigate = useNavigate();
@@ -19,6 +22,9 @@ const Sidebar = ({ onOpenCreate }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
 
   const userId = localStorage.getItem("id");
   const token = localStorage.getItem("token");
@@ -69,6 +75,20 @@ const Sidebar = ({ onOpenCreate }) => {
     }
   }, [userId, token]);
 
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+    // Dispatch storage event for other components to sync
+    window.dispatchEvent(new Event("storage"));
+  }, [darkMode]);
+
+  const toggleDarkMode = () => setDarkMode(!darkMode);
+
   const navItems = [
     { label: "Home", icon: HomeIcon, path: "/home" },
     { label: "Search", icon: MagnifyingGlassIcon, path: "/searchprofile" },
@@ -91,29 +111,18 @@ const Sidebar = ({ onOpenCreate }) => {
 
   return (
     <div
-      className="h-screen w-50 flex flex-col py-6 px-4 relative"
-      style={{
-        backgroundColor: "#0D1117",
-      }}
+      className="h-screen w-50 hidden md:flex flex-col py-6 px-4 relative bg-[#F8FAFC] dark:bg-[#0A0A0B] border-r border-gray-200 dark:border-white/5 transition-colors duration-300"
     >
-      {/* Gradient Border */}
-      <div
-        className="absolute top-0 right-0 h-full w-1"
-        style={{
-          background: "linear-gradient(to bottom, #6366ff, #f9a1e3, #6366ff)",
-        }}
-      ></div>
-
       {/* Sidebar Content */}
       <div className="flex flex-col flex-grow relative z-10">
         {/* Logo */}
         <div className="mb-10 flex items-center space-x-3 px-2">
           <img
-            src="src/assets/images/illura.png"
+            src={logo}
             alt="Illura Logo"
             className="w-10 h-10"
           />
-          <h1 className="text-2xl font-bold text-white custom-font tracking-tight">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white custom-font tracking-tight">
             Illura
           </h1>
         </div>
@@ -124,13 +133,16 @@ const Sidebar = ({ onOpenCreate }) => {
             <React.Fragment key={label}>
               <button
                 onClick={() => navigate(path)}
-                className={`relative flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200
+                className={`relative flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 group cursor-pointer
                   ${
                     isActive(path)
-                      ? "bg-[#5E66FF] text-white shadow-md"
-                      : "text-gray-300 hover:bg-[#161B22] hover:text-[#5E66FF]"
+                      ? "bg-[#5E66FF]/10 text-[#5E66FF]"
+                      : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
                   }`}
               >
+                {isActive(path) && (
+                  <div className="absolute left-0 w-1 h-5 bg-[#5E66FF] rounded-r-full" />
+                )}
                 <Icon className="h-5 w-5" />
                 {showBadge &&
                   (showBadge === "dot" ? (
@@ -147,7 +159,7 @@ const Sidebar = ({ onOpenCreate }) => {
               {index === 0 && (
                 <button
                   onClick={onOpenCreate}
-                  className="flex items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-[#161B22] hover:text-[#5E66FF] transition-colors duration-200"
+                  className="flex items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#161B22] hover:text-[#5E66FF] transition-colors duration-200 cursor-pointer"
                 >
                   <PencilSquareIcon className="h-5 w-5" />
                   <span className="ml-3">Create</span>
@@ -161,38 +173,62 @@ const Sidebar = ({ onOpenCreate }) => {
             onClick={() => navigate("/chatbot")}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className={`flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200
+            className={`relative flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 group cursor-pointer
               ${
                 isActive("/chatbot")
-                  ? "bg-[#5E66FF] text-white shadow-md"
-                  : "text-gray-300 hover:bg-[#161B22] hover:text-[#5E66FF]"
+                  ? "bg-[#5E66FF]/10 text-[#5E66FF]"
+                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
               }`}
           >
+            {isActive("/chatbot") && (
+              <div className="absolute left-0 w-1 h-5 bg-[#5E66FF] rounded-r-full" />
+            )}
             <img
               src={
                 isHovered && !isActive("/chatbot")
                   ? "/qwenhover.png"
-                  : "/qwenwhite.png"
+                  : (darkMode ? "/qwenwhite.png" : "/qwen.png")
               }
               alt="AI Icon"
-              className="h-5 w-5"
+              className={`h-5 w-5 ${!darkMode && !isHovered && !isActive("/chatbot") ? "opacity-70" : ""}`}
             />
             <span className="ml-3">Chatbot</span>
           </button>
         </nav>
 
         {/* Divider */}
-        <div className="border-t border-[#30363D] my-5" />
+        <div className="border-t border-gray-200 dark:border-white/10 my-5" />
 
-        {/* Logout */}
-        <div className="px-2">
+        {/* Theme Toggle & Logout */}
+        <div className="px-2 space-y-1">
+          <button
+            onClick={toggleDarkMode}
+            className="w-full flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-[#5E66FF] hover:bg-[#5E66FF]/5 transition-all duration-200 cursor-pointer"
+          >
+            {darkMode ? (
+              <>
+                <SunIcon className="h-5 w-5" />
+                <span className="ml-3">Light Mode</span>
+              </>
+            ) : (
+              <>
+                <MoonIcon className="h-5 w-5" />
+                <span className="ml-3">Dark Mode</span>
+              </>
+            )}
+          </button>
+          
           <button
             onClick={() => {
+              const currentTheme = localStorage.getItem("theme");
               localStorage.clear();
               sessionStorage.clear();
+              if (currentTheme) {
+                localStorage.setItem("theme", currentTheme);
+              }
               navigate("/login");
             }}
-            className="flex items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:text-red-500 hover:bg-[#161B22] transition-colors duration-200"
+            className="w-full flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-red-400 hover:bg-red-400/5 transition-all duration-200 cursor-pointer"
           >
             <ArrowRightOnRectangleIcon className="h-5 w-5" />
             <span className="ml-3">Logout</span>

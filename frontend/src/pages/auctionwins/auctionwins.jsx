@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "../sidebar/sidebar";
+import MobileNav from "../../components/layout/MobileNav";
 import { 
   CheckIcon, 
   XMarkIcon, 
@@ -17,7 +18,11 @@ import {
   ClockIcon,
   TrophyIcon,
   XCircleIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  ExclamationTriangleIcon,
+  CameraIcon,
+  LightBulbIcon,
+  SparklesIcon
 } from "@heroicons/react/24/outline";
 
 const AuctionWins = () => {
@@ -308,8 +313,9 @@ const fetchParticipatedAuctions = async () => {
             </div>
 
             <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
-              <p className="text-sm text-yellow-800 text-center">
-                ⚠️ Always double-check the GCash details before sending money
+              <p className="text-sm text-yellow-800 text-center flex items-center justify-center gap-2">
+                <ExclamationTriangleIcon className="w-4 h-4" />
+                <span>Always double-check the GCash details before sending money</span>
               </p>
             </div>
           </div>
@@ -384,10 +390,10 @@ const fetchParticipatedAuctions = async () => {
                     View Receipt
                   </button>
                 </div>
-                <p className="text-xs text-green-700 mb-2">
-                  {auction.payment_receipt_verified 
-                    ? '✓ Verified by Illura' 
-                    : '⏳ Waiting for Illura verification'}
+                <p className="text-xs text-green-700 mb-2 flex items-center gap-1">
+                  <CheckCircleIcon className="w-3 h-3" />
+                  <span>{auction.payment_receipt_verified ? 'Verified by Illura' : 'Waiting for Illura verification'}</span>
+                  {!auction.payment_receipt_verified && <ClockIcon className="w-3 h-3 ml-1" />}
                 </p>
                 <div className="text-xs text-gray-600">
                   Status: {auction.payment_receipt_verified ? 'Verified' : 'Pending Review'}
@@ -444,8 +450,9 @@ const fetchParticipatedAuctions = async () => {
               )}
             </div>
             
-            <div className="text-xs text-gray-500 mt-2">
-              📸 Take a screenshot of your GCash payment confirmation
+            <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+              <CameraIcon className="w-4 h-4" />
+              <span>Take a screenshot of your GCash payment confirmation</span>
             </div>
           </div>
         );
@@ -606,7 +613,10 @@ const fetchParticipatedAuctions = async () => {
             </p>
             {auction.release_receipt_path ? (
               <div className="text-xs text-green-600 font-medium">
-                ✓ Payment receipt available
+                <div className="flex items-center gap-1">
+                  <CheckCircleIcon className="w-3 h-3" />
+                  <span>Payment receipt available</span>
+                </div>
               </div>
             ) : (
               <div className="text-xs text-gray-500">
@@ -681,8 +691,9 @@ const fetchParticipatedAuctions = async () => {
   if (loading) {
     return (
       <div className="flex bg-white min-h-screen">
-        <Sidebar />
-        <div className="flex-1 p-6 ml-64 overflow-y-auto">
+        <MobileNav />
+        <div className="hidden md:block"><Sidebar /></div>
+        <div className="flex-1 p-4 md:p-6 ml-0 md:ml-64 overflow-y-auto pt-18 md:pt-6 pb-20 md:pb-6">
           <h1 className="text-xl font-semibold text-gray-900 mb-4">Auction Transactions</h1>
           <p>Loading...</p>
         </div>
@@ -693,51 +704,54 @@ const fetchParticipatedAuctions = async () => {
   const currentItems = getCurrentItems();
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
-      {/* Fixed Sidebar */}
-      <div className="fixed left-0 top-0 h-screen">
+    <div className="flex bg-gray-50 dark:bg-[#0A0A0B] min-h-screen">
+      {/* Mobile Navigation */}
+      <MobileNav />
+
+      {/* Fixed Sidebar — hidden on mobile */}
+      <div className="hidden md:block fixed left-0 top-0 h-screen">
         <Sidebar />
       </div>
       
       {/* Scrollable Main Content */}
-      <div className="flex-1 p-6 ml-50 overflow-y-auto h-screen">
+      <div className="flex-1 p-4 md:p-6 ml-0 md:ml-50 overflow-y-auto h-screen pt-18 md:pt-6 pb-20 md:pb-6 bg-white dark:bg-[#0A0A0B]">
         <div className="max-w-6xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-xl font-semibold text-gray-900">Auction Transactions</h1>
-            <p className="text-sm text-gray-600 mt-1">Manage your auction purchases, sales, and participation</p>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Auction Transactions</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage your auction purchases, sales, and participation</p>
           </div>
 
           {/* Always Visible Illura GCash Info */}
           <IlluraGCashInfoBox />
 
           {/* Tab Navigation */}
-          <div className="flex border-b border-gray-300 mb-6">
+          <div className="flex border-b border-gray-300 dark:border-white/10 mb-6">
             <button
               onClick={() => setActiveTab("won")}
-              className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+              className={`px-4 py-3 font-bold text-sm border-b-2 transition-all ${
                 activeTab === "won"
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-600 hover:text-gray-900"
+                  ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-500/10"
+                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
               }`}
             >
               Auction Wins ({auctionWins.length})
             </button>
             <button
               onClick={() => setActiveTab("sold")}
-              className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+              className={`px-4 py-3 font-bold text-sm border-b-2 transition-all ${
                 activeTab === "sold"
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-600 hover:text-gray-900"
+                  ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-500/10"
+                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
               }`}
             >
               Your Sold Auctions ({sellerAuctions.length})
             </button>
             <button
               onClick={() => setActiveTab("participated")}
-              className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+              className={`px-4 py-3 font-bold text-sm border-b-2 transition-all ${
                 activeTab === "participated"
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-600 hover:text-gray-900"
+                  ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-500/10"
+                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
               }`}
             >
               Participated Auctions ({participatedAuctions.length})
@@ -761,30 +775,30 @@ const fetchParticipatedAuctions = async () => {
                     {currentItems.map((auction) => (
                       <div
                         key={auction.id}
-                        className="bg-white border border-gray-300 rounded p-4 hover:border-gray-400 transition-colors"
+                        className="bg-white dark:bg-white/[0.02] border border-gray-300 dark:border-white/5 rounded-xl p-5 hover:border-gray-400 dark:hover:border-white/10 transition-all shadow-sm"
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <h3 className="text-sm font-semibold text-gray-900">{auction.title}</h3>
+                              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{auction.title}</h3>
                               <div className="ml-auto">
                                 {getStatusBadge(auction)}
                               </div>
                             </div>
                             
-                            <div className="text-xs text-gray-600 mb-3">{auction.description}</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-3">{auction.description}</div>
                             
-                            <div className="flex items-center gap-4 text-xs text-gray-700">
+                            <div className="flex items-center gap-4 text-xs text-gray-700 dark:text-gray-300">
                               <div>
-                                <span className="font-medium">Price:</span> 
-                                <span className="ml-1 text-sm font-bold text-green-600">₱{auction.final_price}</span>
+                                <span className="font-medium text-gray-600 dark:text-gray-400">Price:</span> 
+                                <span className="ml-1 text-sm font-bold text-green-600 dark:text-green-400">₱{auction.final_price}</span>
                               </div>
                               <div>
-                                <span className="font-medium">Seller:</span> 
+                                <span className="font-medium text-gray-600 dark:text-gray-400">Seller:</span> 
                                 <span className="ml-1">{auction.seller_fullname || auction.seller_username}</span>
                               </div>
                               <div>
-                                <span className="font-medium">Ended:</span> 
+                                <span className="font-medium text-gray-600 dark:text-gray-400">Ended:</span> 
                                 <span className="ml-1">{new Date(auction.end_time).toLocaleDateString()}</span>
                               </div>
                             </div>
@@ -796,23 +810,39 @@ const fetchParticipatedAuctions = async () => {
                             <div className="col-span-2">
                               {auction.escrow_status === 'pending_payment' && (
                                 <div>
-                                  <p className="text-sm text-gray-700 mb-1">💡 Send payment to Illura's GCash to complete your purchase</p>
-                                  {auction.payment_receipt_path && (
-                                    <div className="flex items-center text-xs text-green-600">
-                                      <PhotoIcon className="w-3 h-3 mr-1" />
-                                      Receipt uploaded: {auction.payment_receipt_verified ? '✓ Verified' : '⏳ Pending verification'}
+                                  <div>
+                                    <div className="flex items-center gap-2 text-sm text-gray-700 mb-1">
+                                      <LightBulbIcon className="w-4 h-4 text-blue-500" />
+                                      <span>Send payment to Illura's GCash to complete your purchase</span>
                                     </div>
-                                  )}
+                                    {auction.payment_receipt_path && (
+                                      <div className="flex items-center text-xs text-green-600 gap-1">
+                                        <PhotoIcon className="w-3 h-3" />
+                                        <span>Receipt uploaded:</span>
+                                        <span className="font-medium">{auction.payment_receipt_verified ? 'Verified' : 'Pending verification'}</span>
+                                        {auction.payment_receipt_verified ? <CheckCircleIcon className="w-3 h-3" /> : <ClockIcon className="w-3 h-3 animate-pulse" />}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               )}
                               {auction.escrow_status === 'payment_rejected' && (
-                                <p className="text-sm text-red-600">❌ Payment not confirmed. Please check and try again.</p>
+                                <div className="flex items-center gap-2 text-sm text-red-600">
+                                  <XCircleIcon className="w-4 h-4" />
+                                  <span>Payment not confirmed. Please check and try again.</span>
+                                </div>
                               )}
                               {auction.escrow_status === 'paid' && (
-                                <p className="text-sm text-gray-700">📦 Wait for seller to ship your item</p>
+                                <div className="flex items-center gap-2 text-sm text-gray-700">
+                                  <CubeIcon className="w-4 h-4" />
+                                  <span>Wait for seller to ship your item</span>
+                                </div>
                               )}
                               {auction.escrow_status === 'item_received' && (
-                                <p className="text-sm text-gray-700">⏳ Payment will be released to the seller shortly</p>
+                                <div className="flex items-center gap-2 text-sm text-gray-700">
+                                  <ClockIcon className="w-4 h-4" />
+                                  <span>Payment will be released to the seller shortly</span>
+                                </div>
                               )}
                             </div>
                             
@@ -1070,13 +1100,21 @@ const fetchParticipatedAuctions = async () => {
                                   <span className="ml-2 text-green-700">
                                     {auction.current_highest_bid > auction.user_bid_amount 
                                       ? `You're currently outbid by ₱${(auction.current_highest_bid - auction.user_bid_amount).toFixed(2)}`
-                                      : "You're currently the highest bidder! 🎉"}
+                                      : (
+                                        <span className="flex items-center gap-1">
+                                          You're currently the highest bidder!
+                                          <SparklesIcon className="w-3 h-3 text-yellow-500" />
+                                        </span>
+                                      )}
                                   </span>
                                 </div>
                               ) : auction.winner_id === parseInt(localStorage.getItem("userId")) ? (
                                 <div className="flex items-center text-xs text-green-600 bg-green-50 p-2 rounded border border-green-200">
                                   <TrophyIcon className="w-3 h-3 mr-1" />
-                                  <span className="font-medium">🎉 You won this auction!</span>
+                                  <span className="font-medium flex items-center gap-1">
+                                    <SparklesIcon className="w-4 h-4 text-yellow-500" />
+                                    <span>You won this auction!</span>
+                                  </span>
                                   <button
                                     onClick={() => setActiveTab("won")}
                                     className="ml-auto text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200 transition"
@@ -1116,9 +1154,10 @@ const fetchParticipatedAuctions = async () => {
                               </button>
                             </div>
                             {auction.current_highest_bid > auction.user_bid_amount && (
-                              <p className="text-xs text-red-600 mt-2">
-                                💡 You need to bid at least ₱{auction.current_highest_bid} to become the highest bidder
-                              </p>
+                                <div className="flex items-center gap-2 text-xs text-red-600 mt-2">
+                                  <LightBulbIcon className="w-3 h-3" />
+                                  <span>You need to bid at least ₱{auction.current_highest_bid} to become the highest bidder</span>
+                                </div>
                             )}
                           </div>
                         )}

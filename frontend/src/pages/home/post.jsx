@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { MessageCircle, MoreVertical, Loader, Trash, Pencil, X, Globe, Users, Lock, Flag } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Comments from "../comments/comments";
 import { CheckIcon } from "@heroicons/react/24/outline";
@@ -17,13 +18,13 @@ const VisibilityBadge = ({ visibility }) => {
   const getVisibilityInfo = () => {
     switch (visibility) {
       case 'public':
-        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' };
       case 'friends':
-        return { icon: <Users size={14} />, text: 'Friends Only', color: 'text-green-600', bg: 'bg-green-50' };
+        return { icon: <Users size={14} />, text: 'Friends Only', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' };
       case 'private':
-        return { icon: <Lock size={14} />, text: 'Private', color: 'text-gray-600', bg: 'bg-gray-50' };
+        return { icon: <Lock size={14} />, text: 'Private', color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-50 dark:bg-gray-900/20' };
       default:
-        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' };
     }
   };
 
@@ -133,50 +134,55 @@ const Post = ({ post, userId, handleDelete }) => {
   };
 
   return (
-    <div className="relative bg-white p-4 rounded-lg shadow-md text-sm max-w-2xl mx-auto lg:ml-0 mb-5 border border-gray-200">
+    <div className="relative bg-white dark:bg-[#0A0A0B] p-5 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 group transition-all duration-300 hover:shadow-lg">
       {post.post_status === "down" && (
-        <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg">
-          <p className="text-white text-lg font-semibold">🚫 Post is taken down</p>
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-30 rounded-xl">
+          <p className="text-white text-lg font-bold flex items-center gap-2">
+            <X className="w-5 h-5 text-red-500" />
+            Post Taken Down
+          </p>
         </div>
       )}
 
       {/* Post Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          {post.author_pfp ? (
-            <img
-              src={`http://localhost:5000/uploads/${post.author_pfp}`}
-              alt={post.author}
-              className="w-10 h-10 rounded-full border border-gray-300"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-              <span className="text-gray-600 text-xs">N/A</span>
-            </div>
-          )}
+          <div className="relative group/pfp">
+            {post.author_pfp ? (
+              <img src={`http://localhost:5000/uploads/${post.author_pfp}`} alt={post.author} className="w-11 h-11 rounded-full border-2 border-white dark:border-gray-800 shadow-sm object-cover transition-transform group-hover/pfp:scale-105" />
+            ) : (
+              <div className="w-11 h-11 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 text-xs font-bold">
+                {post.author?.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
           <div>
-            <div className="flex items-center">
-              <p className="font-bold text-gray-800">{post.author}</p>
+            <div className="flex items-center flex-wrap gap-1">
+              <p className="font-bold text-gray-900 dark:text-gray-100">{post.fullname}</p>
               {post.is_verified && <VerifiedBadge />}
               <VisibilityBadge visibility={post.visibility} />
             </div>
-            <p className="text-gray-600 text-sm">{post.fullname}</p>
+            <p className="text-gray-400 dark:text-gray-500 text-xs font-medium tracking-tight">@{post.author}</p>
           </div>
         </div>
 
         {/* UPDATE THIS SECTION: Make menu visible to everyone */}
         <div className="relative">
-          <button
+          <button 
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer" 
             onClick={() => setMenuOpen(!menuOpen)}
-            className="text-gray-600 hover:text-gray-900"
           >
-            <MoreVertical size={20} />
+            <MoreVertical className="w-5 h-5" />
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border transform transition-all duration-200">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 shadow-2xl rounded-xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden"
+            >
               {/* Author-only options */}
-              {post.author_id === userId && (
+              {String(post.author_id) === String(userId) && (
                 <>
                   <button
                     onClick={() => {
@@ -198,8 +204,7 @@ const Post = ({ post, userId, handleDelete }) => {
                 </>
               )}
               
-              {/* ADD THIS: Report button for non-authors */}
-              {post.author_id !== userId && (
+              {String(post.author_id) !== String(userId) && (
                 <button
                   onClick={() => {
                     setShowReportModal(true);
@@ -211,46 +216,48 @@ const Post = ({ post, userId, handleDelete }) => {
                   Report Post
                 </button>
               )}
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
 
       {/* Post Content */}
-      <h4 className="text-base text-gray-800">{post.title}</h4>
+      <div className="mb-4">
+        <h4 className="text-base text-gray-800 dark:text-gray-200 leading-relaxed">{post.title}</h4>
+      </div>
+
       {post.media_path && (
-        <div onClick={() => setIsImageModalOpen(true)} className="cursor-pointer">
+        <div onClick={() => setIsImageModalOpen(true)} className="cursor-pointer overflow-hidden group/image relative">
           <img
             src={`http://localhost:5000/uploads/${post.media_path}`}
             alt={post.title}
-            className="w-full object-contain rounded mt-2 hover:opacity-80 transition"
+            className="w-full object-contain transition-transform duration-500 group-hover/image:scale-[1.02]"
           />
+          <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/5 transition-colors"></div>
         </div>
       )}
 
-      {/* ✅ Divider before likes/comments */}
-      <hr className="my-4 border-gray-200" />
-
-      {/* Likes & Comments with date on the right */}
-      <div className="flex items-center justify-between pt-1">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1">
+      {/* Interaction Row */}
+      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50 dark:border-gray-800/50">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-1.5 group/like">
             <PostLikes postId={post.id} />
           </div>
           <button
             onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-1 text-gray-600 hover:text-gray-900"
+            className="flex items-center gap-2 text-gray-400 dark:text-gray-500 transition-all cursor-pointer group/comment"
           >
-            <MessageCircle size={18} />
-            <span className="text-sm">{commentCount}</span>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center group-hover/comment:bg-blue-50 dark:group-hover/comment:bg-blue-900/20 transition-colors">
+              <MessageCircle size={18} />
+            </div>
+            <span className="text-sm font-bold">{commentCount}</span>
           </button>
         </div>
 
-        {/* Date moved to right side */}
         {post.created_at && (
-          <p className="text-xs text-gray-500">
+          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest">
             {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-          </p>
+          </div>
         )}
       </div>
 
@@ -393,71 +400,93 @@ const Post = ({ post, userId, handleDelete }) => {
 
       {/* Image Modal */}
       {isImageModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="relative bg-white rounded-lg max-w-6xl w-full h-[80vh] flex">
-            <div className="flex-[2] overflow-hidden flex items-center justify-center p-4 bg-gray-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="relative bg-white rounded-xl shadow-2xl max-w-6xl w-full h-[85vh] flex overflow-hidden animate-in zoom-in-95 duration-300">
+            {/* Image Area */}
+            <div className="flex-[2] overflow-hidden flex items-center justify-center p-4 bg-[#0F0F11] relative">
               <img
                 src={`http://localhost:5000/uploads/${post.media_path}`}
                 alt={post.title}
-                className="max-h-full max-w-full object-contain"
+                className="max-h-full max-w-full object-contain select-none shadow-2xl"
               />
+              
+              {/* Image Close Button Overlay for mobile or quick exit */}
+              <button
+                onClick={() => setIsImageModalOpen(false)}
+                className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-all md:hidden"
+              >
+                <X size={20} />
+              </button>
             </div>
-            <div className="flex-1 flex flex-col border-l border-gray-200">
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                  {post.author_pfp ? (
-                    <img
-                      src={`http://localhost:5000/uploads/${post.author_pfp}`}
-                      alt={post.author}
-                      className="w-10 h-10 rounded-full border border-gray-300"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                      <span className="text-gray-600 text-xs">N/A</span>
-                    </div>
-                  )}
-                  <div>
-                    <div className="flex items-center">
-                      <p className="font-bold text-gray-800">{post.author}</p>
-                      {post.is_verified && <VerifiedBadge />}
-                      <VisibilityBadge visibility={post.visibility} />
-                    </div>
-                    <p className="text-gray-600 text-sm">{post.fullname}</p>
-                  </div>
-                </div>
-                <p className="mt-3 text-gray-800">{post.title}</p>
 
-                {/* Likes & Comments with date on the right */}
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                  <div className="flex items-center gap-4">
+            {/* Sidebar Area */}
+            <div className="w-[380px] flex flex-col bg-white border-l border-gray-100">
+              {/* Sidebar Header */}
+              <div className="p-6 border-b border-gray-50">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    {post.author_pfp ? (
+                      <img
+                        src={`http://localhost:5000/uploads/${post.author_pfp}`}
+                        alt={post.author}
+                        className="w-11 h-11 rounded-full border-2 border-white shadow-sm object-cover"
+                      />
+                    ) : (
+                      <div className="w-11 h-11 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">
+                        <span className="text-gray-400 text-xs font-bold">NA</span>
+                      </div>
+                    )}
+                    <div>
+                      <div className="flex items-center gap-1">
+                        <p className="font-bold text-gray-900 leading-tight">{post.author}</p>
+                        {post.is_verified && <VerifiedBadge />}
+                      </div>
+                      <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">{post.visibility}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setIsImageModalOpen(false)}
+                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-full transition-all cursor-pointer"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2 leading-snug">
+                  {post.title}
+                </h3>
+                <p className="text-gray-500 text-sm leading-relaxed mb-4">
+                  {post.fullname}
+                </p>
+
+                {/* Interaction Row */}
+                <div className="flex items-center justify-between mt-6 pt-5 border-t border-gray-50">
+                  <div className="flex items-center gap-6">
                     <div className="flex items-center gap-1">
                       <PostLikes postId={post.id} />
                     </div>
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <MessageCircle size={18} />
-                      <span className="text-sm">{commentCount}</span>
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <MessageCircle size={20} />
+                      <span className="text-sm font-bold">{commentCount}</span>
                     </div>
                   </div>
 
-                  {/* Date in modal - bottom right */}
                   {post.created_at && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                       {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
                     </p>
                   )}
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto">
-                <Comments postId={post.id} userId={userId} />
+
+              {/* Comments Area */}
+              <div className="flex-1 overflow-y-auto bg-gray-50/30">
+                <div className="p-6">
+                  <Comments postId={post.id} userId={userId} />
+                </div>
               </div>
             </div>
-
-            <button
-              onClick={() => setIsImageModalOpen(false)}
-              className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 transition"
-            >
-              <X size={24} />
-            </button>
           </div>
         </div>
       )}

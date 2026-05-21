@@ -21,7 +21,7 @@ import {
   TrashIcon,
   CloudArrowUpIcon,
   MapPinIcon,
-  ChevronDownIcon, 
+  ChevronDownIcon,
   CameraIcon,
 } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
@@ -29,23 +29,20 @@ import { FaInstagram, FaFacebook } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { FaPaintBrush, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import FollowStats from "../follow/followstats";
+import MobileNav from "../../components/layout/MobileNav";
 
-// Custom hooks
 import { useProfile } from "../../hooks/useProfile";
 import { useWatermark } from "../../hooks/useWatermark";
 import { useCoverPhoto } from "../../hooks/useCoverPhoto";
 
-// Components
 import ProfileHeader from "../../components/profile/ProfileHeader";
 import ProfileInfo from "../../components/profile/ProfileInfo";
 import ProfilePictureSection from "../../components/profile/ProfilePictureSection";
 import ActionButtons from "../../components/profile/ActionButtons";
 import WatermarkSection from "../../components/profile/WatermarkSection";
-import SocialMediaModal from "../../components/modals/socialmediamodal"; // NEW IMPORT
-
+import SocialMediaModal from "../../components/modals/socialmediamodal";
 const BASE_URL = "http://localhost:5000";
 
-// URL functions that need BASE_URL
 const coverPhotoUrl = (filename) => {
   if (!filename) return null;
   const timestamp = new Date().getTime();
@@ -59,7 +56,6 @@ const watermarkUrl = (filename) => {
 };
 
 const Profile = () => {
-  // Use custom hooks
   const {
     user,
     isLoading,
@@ -103,11 +99,10 @@ const Profile = () => {
     handleRemoveCoverPhoto,
   } = useCoverPhoto(refreshProfile, profileCoverPhoto, setCoverPhotoState);
 
-  // Local state only for UI interactions
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
-  const [isSocialMediaModalOpen, setIsSocialMediaModalOpen] = useState(false); // NEW STATE
-  const [isSavingSocialMedia, setIsSavingSocialMedia] = useState(false); // NEW STATE
+  const [isSocialMediaModalOpen, setIsSocialMediaModalOpen] = useState(false);
+  const [isSavingSocialMedia, setIsSavingSocialMedia] = useState(false);
   const [activeTab, setActiveTab] = useState("posts");
   const [isEditing, setIsEditing] = useState(false);
   const [editUsername, setEditUsername] = useState("");
@@ -121,7 +116,6 @@ const Profile = () => {
   const [isSavingGcash, setIsSavingGcash] = useState(false);
   const [gcashError, setGcashError] = useState("");
 
-  // Fetch portfolio
   const fetchPortfolio = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -134,7 +128,6 @@ const Profile = () => {
     }
   };
 
-  // Event handlers
   const toggleUploadModal = () => setIsUploadModalOpen(!isUploadModalOpen);
   const toggleVerifyModal = () => setIsVerifyModalOpen(!isVerifyModalOpen);
 
@@ -156,24 +149,21 @@ const Profile = () => {
       bio: editBio,
       location_id: selectedLocation,
       pfp: editPfp
-      // Social media links removed from here - handled separately
     });
     if (success) {
       setIsEditing(false);
     }
   };
 
-  // NEW: Handler for saving social media links
   const handleSaveSocialMedia = async (socialMediaData) => {
-  setIsSavingSocialMedia(true);
-  const success = await updateProfile(socialMediaData);
-  if (success) {
-    setIsSocialMediaModalOpen(false);
-    // ADD THIS: Refresh profile to update local state
-    await refreshProfile();
-  }
-  setIsSavingSocialMedia(false);
-};
+    setIsSavingSocialMedia(true);
+    const success = await updateProfile(socialMediaData);
+    if (success) {
+      setIsSocialMediaModalOpen(false);
+      await refreshProfile();
+    }
+    setIsSavingSocialMedia(false);
+  };
 
   const handleSaveGcash = async () => {
     if (gcashNumber && !/^09\d{9}$/.test(gcashNumber)) {
@@ -183,14 +173,14 @@ const Profile = () => {
 
     setIsSavingGcash(true);
     const token = localStorage.getItem("token");
-    
+
     try {
       await axios.patch(
         `${BASE_URL}/api/profile/gcash`,
         { gcash_number: gcashNumber || null },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       await refreshProfile();
       setIsEditingGcash(false);
       setGcashError("");
@@ -213,7 +203,6 @@ const Profile = () => {
     await updateCommissions(newStatus);
   };
 
-  // Global event listeners for image protection
   useEffect(() => {
     const preventDefault = (e) => {
       if (e.target.closest('.watermark-protected')) {
@@ -224,17 +213,18 @@ const Profile = () => {
 
     document.addEventListener('contextmenu', preventDefault);
     document.addEventListener('dragstart', preventDefault);
-    
+
     return () => {
       document.removeEventListener('contextmenu', preventDefault);
       document.removeEventListener('dragstart', preventDefault);
     };
   }, []);
 
-  // Fetch portfolio on component mount
   useEffect(() => {
     fetchPortfolio();
   }, []);
+
+  const [isWatermarkVisible, setIsWatermarkVisible] = useState(false);
 
   if (!user) {
     return (
@@ -246,7 +236,9 @@ const Profile = () => {
 
   return (
     <div className="flex">
-      <div className="fixed h-screen w-60">
+      <MobileNav />
+
+      <div className="hidden md:block fixed h-screen w-50">
         <Sidebar />
       </div>
 
@@ -255,95 +247,127 @@ const Profile = () => {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -50 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="ml-50 flex-grow px-6"
+        className="ml-0 md:ml-50 flex-grow px-4 md:px-6 pt-16 md:pt-0 pb-20 md:pb-0 overflow-x-hidden bg-white dark:bg-[#0A0A0B]"
       >
-        {/* Profile Header with Cover Photo */}
         <ProfileHeader
           coverPhoto={coverPhoto}
           coverPreviewUrl={coverPreviewUrl}
           coverPhotoUrl={coverPhotoUrl}
           onCoverImageError={() => setCoverImageLoadError(true)}
+          isEditing={isEditing}
         >
-          {/* 3-Column Grid Layout */}
-          <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-6 items-start">
-            {/* Column 1: Profile Picture + Commissions */}
+          <div className="flex lg:hidden items-center gap-4 mb-6">
             <ProfilePictureSection
               user={user}
               isEditing={isEditing}
               editPfp={editPfp}
               onPfpChange={handlePfpChange}
-            >
-              <ActionButtons
-                commissions={commissions}
-                onToggleCommissions={toggleCommissions}
-                onToggleUploadModal={toggleUploadModal}
-                onToggleVerifyModal={toggleVerifyModal}
-                user={user}
-                isEditing={isEditing}
-              />
-            </ProfilePictureSection>
-
-            {/* Column 2: Profile Details */}
+            />
             <ProfileInfo
               user={user}
               isEditing={isEditing}
-              editUsername={editUsername}
-              editBio={editBio}
-              locations={locations}
-              selectedLocation={selectedLocation}
               onEdit={startEditing}
-              onUsernameChange={(e) => setEditUsername(e.target.value)}
-              onBioChange={(e) => setEditBio(e.target.value)}
-              onLocationChange={(e) => setSelectedLocation(e.target.value ? Number(e.target.value) : null)}
               CheckIcon={CheckIcon}
-              onSaveChanges={handleProfileUpdate}
-              onCancelEditing={cancelEditing}
-              isLoading={isLoading}
-              gcashNumber={gcashNumber}
-              setGcashNumber={setGcashNumber}
-              isEditingGcash={isEditingGcash}
-              setIsEditingGcash={setIsEditingGcash}
-              isSavingGcash={isSavingGcash}
-              gcashError={gcashError}
-              onSaveGcash={handleSaveGcash}
-              onEditSocialMedia={() => setIsSocialMediaModalOpen(true)} // NEW PROP
+              variant="header"
             />
+          </div>
 
-            {/* Column 3: Watermark + Cover Photo */}
-            <WatermarkSection
-              // Watermark state
-              watermark={watermark}
-              watermarkFile={watermarkFile}
-              previewUrl={previewUrl}
-              isUploading={isUploading}
-              isDeleting={isDeleting}
-              imageLoadError={imageLoadError}
-              
-              // Cover photo state
-              coverPhoto={coverPhoto}
-              coverPhotoFile={coverPhotoFile}
-              coverPreviewUrl={coverPreviewUrl}
-              isCoverUploading={isCoverUploading}
-              
-              // Handlers
-              onWatermarkSelect={handleWatermarkSelect}
-              onWatermarkUpload={handleWatermarkUpload}
-              onCancelSelection={handleCancelSelection}
-              onDeleteWatermark={handleDeleteWatermark}
-              onCoverPhotoSelect={handleCoverPhotoSelect}
-              onCoverPhotoUpload={handleCoverPhotoUpload}
-              onCoverCancelSelection={handleCoverCancelSelection}
-              onRemoveCoverPhoto={handleRemoveCoverPhoto}
-              onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
-              onShowCoverDeleteConfirm={() => setShowCoverDeleteConfirm(true)}
-              
-              // URLs
-              watermarkUrl={watermarkUrl}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-6 items-start">
+            <div className="hidden lg:block">
+              <ProfilePictureSection
+                user={user}
+                isEditing={isEditing}
+                editPfp={editPfp}
+                onPfpChange={handlePfpChange}
+              >
+                <ActionButtons
+                  commissions={commissions}
+                  onToggleCommissions={toggleCommissions}
+                  onToggleUploadModal={toggleUploadModal}
+                  onToggleVerifyModal={toggleVerifyModal}
+                  user={user}
+                  isEditing={isEditing}
+                />
+              </ProfilePictureSection>
+            </div>
+
+            <div className="flex flex-col space-y-4">
+              <ProfileInfo
+                user={user}
+                isEditing={isEditing}
+                editUsername={editUsername}
+                editBio={editBio}
+                locations={locations}
+                selectedLocation={selectedLocation}
+                onEdit={startEditing}
+                onUsernameChange={(e) => setEditUsername(e.target.value)}
+                onBioChange={(e) => setEditBio(e.target.value)}
+                onLocationChange={(e) => setSelectedLocation(e.target.value ? Number(e.target.value) : null)}
+                CheckIcon={CheckIcon}
+                onSaveChanges={handleProfileUpdate}
+                onCancelEditing={cancelEditing}
+                isLoading={isLoading}
+                gcashNumber={gcashNumber}
+                setGcashNumber={setGcashNumber}
+                isEditingGcash={isEditingGcash}
+                setIsEditingGcash={setIsEditingGcash}
+                isSavingGcash={isSavingGcash}
+                gcashError={gcashError}
+                onSaveGcash={handleSaveGcash}
+                onEditSocialMedia={() => setIsSocialMediaModalOpen(true)}
+              />
+
+              <div className="flex lg:hidden flex-col">
+                <ActionButtons
+                  commissions={commissions}
+                  onToggleCommissions={toggleCommissions}
+                  onToggleUploadModal={toggleUploadModal}
+                  onToggleVerifyModal={toggleVerifyModal}
+                  user={user}
+                  isEditing={isEditing}
+                />
+              </div>
+
+              <button
+                onClick={() => setIsWatermarkVisible(!isWatermarkVisible)}
+                className="lg:hidden flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg backdrop-blur-md border border-white/20 transition-all mt-2"
+              >
+                <CameraIcon className="w-4 h-4" />
+                {isWatermarkVisible ? "Hide Cover & Watermark Settings" : "Edit Cover & Watermark"}
+              </button>
+            </div>
+
+            <div className={`${isWatermarkVisible ? 'block' : 'hidden'} lg:block`}>
+              <WatermarkSection
+                watermark={watermark}
+                watermarkFile={watermarkFile}
+                previewUrl={previewUrl}
+                isUploading={isUploading}
+                isDeleting={isDeleting}
+                imageLoadError={imageLoadError}
+
+                coverPhoto={coverPhoto}
+                coverPhotoFile={coverPhotoFile}
+                coverPreviewUrl={coverPreviewUrl}
+                isCoverUploading={isCoverUploading}
+
+                onWatermarkSelect={handleWatermarkSelect}
+                onWatermarkUpload={handleWatermarkUpload}
+                onCancelSelection={handleCancelSelection}
+                onDeleteWatermark={handleDeleteWatermark}
+                onCoverPhotoSelect={handleCoverPhotoSelect}
+                onCoverPhotoUpload={handleCoverPhotoUpload}
+                onCoverCancelSelection={handleCoverCancelSelection}
+                onRemoveCoverPhoto={handleRemoveCoverPhoto}
+                onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
+                onShowCoverDeleteConfirm={() => setShowCoverDeleteConfirm(true)}
+
+                watermarkUrl={watermarkUrl}
+              />
+            </div>
           </div>
         </ProfileHeader>
 
-        {/* Cover Photo Upload Status */}
         {isCoverUploading && (
           <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-center justify-between">
@@ -358,7 +382,6 @@ const Profile = () => {
           </div>
         )}
 
-        {/* Delete Confirmation Modal for Watermark */}
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm mx-4">
@@ -389,7 +412,6 @@ const Profile = () => {
           </div>
         )}
 
-        {/* Delete Confirmation Modal for Cover Photo */}
         {showCoverDeleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm mx-4">
@@ -419,7 +441,6 @@ const Profile = () => {
           </div>
         )}
 
-        {/* Social Media Modal - ADD THIS */}
         <SocialMediaModal
           isOpen={isSocialMediaModalOpen}
           onClose={() => setIsSocialMediaModalOpen(false)}
@@ -428,10 +449,9 @@ const Profile = () => {
           isLoading={isSavingSocialMedia}
         />
 
-        <div className="border-b border-gray-200 mb-4"></div>
+        <div className="border-b border-gray-100 dark:border-white/5 mb-8"></div>
 
-        {/* Tabs Section */}
-        <div className="flex border-b border-gray-300 mb-6 text-sm">
+        <div className="flex border-b border-gray-100 dark:border-white/5 mb-8 text-sm overflow-x-auto no-scrollbar">
           {[
             { key: "posts", icon: NewspaperIcon, label: "Posts" },
             { key: "ownart", icon: PhotoIcon, label: "Art Posts" },
@@ -441,19 +461,25 @@ const Profile = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 text-center py-2 font-semibold flex items-center justify-center gap-2 ${
-                activeTab === tab.key
-                  ? "border-b-4 border-blue-500 text-blue-600"
-                  : "hover:bg-gray-100 text-gray-600"
-              }`}
+              className={`flex-1 min-w-[120px] py-4 font-bold flex items-center justify-center gap-2 transition-all duration-300 relative cursor-pointer ${activeTab === tab.key
+                  ? "text-[#5E66FF]"
+                  : "text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"
+                }`}
             >
-              <tab.icon className="h-5 w-5" />
-              {tab.label}
+              <tab.icon className={`h-5 w-5 transition-transform duration-300 ${activeTab === tab.key ? "scale-110" : "scale-100"}`} />
+              <span className="tracking-tight">{tab.label}</span>
+
+              {activeTab === tab.key && (
+                <motion.div
+                  layoutId="activeTabUnderline"
+                  className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#5E66FF]"
+                  initial={false}
+                />
+              )}
             </button>
           ))}
         </div>
 
-        {/* Tab Content */}
         {activeTab === "posts" && <OwnPost userId={user.id} />}
         {activeTab === "ownart" && <OwnArt userId={user.id} />}
         {activeTab === "portfolio" && (
@@ -461,7 +487,6 @@ const Profile = () => {
         )}
         {activeTab === "ownauct" && <OwnAuct userId={user.id} />}
 
-        {/* Upload Modal */}
         {isUploadModalOpen && (
           <div className="fixed inset-0 bg-gray-950/90 backdrop-blur-md flex justify-center items-center z-50 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
             <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full relative mx-4 my-8">
@@ -471,7 +496,6 @@ const Profile = () => {
           </div>
         )}
 
-        {/* Verify Modal */}
         {isVerifyModalOpen && (
           <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-lg flex justify-center items-center z-50 transition-all duration-300 ease-out">
             <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full relative mx-4 my-8">

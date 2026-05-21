@@ -186,6 +186,19 @@ const deletePost = (req, res) => {
   });
 };
 
+// Get public posts (no auth needed - for landing page)
+const getPublicPosts = (req, res) => {
+  postsModels.getPublicPosts((err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+    res.status(200).json(results.map(post => ({
+      ...post,
+      author_pfp: post.author_pfp || "default.png",
+    })));
+  });
+};
+
 module.exports = {
   createPost,
   getAllPosts,
@@ -195,4 +208,5 @@ module.exports = {
   updatePostStatus,
   deletePost,
    getFollowingPosts,
+  getPublicPosts,
 };

@@ -6,6 +6,9 @@ const upload = multer({ dest: "uploads/" });
 
 const router = express.Router();
 
+// Public route (no auth needed - for landing page)
+router.get("/artwork-posts/public", artworkPostsController.getPublicArtworkPosts);
+
 router.get("/artwork-posts/following", authenticateToken, artworkPostsController.getFollowingArtworkPosts);
 
 // Create a new artwork post

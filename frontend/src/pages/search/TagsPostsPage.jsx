@@ -187,12 +187,16 @@ const TagPostsPage = () => {
   const renderMediaGrid = (media) => {
     const count = media.length;
     if (count === 1)
-      return <ProtectedMedia file={media[0]} className="w-full h-full rounded-lg" />;
+      return (
+        <div className="w-full max-h-[500px] overflow-hidden rounded-none">
+          <ProtectedMedia file={media[0]} className="w-full h-full object-cover" />
+        </div>
+      );
     if (count === 2)
       return (
         <div className="grid grid-cols-2 gap-1">
           {media.map((file, index) => (
-            <ProtectedMedia key={file.id} file={file} className="w-full h-full aspect-square rounded-lg" />
+            <ProtectedMedia key={file.id} file={file} className="w-full h-full aspect-square rounded-none" />
           ))}
         </div>
       );
@@ -200,13 +204,13 @@ const TagPostsPage = () => {
       return (
         <div className="grid grid-cols-2 gap-1">
           <div className="row-span-2 aspect-square">
-            <ProtectedMedia file={media[0]} className="w-full h-full rounded-lg" />
+            <ProtectedMedia file={media[0]} className="w-full h-full rounded-none" />
           </div>
           <div className="aspect-square">
-            <ProtectedMedia file={media[1]} className="w-full h-full rounded-lg" />
+            <ProtectedMedia file={media[1]} className="w-full h-full rounded-none" />
           </div>
           <div className="aspect-square">
-            <ProtectedMedia file={media[2]} className="w-full h-full rounded-lg" />
+            <ProtectedMedia file={media[2]} className="w-full h-full rounded-none" />
           </div>
         </div>
       );
@@ -214,7 +218,7 @@ const TagPostsPage = () => {
       return (
         <div className="grid grid-cols-2 gap-1">
           {media.map((file, index) => (
-            <ProtectedMedia key={file.id} file={file} className="w-full h-full aspect-square rounded-lg" />
+            <ProtectedMedia key={file.id} file={file} className="w-full h-full aspect-square rounded-none" />
           ))}
         </div>
       );
@@ -222,9 +226,9 @@ const TagPostsPage = () => {
       <div className="grid grid-cols-2 gap-1">
         {media.slice(0, 4).map((file, index) => (
           <div key={file.id} className={`aspect-square relative`}>
-            <ProtectedMedia file={file} className="w-full h-full rounded-lg" />
+            <ProtectedMedia file={file} className="w-full h-full rounded-none" />
             {index === 3 && (
-              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center text-white font-bold text-xl pointer-events-none rounded-lg">
+              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center text-white font-bold text-xl pointer-events-none rounded-none">
                 +{media.length - 4}
               </div>
             )}
@@ -333,7 +337,7 @@ const TagPostsPage = () => {
                         <button
                           key={tag.id}
                           onClick={() => handleTagClick(tag.name)}
-                          className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium transition-colors"
                         >
                           <TagIcon size={12} />
                           #{tag.name}

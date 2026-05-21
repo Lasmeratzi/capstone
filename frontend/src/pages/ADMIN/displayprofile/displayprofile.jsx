@@ -243,13 +243,10 @@ const DisplayProfile = () => {
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
-      {/* Fixed Sidebar */}
-      <div className="fixed h-full">
-        <SideAdmin />
-      </div>
+      <SideAdmin />
 
       {/* Scrollable Content */}
-      <div className="flex-grow p-6 ml-48">
+      <div className="flex-grow p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Illura Database › User Profiles</h1>
           <p className="text-gray-600">Manage all user accounts and their status</p>

@@ -6,12 +6,13 @@ const ProfileHeader = ({
   coverPreviewUrl, 
   coverPhotoUrl, 
   onCoverImageError,
+  isEditing,
   children 
 }) => {
   return (
-    <div className="relative mb-6 -mx-6 bg-gray-200 h-80">
+    <div className={`relative mb-6 -mx-4 md:-mx-6 bg-gray-200 min-h-[320px] ${isEditing ? '' : 'lg:h-80 overflow-hidden'}`}>
       {/* Cover Photo Background */}
-      <div className="w-full h-full">
+      <div className="absolute inset-0 w-full h-full z-0">
         {coverPhoto || coverPreviewUrl ? (
           <img
             src={coverPreviewUrl || coverPhotoUrl(coverPhoto)}
@@ -27,7 +28,7 @@ const ProfileHeader = ({
       </div>
 
       {/* Profile Content Overlay */}
-      <div className="absolute inset-0 p-6 bg-gradient-to-t from-black/50 to-transparent h-full">
+      <div className={`relative z-10 p-6 pt-20 md:pt-6 bg-gradient-to-t from-black/70 via-black/40 to-black/20 min-h-[320px] ${isEditing ? '' : 'lg:h-full'} flex flex-col justify-end text-white`}>
         {children}
       </div>
     </div>

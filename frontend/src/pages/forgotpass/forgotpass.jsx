@@ -1,4 +1,6 @@
 import React from "react";
+import axios from "axios";
+import paperBg from "../../assets/images/paper.jpg";
 import { Link } from "react-router-dom"; // Import Link for navigation
 
 const ForgotPass = () => {
@@ -12,7 +14,7 @@ const ForgotPass = () => {
     <div
       className="flex items-center justify-center h-screen bg-cover bg-center"
       style={{
-        backgroundImage: "url('src/assets/images/paper.jpg')", // Set the background image
+        backgroundImage: `url(${paperBg})`,
       }}
     >
       <div className="w-full max-w-md bg-white p-8 shadow-lg rounded-lg">

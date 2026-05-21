@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import SideAdmin from "../sideadmin/sideadmin";
-import { 
-  TrashIcon, 
-  EyeIcon, 
-  EyeSlashIcon, 
-  XMarkIcon, 
-  FunnelIcon, 
-  UserCircleIcon, 
+import {
+  TrashIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  XMarkIcon,
+  FunnelIcon,
+  UserCircleIcon,
   MagnifyingGlassIcon,
-  PhotoIcon 
+  PhotoIcon
 } from "@heroicons/react/24/outline";
 
 const DisplayPosts = () => {
@@ -30,33 +30,30 @@ const DisplayPosts = () => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [userSearch, setUserSearch] = useState("");
 
-  // Fetch posts and users when component loads or filters change
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       const token = sessionStorage.getItem("adminToken");
-      
+
       try {
-        // Fetch posts with filters
         const params = new URLSearchParams();
         if (filters.userId) params.append('userId', filters.userId);
         if (filters.status !== 'all') params.append('status', filters.status);
         if (filters.search) params.append('search', filters.search);
-        
+
         const postsResponse = await axios.get(
           `http://localhost:5000/api/admin/posts?${params.toString()}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        
+
         setPosts(postsResponse.data.posts || []);
         setStats(postsResponse.data.stats || { total: 0, active: 0, down: 0 });
-        
-        // Fetch users for dropdown
+
         const usersResponse = await axios.get(
           "http://localhost:5000/api/admin/posts/users",
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        
+
         setUsers(usersResponse.data || []);
         setFilteredUsers(usersResponse.data || []);
       } catch (error) {
@@ -66,17 +63,16 @@ const DisplayPosts = () => {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, [filters]);
 
-  // Filter users based on search input
   useEffect(() => {
     if (userSearch.trim() === "") {
       setFilteredUsers(users);
     } else {
       const searchLower = userSearch.toLowerCase();
-      const filtered = users.filter(user => 
+      const filtered = users.filter(user =>
         user.username.toLowerCase().includes(searchLower) ||
         user.fullname.toLowerCase().includes(searchLower) ||
         user.id.toString().includes(searchLower)
@@ -85,30 +81,26 @@ const DisplayPosts = () => {
     }
   }, [userSearch, users]);
 
-  // Format date
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", { 
-      month: "2-digit", 
-      day: "2-digit", 
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit"
     });
   };
 
-  // Get selected user display
   const getSelectedUser = () => {
     if (!filters.userId) return null;
     return users.find(user => user.id.toString() === filters.userId);
   };
 
-  // Clear user filter
   const clearUserFilter = () => {
     setFilters(prev => ({ ...prev, userId: "" }));
     setUserSearch("");
   };
 
-  // Toggle post status (Active ↔ Down)
   const togglePostStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === "active" ? "down" : "active";
     const token = sessionStorage.getItem("adminToken");
@@ -120,18 +112,17 @@ const DisplayPosts = () => {
           { status: newStatus },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        
+
         setPosts(posts.map((post) =>
           post.id === id ? { ...post, post_status: newStatus } : post
         ));
-        
-        // Update stats
+
         setStats(prev => ({
           ...prev,
           active: newStatus === 'active' ? prev.active + 1 : prev.active - 1,
           down: newStatus === 'down' ? prev.down + 1 : prev.down - 1
         }));
-        
+
         alert(`Post status changed to ${newStatus}!`);
       } catch (error) {
         alert("Failed to update post status.");
@@ -139,7 +130,6 @@ const DisplayPosts = () => {
     }
   };
 
-  // Delete post
   const deletePost = async (id) => {
     const token = sessionStorage.getItem("adminToken");
 
@@ -148,17 +138,16 @@ const DisplayPosts = () => {
         await axios.delete(`http://localhost:5000/api/admin/posts/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         const postToDelete = posts.find(p => p.id === id);
         setPosts(posts.filter((post) => post.id !== id));
-        
-        // Update stats
+
         setStats(prev => ({
           total: prev.total - 1,
           active: postToDelete.post_status === 'active' ? prev.active - 1 : prev.active,
           down: postToDelete.post_status === 'down' ? prev.down - 1 : prev.down
         }));
-        
+
         alert("Post deleted successfully!");
       } catch (error) {
         alert("Failed to delete post.");
@@ -166,23 +155,19 @@ const DisplayPosts = () => {
     }
   };
 
-  // Open image modal
   const openImageModal = (imagePath) => {
     setSelectedImage(imagePath);
   };
 
-  // Close image modal
   const closeImageModal = () => {
     setSelectedImage(null);
   };
 
-  // Handle filter changes
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
-  // Reset all filters
   const resetFilters = () => {
     setFilters({
       userId: "",
@@ -192,28 +177,21 @@ const DisplayPosts = () => {
     setUserSearch("");
   };
 
-  // Pagination logic
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
   const totalPages = Math.ceil(posts.length / postsPerPage);
 
-  // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div className="flex bg-gray-100 min-h-screen">
-      {/* Fixed Sidebar */}
-      <div className="fixed h-full">
-        <SideAdmin />
-      </div>
+      <SideAdmin />
 
-      {/* Scrollable Content */}
-      <div className="flex-grow p-6 ml-48">
+      <div className="flex-grow p-6">
         <h1 className="text-lg font-bold text-gray-800">Illura Database &gt; Posts</h1>
         <hr className="border-t border-gray-300 mt-2 mb-6" />
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
             <div className="flex items-center">
@@ -257,7 +235,6 @@ const DisplayPosts = () => {
             </div>
           </div>
 
-          {/* Filter Toggle Card */}
           <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -268,7 +245,6 @@ const DisplayPosts = () => {
             </button>
           </div>
 
-          {/* Reset Filters Card */}
           <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
             <button
               onClick={resetFilters}
@@ -283,12 +259,10 @@ const DisplayPosts = () => {
           </div>
         </div>
 
-        {/* Filter Panel */}
         {showFilters && (
           <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Filter Posts</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* User Filter with Searchable Dropdown */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <UserCircleIcon className="w-4 h-4 inline mr-1" />
@@ -308,15 +282,14 @@ const DisplayPosts = () => {
                       className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <UserCircleIcon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-                    
-                    {/* Selected User Display */}
+
                     {filters.userId && (
                       <div className="absolute right-10 top-1/2 transform -translate-y-1/2">
                         <div className="flex items-center bg-blue-50 rounded-full px-3 py-1">
                           {getSelectedUser()?.pfp ? (
-                            <img 
-                              src={`http://localhost:5000/uploads/${getSelectedUser().pfp}`} 
-                              alt="User" 
+                            <img
+                              src={`http://localhost:5000/uploads/${getSelectedUser().pfp}`}
+                              alt="User"
                               className="w-6 h-6 rounded-full mr-2"
                             />
                           ) : (
@@ -340,7 +313,6 @@ const DisplayPosts = () => {
                     )}
                   </div>
 
-                  {/* User Dropdown */}
                   {showUserDropdown && filteredUsers.length > 0 && (
                     <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                       {filteredUsers.map(user => (
@@ -355,9 +327,9 @@ const DisplayPosts = () => {
                           className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
                         >
                           {user.pfp ? (
-                            <img 
-                              src={`http://localhost:5000/uploads/${user.pfp}`} 
-                              alt={user.username} 
+                            <img
+                              src={`http://localhost:5000/uploads/${user.pfp}`}
+                              alt={user.username}
                               className="w-8 h-8 rounded-full"
                             />
                           ) : (
@@ -376,8 +348,7 @@ const DisplayPosts = () => {
                       ))}
                     </div>
                   )}
-                  
-                  {/* Clear button */}
+
                   {filters.userId && (
                     <button
                       onClick={clearUserFilter}
@@ -389,7 +360,6 @@ const DisplayPosts = () => {
                 </div>
               </div>
 
-              {/* Status Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Filter by Status
@@ -397,38 +367,34 @@ const DisplayPosts = () => {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleFilterChange("status", "all")}
-                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                      filters.status === "all"
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${filters.status === "all"
                         ? "bg-gray-800 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
+                      }`}
                   >
                     All
                   </button>
                   <button
                     onClick={() => handleFilterChange("status", "active")}
-                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                      filters.status === "active"
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${filters.status === "active"
                         ? "bg-green-600 text-white"
                         : "bg-green-100 text-green-700 hover:bg-green-200"
-                    }`}
+                      }`}
                   >
                     Active
                   </button>
                   <button
                     onClick={() => handleFilterChange("status", "down")}
-                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                      filters.status === "down"
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${filters.status === "down"
                         ? "bg-red-600 text-white"
                         : "bg-red-100 text-red-700 hover:bg-red-200"
-                    }`}
+                      }`}
                   >
                     Taken Down
                   </button>
                 </div>
               </div>
 
-              {/* Search Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <MagnifyingGlassIcon className="w-4 h-4 inline mr-1" />
@@ -457,7 +423,6 @@ const DisplayPosts = () => {
           </div>
         )}
 
-        {/* Posts Table */}
         <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex justify-between items-center">
@@ -515,12 +480,11 @@ const DisplayPosts = () => {
                             )}
                             <div className="text-xs text-gray-400 mt-1">ID: {post.id}</div>
                             <div className="text-xs text-gray-500 mt-1">
-                              Visibility: 
-                              <span className={`ml-1 px-2 py-0.5 rounded ${
-                                post.visibility === 'public' ? 'bg-blue-100 text-blue-800' :
-                                post.visibility === 'friends' ? 'bg-green-100 text-green-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
+                              Visibility:
+                              <span className={`ml-1 px-2 py-0.5 rounded ${post.visibility === 'public' ? 'bg-blue-100 text-blue-800' :
+                                  post.visibility === 'friends' ? 'bg-green-100 text-green-800' :
+                                    'bg-gray-100 text-gray-800'
+                                }`}>
                                 {post.visibility}
                               </span>
                             </div>
@@ -529,9 +493,9 @@ const DisplayPosts = () => {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             {post.author_pfp ? (
-                              <img 
-                                src={`http://localhost:5000/uploads/${post.author_pfp}`} 
-                                alt={post.author} 
+                              <img
+                                src={`http://localhost:5000/uploads/${post.author_pfp}`}
+                                alt={post.author}
                                 className="w-10 h-10 rounded-full border-2 border-gray-300"
                               />
                             ) : (
@@ -549,28 +513,27 @@ const DisplayPosts = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-  {post.media_path ? (
-    <img
-      src={`http://localhost:5000/uploads/${post.media_path}`}
-      alt={post.title}
-      className="w-14 h-14 rounded-md cursor-pointer hover:opacity-80 transition-all duration-200 object-cover hover:scale-105"
-      onClick={() => openImageModal(post.media_path)}
-      onError={(e) => {
-        e.target.onerror = null;
-        e.target.src = "https://via.placeholder.com/56x56?text=No+Image";
-      }}
-    />
-  ) : (
-    <span className="text-gray-400 text-sm">No media</span>
-  )}
-</td>
+                          {post.media_path ? (
+                            <img
+                              src={`http://localhost:5000/uploads/${post.media_path}`}
+                              alt={post.title}
+                              className="w-14 h-14 rounded-md cursor-pointer hover:opacity-80 transition-all duration-200 object-cover hover:scale-105"
+                              onClick={() => openImageModal(post.media_path)}
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "https://via.placeholder.com/56x56?text=No+Image";
+                              }}
+                            />
+                          ) : (
+                            <span className="text-gray-400 text-sm">No media</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                              post.post_status === "active"
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${post.post_status === "active"
                                 ? "bg-green-100 text-green-800 border border-green-200"
                                 : "bg-red-100 text-red-800 border border-red-200"
-                            }`}
+                              }`}
                           >
                             {post.post_status}
                           </span>
@@ -585,11 +548,10 @@ const DisplayPosts = () => {
                           <div className="flex space-x-2">
                             <button
                               onClick={() => togglePostStatus(post.id, post.post_status)}
-                              className={`inline-flex items-center px-4 py-2 rounded-lg font-semibold text-sm border transition-colors ${
-                                post.post_status === "active"
+                              className={`inline-flex items-center px-4 py-2 rounded-lg font-semibold text-sm border transition-colors ${post.post_status === "active"
                                   ? "border-gray-700 text-gray-700 hover:bg-gray-700 hover:text-white"
                                   : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-                              }`}
+                                }`}
                             >
                               {post.post_status === "active" ? (
                                 <>
@@ -618,7 +580,6 @@ const DisplayPosts = () => {
                 </table>
               </div>
 
-              {/* Pagination */}
               {totalPages > 0 && (
                 <div className="flex justify-between items-center px-6 py-4 border-t border-gray-200">
                   <div className="text-sm text-gray-600">
@@ -628,19 +589,17 @@ const DisplayPosts = () => {
                     <button
                       onClick={() => paginate(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className={`px-4 py-2 rounded-lg border flex items-center gap-2 text-sm ${
-                        currentPage === 1 
-                          ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' 
+                      className={`px-4 py-2 rounded-lg border flex items-center gap-2 text-sm ${currentPage === 1
+                          ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                      }`}
+                        }`}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
                       Previous
                     </button>
-                    
-                    {/* Page Numbers */}
+
                     <div className="flex space-x-1">
                       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                         let pageNum;
@@ -653,31 +612,29 @@ const DisplayPosts = () => {
                         } else {
                           pageNum = currentPage - 2 + i;
                         }
-                        
+
                         return (
                           <button
                             key={pageNum}
                             onClick={() => paginate(pageNum)}
-                            className={`px-3 py-2 rounded-lg border text-sm ${
-                              currentPage === pageNum
+                            className={`px-3 py-2 rounded-lg border text-sm ${currentPage === pageNum
                                 ? 'bg-blue-600 text-white border-blue-600'
                                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                            }`}
+                              }`}
                           >
                             {pageNum}
                           </button>
                         );
                       })}
                     </div>
-                    
+
                     <button
                       onClick={() => paginate(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className={`px-4 py-2 rounded-lg border flex items-center gap-2 text-sm ${
-                        currentPage === totalPages
+                      className={`px-4 py-2 rounded-lg border flex items-center gap-2 text-sm ${currentPage === totalPages
                           ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                      }`}
+                        }`}
                     >
                       Next
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -695,8 +652,8 @@ const DisplayPosts = () => {
                   </svg>
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No posts found</h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    {filters.userId || filters.status !== 'all' || filters.search 
-                      ? "Try adjusting your filters" 
+                    {filters.userId || filters.status !== 'all' || filters.search
+                      ? "Try adjusting your filters"
                       : "No posts in the database"}
                   </p>
                 </div>
@@ -705,20 +662,19 @@ const DisplayPosts = () => {
           )}
         </div>
 
-        {/* Image Modal */}
         {selectedImage && (
           <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-4xl w-full mx-4 relative">
-              <button 
-                onClick={closeImageModal} 
+              <button
+                onClick={closeImageModal}
                 className="absolute -top-3 -right-3 bg-white rounded-full p-1 shadow-lg hover:bg-gray-100 transition-colors"
               >
                 <XMarkIcon className="w-6 h-6 text-gray-600" />
               </button>
-              <img 
-                src={`http://localhost:5000/uploads/${selectedImage}`} 
-                alt="Post" 
-                className="w-full h-auto max-h-[80vh] object-contain rounded-md" 
+              <img
+                src={`http://localhost:5000/uploads/${selectedImage}`}
+                alt="Post"
+                className="w-full h-auto max-h-[80vh] object-contain rounded-md"
               />
             </div>
           </div>

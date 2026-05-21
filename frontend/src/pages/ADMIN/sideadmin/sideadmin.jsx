@@ -1,5 +1,6 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import logo from "../../../assets/images/illura.png";
 import { 
   LayoutDashboard, 
   Users, 
@@ -64,54 +65,58 @@ const SideAdmin = () => {
   };
 
   return (
-    <div className={`h-screen w-48 ${sidebarColor} text-white flex flex-col shadow-xl border-r-2 border-gray-700`}>
-      {/* Header */}
-      <div className="py-5 px-4 bg-gray-800/50 border-b border-gray-700 flex items-center space-x-3">
-        <img src="src/assets/images/illura.png" alt="Illura Logo" className="w-6 h-6" />
+    <div className={`w-48 ${sidebarColor} text-white flex flex-col shadow-xl border-r-2 border-gray-700 min-h-screen flex-shrink-0`}>
+      <div className="sticky top-0 h-screen flex flex-col justify-between overflow-y-auto">
         <div>
-          <h1 className="text-sm font-semibold text-gray-100">Illura Admin</h1>
-          <p className="text-xs text-gray-400 capitalize">{adminRole?.replace('_', ' ')}</p>
+          {/* Header */}
+          <div className="py-5 px-4 bg-gray-800/50 border-b border-gray-700 flex items-center space-x-3">
+            <img src={logo} alt="Illura Logo" className="w-6 h-6" />
+            <div>
+              <h1 className="text-sm font-semibold text-gray-100">Illura Admin</h1>
+              <p className="text-xs text-gray-400 capitalize">{adminRole?.replace('_', ' ')}</p>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="px-3 py-6">
+            <ul className="space-y-1.5">
+              {navItems.map((item) => (
+                <li key={item.path}>
+                  <button 
+                    onClick={() => navigate(item.path)} 
+                    className={getButtonClass(item.color)}
+                  >
+                    <item.icon className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                    <span>{item.label}</span>
+                  </button>
+                </li>
+              ))}
+              
+              {adminRole === "super_admin" && superAdminItems.map((item) => (
+                <li key={item.path}>
+                  <button 
+                    onClick={() => navigate(item.path)} 
+                    className={getButtonClass(item.color)}
+                  >
+                    <item.icon className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                    <span>{item.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
-      </div>
 
-      {/* Navigation */}
-      <nav className="flex-grow px-3 py-6">
-        <ul className="space-y-1.5">
-          {navItems.map((item) => (
-            <li key={item.path}>
-              <button 
-                onClick={() => navigate(item.path)} 
-                className={getButtonClass(item.color)}
-              >
-                <item.icon className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span>{item.label}</span>
-              </button>
-            </li>
-          ))}
-          
-          {adminRole === "super_admin" && superAdminItems.map((item) => (
-            <li key={item.path}>
-              <button 
-                onClick={() => navigate(item.path)} 
-                className={getButtonClass(item.color)}
-              >
-                <item.icon className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span>{item.label}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      {/* Footer */}
-      <div className="px-3 py-4 border-t border-gray-800">
-        <button 
-          onClick={handleAdminLogout} 
-          className={getButtonClass("red")}
-        >
-          <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          <span>Logout</span>
-        </button>
+        {/* Footer */}
+        <div className="px-3 py-4 border-t border-gray-800">
+          <button 
+            onClick={handleAdminLogout} 
+            className={getButtonClass("red")}
+          >
+            <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span>Logout</span>
+          </button>
+        </div>
       </div>
     </div>
   );

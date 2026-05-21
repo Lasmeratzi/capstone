@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ArtPostModal from "../../components/modals/artpostmodal";
+import { motion, AnimatePresence } from "framer-motion";
 import ReportsModal from "../../components/modals/reportsmodal"; // ADD THIS IMPORT
 import ArtworkLikes from "../../pages/likes/artworklikes";
 import ArtworkComments from "../../pages/comments/artworkcomments";
@@ -37,13 +38,13 @@ const VisibilityBadge = ({ visibility }) => {
   const getVisibilityInfo = () => {
     switch (visibility) {
       case 'public':
-        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' };
       case 'friends':
-        return { icon: <Users size={14} />, text: 'Friends Only', color: 'text-green-600', bg: 'bg-green-50' };
+        return { icon: <Users size={14} />, text: 'Friends Only', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' };
       case 'private':
-        return { icon: <Lock size={14} />, text: 'Private', color: 'text-gray-600', bg: 'bg-gray-50' };
+        return { icon: <Lock size={14} />, text: 'Private', color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-50 dark:bg-gray-900/20' };
       default:
-        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600', bg: 'bg-blue-50' };
+        return { icon: <Globe size={14} />, text: 'Public', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' };
     }
   };
 
@@ -138,7 +139,7 @@ const ArtPosts = ({ initialArtworks = [], userId: propUserId, onDeleteArtwork })
   // media viewer modal state (per-post)
   const [modalState, setModalState] = useState({
     isOpen: false,
-    postIndex: null,
+    activePostId: null,
     mediaIndex: 0,
   });
 
@@ -314,7 +315,7 @@ const ArtPosts = ({ initialArtworks = [], userId: propUserId, onDeleteArtwork })
       await axios.delete(`${API_BASE}/api/artwork-posts/${postId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setArtPosts((prev) => prev.filter((p) => p.id !== postId));
+      setArtPosts((prev) => prev.filter((p) => String(p.id) !== String(postId)));
       setConfirmDeleteFor(null);
       
       // Call parent's onDeleteArtwork if provided
@@ -385,10 +386,10 @@ const ArtPosts = ({ initialArtworks = [], userId: propUserId, onDeleteArtwork })
   };
 
   // Media viewer modal
-  const openModal = (postIndex, mediaIndex = 0) => {
+  const openModal = (postId, mediaIndex = 0) => {
     setModalState({
       isOpen: true,
-      postIndex,
+      activePostId: postId,
       mediaIndex,
     });
   };
@@ -396,14 +397,15 @@ const ArtPosts = ({ initialArtworks = [], userId: propUserId, onDeleteArtwork })
   const closeModal = () => {
     setModalState({
       isOpen: false,
-      postIndex: null,
+      activePostId: null,
       mediaIndex: 0,
     });
   };
 
   const navigateMedia = (direction) => {
-    if (modalState.postIndex === null) return;
-    const mediaLength = artPosts[modalState.postIndex]?.media?.length || 0;
+    if (modalState.activePostId === null) return;
+    const currentPost = artPosts.find(p => p.id === modalState.activePostId);
+    const mediaLength = currentPost?.media?.length || 0;
     if (mediaLength === 0) return;
     const newIndex =
       direction === "next"
@@ -414,15 +416,19 @@ const ArtPosts = ({ initialArtworks = [], userId: propUserId, onDeleteArtwork })
   };
 
   // render grid helpers
-  const renderMediaGrid = (media, postIndex) => {
+  const renderMediaGrid = (media, postId) => {
     const count = media.length;
     if (count === 1)
-      return <ProtectedMedia file={media[0]} onClick={() => openModal(postIndex, 0)} className="w-full h-full" />;
+      return (
+        <div className="w-full max-h-[500px] overflow-hidden rounded-none">
+          <ProtectedMedia file={media[0]} onClick={() => openModal(postId, 0)} className="w-full h-full object-cover" />
+        </div>
+      );
     if (count === 2)
       return (
         <div className="grid grid-cols-2 gap-1">
           {media.map((file, index) => (
-            <ProtectedMedia key={file.id} file={file} onClick={() => openModal(postIndex, index)} className="w-full h-full aspect-square" />
+            <ProtectedMedia key={file.id} file={file} onClick={() => openModal(postId, index)} className="w-full h-full aspect-square" />
           ))}
         </div>
       );
@@ -430,13 +436,13 @@ const ArtPosts = ({ initialArtworks = [], userId: propUserId, onDeleteArtwork })
       return (
         <div className="grid grid-cols-2 gap-1">
           <div className="row-span-2 aspect-square">
-            <ProtectedMedia file={media[0]} onClick={() => openModal(postIndex, 0)} className="w-full h-full" />
+            <ProtectedMedia file={media[0]} onClick={() => openModal(postId, 0)} className="w-full h-full" />
           </div>
           <div className="aspect-square">
-            <ProtectedMedia file={media[1]} onClick={() => openModal(postIndex, 1)} className="w-full h-full" />
+            <ProtectedMedia file={media[1]} onClick={() => openModal(postId, 1)} className="w-full h-full" />
           </div>
           <div className="aspect-square">
-            <ProtectedMedia file={media[2]} onClick={() => openModal(postIndex, 2)} className="w-full h-full" />
+            <ProtectedMedia file={media[2]} onClick={() => openModal(postId, 2)} className="w-full h-full" />
           </div>
         </div>
       );
@@ -444,7 +450,7 @@ const ArtPosts = ({ initialArtworks = [], userId: propUserId, onDeleteArtwork })
       return (
         <div className="grid grid-cols-2 gap-1">
           {media.map((file, index) => (
-            <ProtectedMedia key={file.id} file={file} onClick={() => openModal(postIndex, index)} className="w-full h-full aspect-square" />
+            <ProtectedMedia key={file.id} file={file} onClick={() => openModal(postId, index)} className="w-full h-full aspect-square" />
           ))}
         </div>
       );
@@ -452,7 +458,7 @@ const ArtPosts = ({ initialArtworks = [], userId: propUserId, onDeleteArtwork })
       <div className="grid grid-cols-2 gap-1">
         {media.slice(0, 4).map((file, index) => (
           <div key={file.id} className={`aspect-square relative`}>
-            <ProtectedMedia file={file} onClick={() => openModal(postIndex, index)} className="w-full h-full" />
+            <ProtectedMedia file={file} onClick={() => openModal(postId, index)} className="w-full h-full" />
             {index === 3 && (
               <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center text-white font-bold text-xl pointer-events-none">
                 +{media.length - 4}
@@ -480,308 +486,588 @@ const ArtPosts = ({ initialArtworks = [], userId: propUserId, onDeleteArtwork })
   return (
     <div className="w-full">
       {artPosts.length > 0 ? (
-        artPosts.map((post, postIndex) => (
-          <div key={post.id} className="relative bg-white p-4 rounded-lg shadow-md border border-gray-200 mb-4 break-inside-avoid">
-            {post.post_status === "down" && (
-              <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg pointer-events-none">
-                <p className="text-white text-lg font-semibold">🚫 Post is taken down</p>
-              </div>
-            )}
+        <div className="w-full">
+          {/* Mobile/Tablet view: Single Column (chronological) */}
+          <div className="flex flex-col gap-8 md:hidden">
+            {artPosts.map((post) => (
+              <div key={post.id} className="relative bg-white dark:bg-[#0A0A0B] p-5 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 transition-all duration-300">
+                {post.post_status === "down" && (
+                  <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-30 rounded-xl">
+                    <p className="text-white text-lg font-bold flex items-center gap-2">
+                      <X className="w-5 h-5 text-red-500" />
+                      Post Taken Down
+                    </p>
+                  </div>
+                )}
 
-            <div className="flex items-center gap-3 mb-3">
-              {post.author_pfp ? (
-                <img src={`${API_BASE}/uploads/${post.author_pfp}`} alt={`${post.author}'s profile`} className="w-10 h-10 rounded-full border border-gray-300 object-cover" />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-gray-600 text-xs">N/A</span>
-                </div>
-              )}
-              <div>
-                <div className="flex items-center">
-                  <p className="font-bold text-gray-800">{post.author}</p>
-                  {post.is_verified && <VerifiedBadge />}
-                  <VisibilityBadge visibility={post.visibility} />
-                </div>
-                <p className="text-gray-600 text-sm">{post.fullname}</p>
-              </div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="relative group/pfp">
+                      {post.author_pfp ? (
+                        <img src={`${API_BASE}/uploads/${post.author_pfp}`} alt={`${post.author}'s profile`} className="w-11 h-11 rounded-full border-2 border-white dark:border-gray-800 shadow-sm object-cover" />
+                      ) : (
+                        <div className="w-11 h-11 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 text-xs font-bold">
+                          {post.author?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center flex-wrap gap-1">
+                        <p className="font-bold text-gray-900 dark:text-gray-100">{post.fullname}</p>
+                        {post.is_verified && <VerifiedBadge />}
+                        <VisibilityBadge visibility={post.visibility} />
+                      </div>
+                      <p className="text-gray-400 dark:text-gray-500 text-xs font-medium tracking-tight">@{post.author}</p>
+                    </div>
+                  </div>
 
-              {/* UPDATE THIS SECTION: Make menu visible to everyone */}
-              <div className="ml-auto relative">
-                <button className="p-2 rounded-full hover:bg-gray-100" onClick={() => setDropdownOpen(dropdownOpen === post.id ? null : post.id)}>
-                  <MoreVertical className="w-5 h-5 text-gray-600" />
-                </button>
+                  <div className="relative">
+                    <button 
+                      className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer" 
+                      onClick={() => setDropdownOpen(dropdownOpen === post.id ? null : post.id)}
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
 
-                {dropdownOpen === post.id && (
-                  <div className="absolute right-0 mt-2 w-36 bg-white shadow-lg rounded border border-gray-200 z-50">
-                    {/* Author-only options */}
-                    {String(post.author_id) === String(userId) && (
-                      <>
-                        <button
-                          className="w-full px-4 py-2 hover:bg-gray-100 text-left"
-                          onClick={() => {
-                            setArtPostModal({ isOpen: true, type: "edit", post });
-                            setDropdownOpen(null);
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="w-full px-4 py-2 hover:bg-gray-100 text-left text-red-600"
-                          onClick={() => {
-                            setConfirmDeleteFor(post.id);
-                            setDropdownOpen(null);
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
-                    
-                    {/* ADD THIS: Report button for non-authors */}
-                    {String(post.author_id) !== String(userId) && (
-                      <button
-                        className="w-full px-4 py-2 hover:bg-gray-100 text-left text-orange-500 flex items-center gap-2"
-                        onClick={() => {
-                          setReportModal({ isOpen: true, post });
-                          setDropdownOpen(null);
-                        }}
+                    {dropdownOpen === post.id && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 shadow-2xl rounded-2xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden"
                       >
-                        <Flag size={14} />
-                        Report
-                      </button>
+                        {String(post.author_id) === String(userId) && (
+                          <>
+                            <button
+                              className="w-full px-4 py-2 hover:bg-gray-100 text-left"
+                              onClick={() => {
+                                setArtPostModal({ isOpen: true, type: "edit", post });
+                                setDropdownOpen(null);
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="w-full px-4 py-2 hover:bg-gray-100 text-left text-red-600"
+                              onClick={() => {
+                                setArtPostModal({ isOpen: true, type: "delete", post });
+                                setDropdownOpen(null);
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                        {String(post.author_id) !== String(userId) && (
+                          <button
+                            className="w-full px-4 py-2 hover:bg-gray-100 text-left text-orange-500 flex items-center gap-2"
+                            onClick={() => {
+                              setReportModal({ isOpen: true, post });
+                              setDropdownOpen(null);
+                            }}
+                          >
+                            <Flag size={14} />
+                            Report
+                          </button>
+                        )}
+                      </motion.div>
                     )}
                   </div>
-                )}
-              </div>
-            </div>
-
-            <h4 className="text-base font-semibold text-gray-800 mb-2">{post.title}</h4>
-            <p className="text-gray-600 mb-3">{post.description}</p>
-
-            {/* Display Tags */}
-            {postTags[post.id] && postTags[post.id].length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {postTags[post.id].map((tag) => (
-                  <button
-                    key={tag.id}
-                    onClick={() => handleTagClick(tag.name)}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium hover:bg-blue-100 transition-colors"
-                  >
-                    <Tag size={12} />
-                    #{tag.name}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {post.media?.length > 0 && <div className="mt-3">{renderMediaGrid(post.media, postIndex)}</div>}
-
-            {/* Likes & Comments inline row with date on the right */}
-            <div className="flex items-center justify-between mt-3">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <ArtworkLikes artworkPostId={post.id} />
                 </div>
 
-                <button onClick={() => toggleComments(post.id)} className="flex items-center gap-1 text-gray-600 hover:text-gray-900">
-                  <MessageCircle size={18} />
-                  <span className="text-sm">{commentCounts[post.id] ?? 0}</span>
-                </button>
+                <div className="mb-4">
+                  <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1 leading-tight">{post.title}</h4>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{post.description}</p>
+                </div>
 
-                {confirmDeleteFor === post.id && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setConfirmDeleteFor(null)}
-                      className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleDeleteConfirmed(post.id)}
-                      className="px-3 py-1 rounded text-sm bg-red-500 text-white hover:bg-red-600"
-                    >
-                      Confirm Delete
-                    </button>
+                {postTags[post.id] && postTags[post.id].length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {postTags[post.id].map((tag) => (
+                      <button
+                        key={tag.id}
+                        onClick={() => handleTagClick(tag.name)}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full text-xs font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                      >
+                        <Tag size={12} />
+                        #{tag.name}
+                      </button>
+                    ))}
                   </div>
                 )}
-              </div>
 
-              {/* Date moved to right side */}
-              {post.created_at && (
-                <p className="text-xs text-gray-500">
-                  {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                </p>
-              )}
+                {post.media?.length > 0 && <div className="mt-4 overflow-hidden group transition-all duration-300">{renderMediaGrid(post.media, post.id)}</div>}
+
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50 dark:border-gray-800/50">
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-1.5 group/like">
+                      <ArtworkLikes artworkPostId={post.id} />
+                    </div>
+                    <button 
+                      onClick={() => toggleComments(post.id)} 
+                      className="flex items-center gap-2 text-gray-400 dark:text-gray-500 hover:text-[#5E66FF] transition-all cursor-pointer group/comment"
+                    >
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center group-hover/comment:bg-blue-50 dark:group-hover/comment:bg-blue-900/20 transition-colors">
+                        <MessageCircle size={18} />
+                      </div>
+                      <span className="text-sm font-bold">{commentCounts[post.id] ?? 0}</span>
+                    </button>
+                  </div>
+
+                  {post.created_at && (
+                    <div className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest">
+                      {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop view: Two Columns */}
+          <div className="hidden md:flex gap-8 items-start">
+            {/* Left Column */}
+            <div className="flex-1 flex flex-col gap-8">
+              {artPosts.map((post, idx) => ({ post, idx })).filter(({ idx }) => idx % 2 === 0).map(({ post, idx }) => (
+                <div key={post.id} className="relative bg-white dark:bg-[#0A0A0B] p-5 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 transition-all duration-300">
+                  {post.post_status === "down" && (
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-30 rounded-xl">
+                      <p className="text-white text-lg font-bold flex items-center gap-2">
+                        <X className="w-5 h-5 text-red-500" />
+                        Post Taken Down
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative group/pfp">
+                        {post.author_pfp ? (
+                          <img src={`${API_BASE}/uploads/${post.author_pfp}`} alt={`${post.author}'s profile`} className="w-11 h-11 rounded-full border-2 border-white dark:border-gray-800 shadow-sm object-cover" />
+                        ) : (
+                          <div className="w-11 h-11 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 text-xs font-bold">
+                            {post.author?.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center flex-wrap gap-1">
+                          <p className="font-bold text-gray-900 dark:text-gray-100">{post.fullname}</p>
+                          {post.is_verified && <VerifiedBadge />}
+                          <VisibilityBadge visibility={post.visibility} />
+                        </div>
+                        <p className="text-gray-400 dark:text-gray-500 text-xs font-medium tracking-tight">@{post.author}</p>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <button 
+                        className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer" 
+                        onClick={() => setDropdownOpen(dropdownOpen === post.id ? null : post.id)}
+                      >
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+
+                      {dropdownOpen === post.id && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 shadow-2xl rounded-2xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden"
+                        >
+                          {String(post.author_id) === String(userId) && (
+                            <>
+                              <button
+                                className="w-full px-4 py-2 hover:bg-gray-100 text-left"
+                                onClick={() => {
+                                  setArtPostModal({ isOpen: true, type: "edit", post });
+                                  setDropdownOpen(null);
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="w-full px-4 py-2 hover:bg-gray-100 text-left text-red-600"
+                                onClick={() => {
+                                  setArtPostModal({ isOpen: true, type: "delete", post });
+                                  setDropdownOpen(null);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </>
+                          )}
+                          {String(post.author_id) !== String(userId) && (
+                            <button
+                              className="w-full px-4 py-2 hover:bg-gray-100 text-left text-orange-500 flex items-center gap-2"
+                              onClick={() => {
+                                setReportModal({ isOpen: true, post });
+                                setDropdownOpen(null);
+                              }}
+                            >
+                              <Flag size={14} />
+                              Report
+                            </button>
+                          )}
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1 leading-tight">{post.title}</h4>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{post.description}</p>
+                  </div>
+
+                  {postTags[post.id] && postTags[post.id].length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {postTags[post.id].map((tag) => (
+                        <button
+                          key={tag.id}
+                          onClick={() => handleTagClick(tag.name)}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full text-xs font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                        >
+                          <Tag size={12} />
+                          #{tag.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {post.media?.length > 0 && <div className="mt-4 overflow-hidden group transition-all duration-300">{renderMediaGrid(post.media, post.id)}</div>}
+
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50 dark:border-gray-800/50">
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-1.5 group/like">
+                        <ArtworkLikes artworkPostId={post.id} />
+                      </div>
+                      <button 
+                        onClick={() => toggleComments(post.id)} 
+                        className="flex items-center gap-2 text-gray-400 dark:text-gray-500 transition-all cursor-pointer group/comment"
+                      >
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center group-hover/comment:bg-blue-50 dark:group-hover/comment:bg-blue-900/20 transition-colors">
+                          <MessageCircle size={18} />
+                        </div>
+                        <span className="text-sm font-bold">{commentCounts[post.id] ?? 0}</span>
+                      </button>
+                    </div>
+
+                    {post.created_at && (
+                      <div className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest">
+                        {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {/* Comments Section */}
-            {showCommentsMap[post.id] && (
-              <div className="mt-2">
-                <ArtworkComments artworkPostId={post.id} userId={userId} />
-              </div>
-            )}
+            {/* Right Column */}
+            <div className="flex-1 flex flex-col gap-8">
+              {artPosts.map((post, idx) => ({ post, idx })).filter(({ idx }) => idx % 2 !== 0).map(({ post, idx }) => (
+                <div key={post.id} className="relative bg-white dark:bg-[#0A0A0B] p-5 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 transition-all duration-300">
+                  {post.post_status === "down" && (
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-30 rounded-xl">
+                      <p className="text-white text-lg font-bold flex items-center gap-2">
+                        <X className="w-5 h-5 text-red-500" />
+                        Post Taken Down
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative group/pfp">
+                        {post.author_pfp ? (
+                          <img src={`${API_BASE}/uploads/${post.author_pfp}`} alt={`${post.author}'s profile`} className="w-11 h-11 rounded-full border-2 border-white dark:border-gray-800 shadow-sm object-cover" />
+                        ) : (
+                          <div className="w-11 h-11 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 text-xs font-bold">
+                            {post.author?.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center flex-wrap gap-1">
+                          <p className="font-bold text-gray-900 dark:text-gray-100">{post.fullname}</p>
+                          {post.is_verified && <VerifiedBadge />}
+                          <VisibilityBadge visibility={post.visibility} />
+                        </div>
+                        <p className="text-gray-400 dark:text-gray-500 text-xs font-medium tracking-tight">@{post.author}</p>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <button 
+                        className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer" 
+                        onClick={() => setDropdownOpen(dropdownOpen === post.id ? null : post.id)}
+                      >
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+
+                      {dropdownOpen === post.id && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 shadow-2xl rounded-2xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden"
+                        >
+                          {String(post.author_id) === String(userId) && (
+                            <>
+                              <button
+                                className="w-full px-4 py-2 hover:bg-gray-100 text-left"
+                                onClick={() => {
+                                  setArtPostModal({ isOpen: true, type: "edit", post });
+                                  setDropdownOpen(null);
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="w-full px-4 py-2 hover:bg-gray-100 text-left text-red-600"
+                                onClick={() => {
+                                  setConfirmDeleteFor(post.id);
+                                  setDropdownOpen(null);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </>
+                          )}
+                          {String(post.author_id) !== String(userId) && (
+                            <button
+                              className="w-full px-4 py-2 hover:bg-gray-100 text-left text-orange-500 flex items-center gap-2"
+                              onClick={() => {
+                                setReportModal({ isOpen: true, post });
+                                setDropdownOpen(null);
+                              }}
+                            >
+                              <Flag size={14} />
+                              Report
+                            </button>
+                          )}
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1 leading-tight">{post.title}</h4>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{post.description}</p>
+                  </div>
+
+                  {postTags[post.id] && postTags[post.id].length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {postTags[post.id].map((tag) => (
+                        <button
+                          key={tag.id}
+                          onClick={() => handleTagClick(tag.name)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                        >
+                          <Tag size={12} />
+                          #{tag.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {post.media?.length > 0 && <div className="mt-4 overflow-hidden group transition-all duration-300">{renderMediaGrid(post.media, post.id)}</div>}
+
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50 dark:border-gray-800/50">
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-1.5 group/like">
+                        <ArtworkLikes artworkPostId={post.id} />
+                      </div>
+                      <button 
+                        onClick={() => toggleComments(post.id)} 
+                        className="flex items-center gap-2 text-gray-400 dark:text-gray-500 transition-all cursor-pointer group/comment"
+                      >
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center group-hover/comment:bg-blue-50 dark:group-hover/comment:bg-blue-900/20 transition-colors">
+                          <MessageCircle size={18} />
+                        </div>
+                        <span className="text-sm font-bold">{commentCounts[post.id] ?? 0}</span>
+                      </button>
+                    </div>
+
+                    {post.created_at && (
+                      <div className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest">
+                        {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        ))
+        </div>
       ) : (
         <p className="text-gray-500 text-center">No artwork posts yet.</p>
       )}
 
       {/* Media Viewer Modal with tags in sidebar */}
-      {modalState.isOpen && modalState.postIndex !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="relative max-w-6xl w-full max-h-[90vh] flex">
-            {/* Image area */}
-            <div className="flex-[2] relative flex items-center justify-center bg-black">
-              {artPosts[modalState.postIndex]?.media?.length > 1 && (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigateMedia("prev");
-                    }}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-20"
-                    aria-label="Previous"
-                  >
-                    <ChevronLeft size={32} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigateMedia("next");
-                    }}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 z-20"
-                    aria-label="Next"
-                  >
-                    <ChevronRight size={32} />
-                  </button>
-                </>
-              )}
+      {modalState.isOpen && modalState.activePostId !== null && (() => {
+        const activePost = artPosts.find(p => p.id === modalState.activePostId);
+        if (!activePost) return null;
 
-              {(() => {
-                const currentMedia = artPosts[modalState.postIndex].media[modalState.mediaIndex];
-                const mediaUrl = getMediaUrl(currentMedia.media_path);
-                const isVideo = currentMedia.media_path.endsWith(".mp4");
-
-                const handleContextMenu = (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                };
-
-                const handleDragStart = (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                };
-
-                return isVideo ? (
-                  <video
-                    src={mediaUrl}
-                    controls
-                    autoPlay
-                    className="max-h-[80vh] w-full object-contain"
-                    onContextMenu={handleContextMenu}
-                    onDragStart={handleDragStart}
-                    controlsList="nodownload"
-                  />
-                ) : (
-                  <img
-                    src={mediaUrl}
-                    alt="Artwork media"
-                    className="max-h-[80vh] w-auto max-w-full object-contain"
-                    onContextMenu={handleContextMenu}
-                    onDragStart={handleDragStart}
-                    draggable={false}
-                    style={{
-                      userSelect: 'none',
-                      WebkitUserSelect: 'none',
-                      MozUserSelect: 'none',
-                      msUserSelect: 'none',
-                    }}
-                  />
-                );
-              })()}
-
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white z-20">
-                {modalState.mediaIndex + 1} of {artPosts[modalState.postIndex].media.length}
-              </div>
-            </div>
-
-            {/* Sidebar with tags */}
-            <div className="flex-1 flex flex-col border-l border-gray-200 bg-white">
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                  {artPosts[modalState.postIndex].author_pfp ? (
-                    <img
-                      src={`${API_BASE}/uploads/${artPosts[modalState.postIndex].author_pfp}`}
-                      alt={`${artPosts[modalState.postIndex].author}'s profile`}
-                      className="w-10 h-10 rounded-full border border-gray-300 object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                      <span className="text-gray-600 text-xs">N/A</span>
-                    </div>
-                  )}
-                  <div>
-                    <div className="flex items-center">
-                      <p className="font-bold text-gray-800">{artPosts[modalState.postIndex].author}</p>
-                      {artPosts[modalState.postIndex].is_verified && <VerifiedBadge />}
-                      <VisibilityBadge visibility={artPosts[modalState.postIndex].visibility} />
-                    </div>
-                    <p className="text-gray-600 text-sm">{artPosts[modalState.postIndex].fullname}</p>
-                  </div>
-                </div>
-
-                <p className="mt-3 text-gray-800">{artPosts[modalState.postIndex].title}</p>
-
-                {/* Tags in modal */}
-                {postTags[artPosts[modalState.postIndex].id] && postTags[artPosts[modalState.postIndex].id].length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {postTags[artPosts[modalState.postIndex].id].map((tag) => (
-                      <span
-                        key={tag.id}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium"
-                      >
-                        <Tag size={12} />
-                        #{tag.name}
-                      </span>
-                    ))}
-                  </div>
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+            <div className="relative max-w-6xl w-full max-h-[90vh] flex bg-white dark:bg-[#0A0A0B] rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-transparent dark:border-white/5">
+              {/* Image area */}
+              <div className="flex-[2] relative flex items-center justify-center bg-[#0F0F11]">
+                {activePost.media?.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigateMedia("prev");
+                      }}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all z-20 group"
+                      aria-label="Previous"
+                    >
+                      <ChevronLeft size={28} className="group-hover:-translate-x-0.5 transition-transform" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigateMedia("next");
+                      }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all z-20 group"
+                      aria-label="Next"
+                    >
+                      <ChevronRight size={28} className="group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  </>
                 )}
 
-                {/* Likes & Comments with date on the right */}
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                  <div className="flex items-center gap-4">
-                    <ArtworkLikes artworkPostId={artPosts[modalState.postIndex].id} />
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <MessageCircle size={18} />
-                      <span className="text-sm">{commentCounts[artPosts[modalState.postIndex].id] ?? 0}</span>
-                    </div>
-                  </div>
+                {(() => {
+                  const currentMedia = activePost.media[modalState.mediaIndex];
+                  if (!currentMedia) return null;
+                  const mediaUrl = getMediaUrl(currentMedia.media_path);
+                  const isVideo = currentMedia.media_path.endsWith(".mp4");
 
-                  {/* Date in modal - bottom right */}
-                  {artPosts[modalState.postIndex].created_at && (
-                    <p className="text-xs text-gray-500">
-                      {formatDistanceToNow(new Date(artPosts[modalState.postIndex].created_at), { addSuffix: true })}
-                    </p>
-                  )}
+                  const handleContextMenu = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  };
+
+                  const handleDragStart = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  };
+
+                  return isVideo ? (
+                    <video
+                      src={mediaUrl}
+                      controls
+                      autoPlay
+                      className="max-h-[85vh] w-full object-contain"
+                      onContextMenu={handleContextMenu}
+                      onDragStart={handleDragStart}
+                      controlsList="nodownload"
+                    />
+                  ) : (
+                    <img
+                      src={mediaUrl}
+                      alt="Artwork media"
+                      className="max-h-[85vh] w-auto max-w-full object-contain select-none shadow-2xl"
+                      onContextMenu={handleContextMenu}
+                      onDragStart={handleDragStart}
+                      draggable={false}
+                      style={{
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                        MozUserSelect: 'none',
+                        msUserSelect: 'none',
+                      }}
+                    />
+                  );
+                })()}
+
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full text-white text-xs font-bold tracking-widest uppercase z-20 border border-white/10">
+                  {modalState.mediaIndex + 1} / {activePost.media.length}
                 </div>
               </div>
 
-              {/* Comments area (scrollable) */}
-              <div className="flex-1 overflow-y-auto p-4">
-                <ArtworkComments artworkPostId={artPosts[modalState.postIndex].id} userId={userId} />
+              {/* Sidebar with tags */}
+              <div className="w-[380px] flex flex-col bg-white border-l border-gray-100">
+                <div className="p-6 border-b border-gray-50">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      {activePost.author_pfp ? (
+                        <img
+                          src={`${API_BASE}/uploads/${activePost.author_pfp}`}
+                          alt={`${activePost.author}'s profile`}
+                          className="w-11 h-11 rounded-full border-2 border-white shadow-sm object-cover"
+                        />
+                      ) : (
+                        <div className="w-11 h-11 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">
+                          <span className="text-gray-400 text-xs font-bold">NA</span>
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <p className="font-bold text-gray-900 leading-tight">{activePost.author}</p>
+                          {activePost.is_verified && <VerifiedBadge />}
+                        </div>
+                        <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">{activePost.visibility}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Close Button Inside Sidebar for better organization */}
+                    <button 
+                      onClick={closeModal} 
+                      className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-full transition-all cursor-pointer"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <h3 className="text-xl font-bold text-gray-900 mb-2 leading-snug">
+                    {activePost.title}
+                  </h3>
+                  
+                  <p className="text-gray-500 text-sm leading-relaxed mb-4">
+                    {activePost.fullname}
+                  </p>
+
+                  {/* Tags in modal */}
+                  {postTags[activePost.id] && postTags[activePost.id].length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-4">
+                      {postTags[activePost.id].map((tag) => (
+                        <span
+                          key={tag.id}
+                          className="inline-flex items-center px-2.5 py-1 bg-gray-50 text-gray-600 rounded-lg text-[11px] font-bold uppercase tracking-wider border border-gray-100"
+                        >
+                          #{tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Interaction Row */}
+                  <div className="flex items-center justify-between mt-6 pt-5 border-t border-gray-50">
+                    <div className="flex items-center gap-6">
+                      <ArtworkLikes artworkPostId={activePost.id} />
+                      <div className="flex items-center gap-2 text-gray-400">
+                        <MessageCircle size={20} />
+                        <span className="text-sm font-bold">{commentCounts[activePost.id] ?? 0}</span>
+                      </div>
+                    </div>
+
+                    {activePost.created_at && (
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        {formatDistanceToNow(new Date(activePost.created_at), { addSuffix: true })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Comments area (scrollable) */}
+                <div className="flex-1 overflow-y-auto bg-gray-50/30">
+                  <div className="p-6">
+                    <ArtworkComments artworkPostId={activePost.id} userId={userId} />
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* GitHub-style Close Button */}
-            <button 
-              onClick={closeModal} 
-              className="absolute top-4 right-4 flex items-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-300 bg-white/90 backdrop-blur-sm"
-            >
-              <X size={20} />
-            </button>
           </div>
-        </div>
-      )}
+        );
+      })()}
       
       {/* ArtPostModal for edit/delete */}
       {artPostModal.isOpen && (
@@ -790,7 +1076,7 @@ const ArtPosts = ({ initialArtworks = [], userId: propUserId, onDeleteArtwork })
           post={artPostModal.post}
           onClose={() => setArtPostModal({ isOpen: false, type: "", post: null })}
           onDelete={(postId) => {
-            setConfirmDeleteFor(postId);
+            handleDeleteConfirmed(postId);
             setArtPostModal({ isOpen: false, type: "", post: null });
           }}
           onEdit={(postId, updatedData) => {

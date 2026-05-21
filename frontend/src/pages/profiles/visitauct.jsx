@@ -74,7 +74,7 @@ const VisitAuct = ({ userId }) => {
       });
 
       console.log("🔍 Raw API response:", response.data);
-      const auctionsData = response.data.filter(auction => auction.author_id === userId);
+      const auctionsData = response.data.filter(auction => String(auction.author_id) === String(userId));
       console.log("🔍 Filtered auctions (author_id matches):", auctionsData);
 
       // Check the first auction's structure
@@ -217,9 +217,9 @@ const VisitAuct = ({ userId }) => {
         
         // Show success message
         if (response.data.hasReminder) {
-          alert("✅ Reminder set! You'll be notified when this auction goes live.");
+          alert("Reminder set! You'll be notified when this auction goes live.");
         } else {
-          alert("ℹ️ Reminder removed.");
+          alert("Reminder removed.");
         }
       }
     } catch (error) {
@@ -250,65 +250,65 @@ const VisitAuct = ({ userId }) => {
     switch (status) {
       case 'active':
         return { 
-          bg: 'bg-green-100', 
-          text: 'text-green-700', 
-          border: 'border-green-200', 
+          bg: 'bg-green-100 dark:bg-green-900/20', 
+          text: 'text-green-700 dark:text-green-400', 
+          border: 'border-green-200 dark:border-green-800/30', 
           icon: <Clock size={14} />, 
           label: 'Live Now' 
         };
       case 'ended':
         return { 
-          bg: 'bg-purple-100', 
-          text: 'text-purple-700', 
-          border: 'border-purple-200', 
+          bg: 'bg-purple-100 dark:bg-purple-900/20', 
+          text: 'text-purple-700 dark:text-purple-400', 
+          border: 'border-purple-200 dark:border-purple-800/30', 
           icon: <Trophy size={14} />, 
           label: 'Ended' 
         };
       case 'draft':
         return { 
-          bg: 'bg-gray-100', 
-          text: 'text-gray-700', 
-          border: 'border-gray-200', 
+          bg: 'bg-gray-100 dark:bg-white/5', 
+          text: 'text-gray-700 dark:text-gray-400', 
+          border: 'border-gray-200 dark:border-white/10', 
           icon: null, 
           label: 'Draft' 
         };
       case 'pending':
         return { 
-          bg: 'bg-yellow-100', 
-          text: 'text-yellow-700', 
-          border: 'border-yellow-200', 
+          bg: 'bg-yellow-100 dark:bg-yellow-900/20', 
+          text: 'text-yellow-700 dark:text-yellow-400', 
+          border: 'border-yellow-200 dark:border-yellow-800/30', 
           icon: <Clock size={14} />, 
           label: 'Pending Approval' 
         };
       case 'approved':
         return { 
-          bg: 'bg-blue-100', 
-          text: 'text-blue-700', 
-          border: 'border-blue-200', 
+          bg: 'bg-blue-100 dark:bg-blue-900/20', 
+          text: 'text-blue-700 dark:text-blue-400', 
+          border: 'border-blue-200 dark:border-blue-800/30', 
           icon: <CheckCircle size={14} />, 
           label: 'Approved' 
         };
       case 'rejected':
         return { 
-          bg: 'bg-red-100', 
-          text: 'text-red-700', 
-          border: 'border-red-200', 
+          bg: 'bg-red-100 dark:bg-red-900/20', 
+          text: 'text-red-700 dark:text-red-400', 
+          border: 'border-red-200 dark:border-red-800/30', 
           icon: <XCircle size={14} />, 
           label: 'Rejected' 
         };
       case 'stopped':
         return { 
-          bg: 'bg-orange-100', 
-          text: 'text-orange-700', 
-          border: 'border-orange-200', 
+          bg: 'bg-orange-100 dark:bg-orange-900/20', 
+          text: 'text-orange-700 dark:text-orange-400', 
+          border: 'border-orange-200 dark:border-orange-800/30', 
           icon: <XCircle size={14} />, 
           label: 'Stopped' 
         };
       default:
         return { 
-          bg: 'bg-gray-100', 
-          text: 'text-gray-700', 
-          border: 'border-gray-200', 
+          bg: 'bg-gray-100 dark:bg-white/5', 
+          text: 'text-gray-700 dark:text-gray-400', 
+          border: 'border-gray-200 dark:border-white/10', 
           icon: null, 
           label: status 
         };
@@ -326,33 +326,15 @@ const VisitAuct = ({ userId }) => {
   const getImageUrl = (path) => {
     if (!path) return '';
     
-    console.log("🔍 getImageUrl called with path:", path);
-    
     // Check if it's already a full URL
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return path;
     }
     
-    // For profile pictures and other images, they might already have 'uploads/' prefix
-    // But for auction media, the path is stored as 'auctions/filename.jpg'
-    // So we need to prepend 'uploads/' to all relative paths
+    // Remove leading slash and duplicate uploads/ if present
+    const cleanPath = path.replace(/^\/+/, '').replace(/^uploads\//, '');
     
-    let cleanPath = path;
-    
-    // Remove leading slash if present
-    if (cleanPath.startsWith('/')) {
-      cleanPath = cleanPath.substring(1);
-    }
-    
-    console.log("🔍 Clean path:", cleanPath);
-    
-    // If it doesn't already start with 'uploads/', add it
-    if (!cleanPath.startsWith('uploads/')) {
-      cleanPath = `uploads/${cleanPath}`;
-    }
-    
-    const url = `${API_BASE}/${cleanPath}`;
-    console.log("🔍 Constructed URL:", url);
+    const url = `${API_BASE}/uploads/${cleanPath}`;
     return url;
   };
 
@@ -364,56 +346,56 @@ const VisitAuct = ({ userId }) => {
         <div className="flex-1">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-white dark:bg-[#0A0A0B] p-4 rounded-lg border border-gray-100 dark:border-white/5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Auctions</p>
-                  <p className="text-2xl font-bold text-gray-900">{filteredAuctions.length}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Auctions</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{filteredAuctions.length}</p>
                 </div>
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Tag className="h-6 w-6 text-blue-600" />
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <Tag className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </div>
             
-            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-white dark:bg-[#0A0A0B] p-4 rounded-lg border border-gray-100 dark:border-white/5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Active Auctions</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Active Auctions</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-500">
                     {filteredAuctions.filter(a => a.status === 'active').length}
                   </p>
                 </div>
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Clock className="h-6 w-6 text-green-600" />
+                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                  <Clock className="h-6 w-6 text-green-600 dark:text-green-500" />
                 </div>
               </div>
             </div>
             
-            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-white dark:bg-[#0A0A0B] p-4 rounded-lg border border-gray-100 dark:border-white/5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">With Increments</p>
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">With Increments</p>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-500">
                     {filteredAuctions.filter(a => a.use_increment === 1).length}
                   </p>
                 </div>
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Calculator className="h-6 w-6 text-purple-600" />
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                  <Calculator className="h-6 w-6 text-purple-600 dark:text-purple-500" />
                 </div>
               </div>
             </div>
             
-            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-white dark:bg-[#0A0A0B] p-4 rounded-lg border border-gray-100 dark:border-white/5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Highest Bid</p>
-                  <p className="text-2xl font-bold text-yellow-600">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Highest Bid</p>
+                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-500">
                     ₱{formatPrice(Math.max(...filteredAuctions.map(a => a.current_price || a.starting_price))) || '0.00'}
                   </p>
                 </div>
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-yellow-600" />
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+                  <DollarSign className="h-6 w-6 text-yellow-600 dark:text-yellow-500" />
                 </div>
               </div>
             </div>
@@ -429,10 +411,10 @@ const VisitAuct = ({ userId }) => {
           )}
 
           {!loading && filteredAuctions.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+            <div className="text-center py-12 bg-white dark:bg-[#161B22] rounded-xl border border-gray-200 dark:border-white/5">
               <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No auctions available</h3>
-              <p className="text-gray-500">This user hasn't created any auctions yet.</p>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No auctions available</h3>
+              <p className="text-gray-500 dark:text-gray-400">This user hasn't created any auctions yet.</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -441,7 +423,6 @@ const VisitAuct = ({ userId }) => {
                 const hasWinner = auction.status === 'ended' && auction.winner_id;
                 const winnerUsername = auction.winner_username;
                 const winnerPfp = auction.winner_pfp;
-                const winnerFullname = auction.winner_fullname;
                 const useIncrement = auction.use_increment === 1;
                 const bidIncrement = auction.bid_increment || 100;
                 
@@ -450,34 +431,17 @@ const VisitAuct = ({ userId }) => {
                 const isLoadingReminder = loadingReminders[auction.id] || false;
                 const showReminderButton = canUserSetReminder(auction);
                 
-                console.log(`🔍 Rendering auction ${auction.id}:`, {
-                  status: auction.status,
-                  hasWinner,
-                  use_increment: useIncrement,
-                  bid_increment: bidIncrement,
-                  winner_id: auction.winner_id,
-                  winner_username: winnerUsername,
-                  showReminderButton,
-                  hasReminder,
-                  author_id: auction.author_id,
-                  currentUserId
-                });
-                
                 return (
-                  <div key={auction.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                  <div key={auction.id} className="bg-white dark:bg-[#0A0A0B] rounded-xl shadow-md border border-gray-100 dark:border-white/5 overflow-hidden transition-all duration-300 group">
                     {/* Auction Header */}
-                    <div className="p-4 border-b border-gray-200 bg-gray-50">
+                    <div className="p-4 border-b border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02]">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                           {auction.author_pfp ? (
                             <img
                               src={getImageUrl(auction.author_pfp)}
                               alt={`${auction.author_username}'s profile`}
-                              className="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.style.display = 'none';
-                              }}
+                              className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 shadow-sm object-cover"
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold">
@@ -485,8 +449,8 @@ const VisitAuct = ({ userId }) => {
                             </div>
                           )}
                           <div>
-                            <p className="font-bold text-gray-800">{auction.author_username}</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="font-bold text-gray-900 dark:text-gray-100">@{auction.author_username}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                               {new Date(auction.created_at).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'short',
@@ -497,43 +461,30 @@ const VisitAuct = ({ userId }) => {
                         </div>
                         
                         <div className="flex items-center gap-3">
-                          {/* Reminder Button - Only show for non-active auctions and non-authors */}
+                          {/* Reminder Button */}
                           {showReminderButton && (
                             <button
                               onClick={() => toggleReminder(auction.id)}
                               disabled={isLoadingReminder}
-                              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                 hasReminder
-                                  ? "bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200"
-                                  : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                              } ${isLoadingReminder ? "opacity-50 cursor-not-allowed" : "hover:shadow-sm"}`}
+                                  ? "bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border border-purple-300 dark:border-purple-800/30"
+                                  : "bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-white/10"
+                              } ${isLoadingReminder ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
                               {isLoadingReminder ? (
-                                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                                <div className="w-3 h-3 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
                               ) : hasReminder ? (
-                                <>
-                                  <BellOff size={14} />
-                                  <span>Remove Reminder</span>
-                                </>
+                                <BellOff size={14} />
                               ) : (
-                                <>
-                                  <Bell size={14} />
-                                  <span>Remind Me</span>
-                                </>
+                                <Bell size={14} />
                               )}
+                              <span>{hasReminder ? "Remove Reminder" : "Remind Me"}</span>
                             </button>
                           )}
                           
-                          {/* Increment badge */}
-                          {useIncrement && auction.status === 'active' && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold border border-purple-200">
-                              <Calculator size={14} />
-                              <span>₱{formatPrice(bidIncrement)} Increment</span>
-                            </div>
-                          )}
-                          
                           {/* Status badge */}
-                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold border ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border}`}>
+                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border} dark:bg-opacity-20`}>
                             {statusBadge.icon}
                             <span>{statusBadge.label}</span>
                           </div>
@@ -541,253 +492,171 @@ const VisitAuct = ({ userId }) => {
                       </div>
                     </div>
 
-                    {/* Auction Content */}
-                    <div className="p-4 md:p-6">
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Left Column: Auction Details */}
-                        <div className="lg:col-span-2 space-y-4">
+                    {/* Auction Content Area */}
+                    <div className="flex flex-col md:flex-row gap-6 p-4 md:p-6">
+                      {/* Left: Images */}
+                      <div className="md:w-1/3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">Images ({auction.media?.length || 0})</p>
+                        {auction.media?.length > 0 ? (
+                          <div className="space-y-3">
+                            <div 
+                              className="relative aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-white/5 cursor-pointer group"
+                              onClick={() => setSelectedMedia(auction.media[0])}
+                            >
+                              <img
+                                src={getImageUrl(auction.media[0].media_path)}
+                                alt={auction.title}
+                                className="w-full h-full object-cover transition-transform duration-500"
+                              />
+                              {auction.media.length > 1 && (
+                                <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-full border border-white/10">
+                                  +{auction.media.length - 1} more
+                                </div>
+                              )}
+                            </div>
+                            {/* Thumbnails */}
+                            {auction.media.length > 1 && (
+                              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                                {auction.media.slice(1, 4).map((file, idx) => (
+                                  <div 
+                                    key={file.id} 
+                                    className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-gray-100 dark:border-white/5 cursor-pointer transition"
+                                    onClick={() => setSelectedMedia(file)}
+                                  >
+                                    <img
+                                      src={getImageUrl(file.media_path)}
+                                      alt="Thumbnail"
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                ))}
+                                {auction.media.length > 4 && (
+                                  <div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center text-[10px] font-bold text-gray-500">
+                                    +{auction.media.length - 4}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="aspect-square rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-dashed border-gray-200 dark:border-white/10 flex items-center justify-center">
+                            <p className="text-xs text-gray-400">No media available</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="space-y-5">
                           <div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">{auction.title}</h3>
-                            <p className="text-gray-600">{auction.description}</p>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-tight">{auction.title}</h3>
+                            <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">{auction.description}</p>
                           </div>
 
-                          {/* Price Cards - Updated to 3 columns */}
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-                              <div className="flex items-center gap-2 mb-2">
-                                <DollarSign className="h-5 w-5 text-blue-600" />
-                                <p className="text-sm font-medium text-blue-800">Starting Price</p>
-                              </div>
-                              <p className="text-2xl font-bold text-blue-900">₱{formatPrice(auction.starting_price)}</p>
+                          {/* Price Grid */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100 dark:border-blue-900/20">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">Starting Price</p>
+                              <p className="text-lg font-bold text-blue-900 dark:text-blue-100">₱{formatPrice(auction.starting_price)}</p>
                             </div>
                             
-                            <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
-                              <div className="flex items-center gap-2 mb-2">
-                                <ArrowRight className="h-5 w-5 text-green-600" />
-                                <p className="text-sm font-medium text-green-800">Current Price</p>
-                              </div>
-                              <p className="text-2xl font-bold text-green-900">₱{formatPrice(auction.current_price || auction.starting_price)}</p>
+                            <div className="bg-green-50/50 dark:bg-green-900/10 p-3 rounded-xl border border-green-100 dark:border-green-900/20">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-green-600 dark:text-green-400 mb-1">Current Price</p>
+                              <p className="text-lg font-bold text-green-900 dark:text-green-100">₱{formatPrice(auction.current_price || auction.starting_price)}</p>
                             </div>
 
-                            {/* NEW: Bid Increment Card */}
-                            <div className={`p-4 rounded-xl border ${
+                            <div className={`sm:col-span-2 p-3 rounded-xl border ${
                               useIncrement 
-                                ? 'bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200'
-                                : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
+                                ? 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-900/20'
+                                : 'bg-gray-50/50 dark:bg-white/[0.02] border-gray-100 dark:border-white/5'
                             }`}>
-                              <div className="flex items-center gap-2 mb-2">
-                                <Calculator className={`h-5 w-5 ${useIncrement ? 'text-purple-600' : 'text-gray-500'}`} />
-                                <p className={`text-sm font-medium ${useIncrement ? 'text-purple-800' : 'text-gray-700'}`}>
+                              <div className="flex items-center justify-between">
+                                <p className={`text-[10px] font-bold uppercase tracking-wider ${useIncrement ? 'text-purple-600 dark:text-purple-400' : 'text-gray-500'}`}>
                                   {useIncrement ? 'Bid Increment' : 'Bidding Rules'}
                                 </p>
+                                {useIncrement && <Calculator size={14} className="text-purple-400" />}
                               </div>
                               {useIncrement ? (
-                                <>
-                                  <p className="text-2xl font-bold text-purple-900">₱{formatPrice(bidIncrement)}</p>
-                                  <p className="text-xs text-purple-700 mt-1">
-                                    Bids increase by ₱{formatPrice(bidIncrement)}
-                                  </p>
-                                </>
+                                <p className="text-lg font-bold text-purple-900 dark:text-purple-100">₱{formatPrice(bidIncrement)}</p>
                               ) : (
-                                <>
-                                  <p className="text-xl font-bold text-gray-900">Free Bidding</p>
-                                  <p className="text-xs text-gray-600 mt-1">
-                                    Bid any amount above current
-                                  </p>
-                                </>
+                                <p className="text-sm font-bold text-gray-700 dark:text-gray-300">Free Bidding</p>
                               )}
                             </div>
                           </div>
 
-                          {/* Time Information */}
-                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <div className="flex items-center gap-3">
-                                <CalendarIcon className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                                <div>
-                                  <p className="text-xs text-gray-500">Started</p>
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {new Date(auction.auction_start_time || auction.created_at).toLocaleString()}
-                                  </p>
-                                </div>
+                          {/* Time Info */}
+                          <div className="bg-gray-50 dark:bg-white/[0.02] p-4 rounded-xl border border-gray-100 dark:border-white/5">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Started</p>
+                                <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                                  {new Date(auction.auction_start_time || auction.created_at).toLocaleString()}
+                                </p>
                               </div>
-                              <div className="flex items-center gap-3">
-                                <Clock className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                                <div>
-                                  <p className="text-xs text-gray-500">Ended</p>
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {new Date(auction.end_time).toLocaleString()}
-                                  </p>
-                                </div>
+                              <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Ended</p>
+                                <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                                  {new Date(auction.end_time).toLocaleString()}
+                                </p>
                               </div>
                             </div>
                           </div>
 
-                          {/* Winner Info - only show if we have a winner */}
+                          {/* Winner Details */}
                           {hasWinner && winnerUsername && (
-                            <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
-                              <div className="flex items-center gap-3 mb-3">
-                                <Trophy className="h-6 w-6 text-purple-600" />
-                                <div>
-                                  <p className="text-sm font-medium text-purple-800">WINNER DETAILS</p>
-                                  <p className="text-xs text-purple-600">Auction successfully completed</p>
-                                </div>
-                              </div>
+                            <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 p-4 rounded-xl border border-purple-500/20">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-3">Auction Winner</p>
                               <div className="flex items-center gap-3">
                                 {winnerPfp ? (
                                   <img
                                     src={getImageUrl(winnerPfp)}
-                                    alt={`${winnerFullname || winnerUsername}'s profile`}
+                                    alt={winnerUsername}
                                     className="w-10 h-10 rounded-full border-2 border-purple-300 shadow-sm object-cover"
-                                    onError={(e) => {
-                                      e.target.onerror = null;
-                                      e.target.style.display = 'none';
-                                    }}
                                   />
                                 ) : (
                                   <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold">
-                                    <User size={20} />
+                                    <Trophy size={18} />
                                   </div>
                                 )}
                                 <div>
-                                  <p className="font-medium text-purple-900">@{winnerUsername}</p>
-                                  <p className="text-sm text-purple-700">
-                                    Won with ₱{formatPrice(auction.final_price || auction.current_price || auction.starting_price)}
+                                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">@{winnerUsername}</p>
+                                  <p className="text-xs text-purple-600 dark:text-purple-400">
+                                    Won for ₱{formatPrice(auction.final_price || auction.current_price || auction.starting_price)}
                                   </p>
                                 </div>
                               </div>
                             </div>
                           )}
                           
-                          {/* Show if auction ended but no winner */}
-                          {auction.status === 'ended' && !hasWinner && (
-                            <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
-                              <div className="flex items-center gap-3">
-                                <Trophy className="h-6 w-6 text-gray-500" />
-                                <div>
-                                  <p className="text-sm font-medium text-gray-800">AUCTION ENDED</p>
-                                  <p className="text-xs text-gray-600">No bids were placed on this auction</p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Show start time for pending/approved auctions */}
+                          {/* Scheduled Note */}
                           {(auction.status === 'pending' || auction.status === 'approved') && auction.auction_start_time && (
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-yellow-600" />
-                                <span className="text-sm font-medium text-yellow-700">
-                                  Scheduled to start: {new Date(auction.auction_start_time).toLocaleString()}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Right Column: IMAGES */}
-                        <div className="space-y-4">
-                          {/* Main Featured Image */}
-                          {auction.media?.length > 0 ? (
-                            <div className="space-y-3">
-                              <div className="relative group">
-                                <div
-                                  className="relative aspect-square w-full rounded-xl overflow-hidden cursor-pointer bg-gray-100"
-                                  onClick={() => setSelectedMedia(auction.media[0])}
-                                >
-                                  <img
-                                    src={getImageUrl(auction.media[0].media_path)}
-                                    alt="Auction featured"
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    loading="lazy"
-                                    onError={(e) => {
-                                      e.target.onerror = null;
-                                      e.target.style.display = 'none';
-                                    }}
-                                  />
-                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-300" />
-                                  <div className="absolute bottom-3 right-3 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
-                                    Featured
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Additional Images Grid */}
-                              {auction.media.length > 1 && (
-                                <div className="grid grid-cols-2 gap-2">
-                                  {auction.media.slice(1).map((file, index) => (
-                                    <div
-                                      key={file.id}
-                                      className="relative aspect-square rounded-lg overflow-hidden cursor-pointer bg-gray-100 group"
-                                      onClick={() => setSelectedMedia(file)}
-                                    >
-                                      <img
-                                        src={getImageUrl(file.media_path)}
-                                        alt={`Auction image ${index + 2}`}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                        loading="lazy"
-                                        onError={(e) => {
-                                          e.target.onerror = null;
-                                          e.target.style.display = 'none';
-                                        }}
-                                      />
-                                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-300" />
-                                      {index === auction.media.length - 2 && auction.media.length > 3 && (
-                                        <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
-                                          <span className="text-white text-sm font-medium">
-                                            +{auction.media.length - 3} more
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="aspect-square w-full rounded-xl bg-gray-100 flex items-center justify-center">
-                              <div className="text-center p-4">
-                                <Image className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                                <p className="text-gray-500 text-sm">No images available</p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Image Counter */}
-                          {auction.media?.length > 0 && (
-                            <div className="flex items-center justify-between text-sm text-gray-600">
-                              <span className="flex items-center gap-1">
-                                <Image className="h-4 w-4" />
-                                {auction.media.length} image{auction.media.length !== 1 ? 's' : ''}
+                            <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-900/20 rounded-xl p-3 flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-yellow-600" />
+                              <span className="text-xs font-bold text-yellow-700 dark:text-yellow-500">
+                                Starts: {new Date(auction.auction_start_time).toLocaleString()}
                               </span>
-                              <button 
-                                onClick={() => auction.media?.length > 0 && setSelectedMedia(auction.media[0])}
-                                className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                              >
-                                View all
-                                <ArrowRight className="h-3 w-3" />
-                              </button>
                             </div>
                           )}
-                        </div>
-                      </div>
 
-                      {/* Bidding/Action Section */}
-                      <div className="mt-6 pt-6 border-t border-gray-200">
-                        {auction.status === "active" ? (
-                          <AuctionBids 
-                            auctionId={auction.id} 
-                            currentPrice={auction.current_price} 
-                            refreshAuctions={refreshAuctions}
-                          />
-                        ) : (
-                          <div className="text-center p-4">
-                            <div className="text-sm text-gray-500">
-                              {auction.status === 'pending' && "Awaiting admin approval"}
-                              {auction.status === 'approved' && "Scheduled to start soon"}
-                            </div>
+                          {/* Bidding/Action Section */}
+                          <div className="mt-4 pt-6 border-t border-gray-100 dark:border-white/5">
+                            {auction.status === "active" ? (
+                              <AuctionBids 
+                                auctionId={auction.id} 
+                                currentPrice={auction.current_price} 
+                                refreshAuctions={refreshAuctions}
+                              />
+                            ) : (
+                              <div className="text-center py-2">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                  {auction.status === 'pending' ? "Awaiting admin approval" : 
+                                   auction.status === 'approved' ? "Scheduled to start soon" : 
+                                   auction.status === 'ended' ? "Bidding has concluded" : "Bidding unavailable"}
+                                </p>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -801,18 +670,18 @@ const VisitAuct = ({ userId }) => {
         <div className="lg:w-80">
           <div className="sticky top-4 space-y-4">
             {/* Filters Card */}
-            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters & Sorting</h3>
+            <div className="bg-white dark:bg-[#0A0A0B] p-4 rounded-lg border border-gray-100 dark:border-white/5 shadow-sm">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-4">Filters & Sorting</h3>
               
               <div className="space-y-4">
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                     <SortAsc size={16} /> Sort by
                   </label>
                   <select
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-gray-50 dark:bg-[#0A0A0B] border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#5E66FF]/50 text-gray-900 dark:text-gray-100 transition-all cursor-pointer"
                   >
                     <option value="latest">Latest first</option>
                     <option value="oldest">Oldest first</option>
@@ -822,13 +691,13 @@ const VisitAuct = ({ userId }) => {
                 </div>
 
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                     <Calendar size={16} /> Filter by year
                   </label>
                   <div className="relative">
                     <button
                       onClick={() => setShowYearDropdown(!showYearDropdown)}
-                      className="w-full flex items-center justify-between gap-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm hover:bg-gray-100 transition-colors"
+                      className="w-full flex items-center justify-between gap-1 bg-gray-50 dark:bg-[#0A0A0B] border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-gray-900 dark:text-gray-100"
                     >
                       {yearFilter === "all" ? "All years" : yearFilter}
                       <ChevronDown
@@ -838,14 +707,14 @@ const VisitAuct = ({ userId }) => {
                     </button>
 
                     {showYearDropdown && (
-                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div className="absolute z-10 mt-1 w-full bg-white dark:bg-[#0A0A0B] border border-gray-300 dark:border-white/10 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         <button
                           onClick={() => {
                             setYearFilter("all");
                             setShowYearDropdown(false);
                           }}
-                          className={`block w-full text-left px-3 py-2.5 text-sm hover:bg-gray-100 ${
-                            yearFilter === "all" ? "bg-gray-100 font-medium" : ""
+                          className={`block w-full text-left px-3 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-white/5 transition-colors ${
+                            yearFilter === "all" ? "bg-gray-100 dark:bg-white/5 font-bold text-[#5E66FF]" : "text-gray-600 dark:text-gray-400"
                           }`}
                         >
                           All years
@@ -857,8 +726,8 @@ const VisitAuct = ({ userId }) => {
                               setYearFilter(year.toString());
                               setShowYearDropdown(false);
                             }}
-                            className={`block w-full text-left px-3 py-2.5 text-sm hover:bg-gray-100 ${
-                              yearFilter === year.toString() ? "bg-gray-100 font-medium" : ""
+                            className={`block w-full text-left px-3 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-white/5 transition-colors ${
+                              yearFilter === year.toString() ? "bg-gray-100 dark:bg-white/5 font-bold text-[#5E66FF]" : "text-gray-600 dark:text-gray-400"
                             }`}
                           >
                             {year}
@@ -872,42 +741,42 @@ const VisitAuct = ({ userId }) => {
             </div>
 
             {/* Status Legend Card */}
-            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Auction Status</h4>
+            <div className="bg-white dark:bg-[#0A0A0B] p-4 rounded-lg border border-gray-100 dark:border-white/5 shadow-sm">
+              <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-4">Auction Status</h4>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-green-50 border border-green-200">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-green-50/50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="text-sm font-medium text-green-700">Active</span>
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]"></div>
+                    <span className="text-xs font-bold text-green-700 dark:text-green-500 uppercase tracking-tight">Active</span>
                   </div>
-                  <span className="text-xs text-green-600 font-medium">
+                  <span className="text-xs text-green-600 dark:text-green-400 font-bold">
                     {filteredAuctions.filter(a => a.status === 'active').length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-purple-50 border border-purple-200">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/20">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                    <span className="text-sm font-medium text-purple-700">Ended</span>
+                    <div className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.4)]"></div>
+                    <span className="text-xs font-bold text-purple-700 dark:text-purple-500 uppercase tracking-tight">Ended</span>
                   </div>
-                  <span className="text-xs text-purple-600 font-medium">
+                  <span className="text-xs text-purple-600 dark:text-purple-400 font-bold">
                     {filteredAuctions.filter(a => a.status === 'ended').length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-yellow-50 border border-yellow-200">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-yellow-50/50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <span className="text-sm font-medium text-yellow-700">Pending</span>
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]"></div>
+                    <span className="text-xs font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-tight">Pending</span>
                   </div>
-                  <span className="text-xs text-yellow-600 font-medium">
+                  <span className="text-xs text-yellow-600 dark:text-yellow-400 font-bold">
                     {filteredAuctions.filter(a => a.status === 'pending').length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-blue-50 border border-blue-200">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                    <span className="text-sm font-medium text-blue-700">Approved</span>
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.4)]"></div>
+                    <span className="text-xs font-bold text-blue-700 dark:text-blue-500 uppercase tracking-tight">Approved</span>
                   </div>
-                  <span className="text-xs text-blue-600 font-medium">
+                  <span className="text-xs text-blue-600 dark:text-blue-400 font-bold">
                     {filteredAuctions.filter(a => a.status === 'approved').length}
                   </span>
                 </div>

@@ -1,4 +1,15 @@
 @import "tailwindcss";
+
+/* Force Tailwind 4 to use class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --dark-bg: #0A0A0B;
+}
+
+.dark {
+  background-color: var(--dark-bg);
+}
 * {
     font-family: 'Inter', sans-serif;
   }
@@ -9,4 +20,22 @@
     font-family: "BasheqVintageRegular";
     src: url("./assets/fonts/BasheqVintageRegular.ttf") format("truetype");
   }
-  
+
+/* Mobile Navigation Animations */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Safe area for devices with home indicator (iPhone X+) */
+.h-safe-bottom {
+  height: env(safe-area-inset-bottom, 0px);
+}

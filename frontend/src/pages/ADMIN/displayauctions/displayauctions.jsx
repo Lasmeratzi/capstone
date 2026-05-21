@@ -332,13 +332,10 @@ const DisplayAuctions = () => {
 
   return (
     <div className="flex bg-gray-100 min-h-screen">
-      {/* Fixed Sidebar */}
-      <div className="fixed h-full">
-        <SideAdmin />
-      </div>
+      <SideAdmin />
 
       {/* Scrollable Content */}
-      <div className="flex-grow p-6 ml-48">
+      <div className="flex-grow p-6">
         <h1 className="text-lg font-bold text-gray-800">Illura Database &gt; Auctions</h1>
         <hr className="border-t border-gray-300 mt-2 mb-6" />
 

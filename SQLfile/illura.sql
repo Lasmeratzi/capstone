@@ -1440,7 +1440,7 @@ ALTER TABLE `verification_requests`
 --
 ALTER TABLE `artwork_comments`
   ADD CONSTRAINT `artwork_comments_ibfk_1` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `artwork_comments_ibfk_2` FOREIGN KEY (`artwork_post_id`) REFERENCES `artwork_posts` (`id`);
+  ADD CONSTRAINT `artwork_comments_ibfk_2` FOREIGN KEY (`artwork_post_id`) REFERENCES `artwork_posts` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `artwork_media`

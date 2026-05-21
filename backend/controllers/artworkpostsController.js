@@ -146,7 +146,16 @@ const deleteArtworkPost = (req, res) => {
     }
 
     artworkPostsModels.deleteArtworkPost(id, (deleteErr) => {
-      if (deleteErr) return res.status(500).json({ message: "Database error.", error: deleteErr });
+      if (deleteErr) {
+        console.error("Delete error details:", deleteErr);
+        return res.status(500).json({ 
+          message: "Database error during deletion.", 
+          error: deleteErr,
+          sqlMessage: deleteErr.sqlMessage,
+          errno: deleteErr.errno,
+          code: deleteErr.code
+        });
+      }
       res.status(200).json({ message: "Artwork post deleted successfully!" });
     });
   });
@@ -169,6 +178,19 @@ const getFollowingArtworkPosts = (req, res) => {
   });
 };
 
+// Get public artwork posts (no auth needed - for landing page)
+const getPublicArtworkPosts = (req, res) => {
+  artworkPostsModels.getPublicArtworkPosts((err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error.", error: err });
+    }
+    res.status(200).json(results.map(post => ({
+      ...post,
+      author_pfp: post.author_pfp || "default.png",
+    })));
+  });
+};
+
 module.exports = {
   createArtworkPost,
   getAllArtworkPosts,
@@ -177,4 +199,5 @@ module.exports = {
   updateArtworkPost,
   deleteArtworkPost,
   getFollowingArtworkPosts,
+  getPublicArtworkPosts,
 };
